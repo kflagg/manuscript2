@@ -1,0 +1,44 @@
+---
+title: "INLA Demonstration"
+author: "Kenneth A. Flagg"
+output:
+  revealjs::revealjs_presentation:
+    fig_height: 6
+    fig_width: 10
+    fig_crop: FALSE
+    height: "960px"
+    width: "720px"
+    theme: "black"
+    slide_level: 1
+    transition: "slide"
+    incremental: TRUE
+    self_contained: TRUE
+---
+
+
+```{r setup, cache=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE,
+  fig.width=10, fig.height=6, dpi=150, fig.align='center',
+  dev.args=list(family='sans', pointsize=21))
+
+library(spatstat)
+library(INLA)
+library(inlabru)
+library(maptools)
+```
+
+
+# Trees in a Rainforest
+
+```{r beiplot}
+plot(bei, asp = 1)
+```
+
+```{r beilgcp}
+bei_df <- as.SpatialPoints.ppp(bei)
+# Need mesh and prior for GP.
+#bei_lgcp <- lgcp(, data = bei_df)
+```
+
+# References
+
