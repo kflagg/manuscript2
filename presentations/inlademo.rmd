@@ -1,6 +1,7 @@
 ---
 title: "INLA Demonstration"
 author: "Kenneth A. Flagg"
+bibliography: "../references.bib"
 output:
   revealjs::revealjs_presentation:
     fig_height: 6
@@ -26,6 +27,11 @@ library(INLA)
 library(inlabru)
 library(maptools)
 ```
+
+
+# Simple Illustration
+
+@rinla section 4.9
 
 
 # Trees in a Rainforest
