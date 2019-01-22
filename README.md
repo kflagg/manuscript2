@@ -7,8 +7,8 @@ See the projects and issues pages for task descriptions. Desired due dates are b
 | Date   | Tasks |
 |:-------|:------|
 | Jan 22 | INLA explanation, collect citations |
-| Jan 29 | normal vignette, spatial vignette |
-| Feb  5 |  |
+| Jan 29 | normal vignette, spatial vignette, quick lit review |
+| Feb  5 | deeper reading |
 | Feb 12 |  |
 | Feb 19 |  |
 | Feb 26 |  |

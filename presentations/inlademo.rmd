@@ -10,7 +10,7 @@ output:
     height: "960px"
     width: "720px"
     theme: "black"
-    slide_level: 1
+    slide_level: 2
     transition: "slide"
     incremental: TRUE
     self_contained: TRUE
@@ -28,13 +28,45 @@ library(inlabru)
 library(maptools)
 ```
 
+# Introduction
 
-# Simple Illustration
+## Why INLA?
+
+- Bayesian Hierarchical models
+     - Many latent Gaussian variables
+     - Few parameters
+- Monte Carlo methods impractical
+ - Approximate posterior marginals using Laplace expansions
+     - Clever algebra, end up with posterior in denominator
+     - Taylor expand posterior about its mode
+     - Results in a Gaussian approximation
+     - Some numerical integration needed
+
+## Advantages and Disadvantages
+
+ - Advantages
+    - Accurate approximation
+    - Fast computation of many posterior marginals
+ - Disadvantages
+    - Does not provide full joint posterior
+    - Slow with >4-6 parameters
+
+
+## Derivations
+
+From @rinla, Section 4.7
+
+Include derivations of $\tilde{p}(\boldsymbol{\psi}|\mathbf{y})$, $\tilde{p}(\theta_{i}|\boldsymbol{\psi},\mathbf{y})$, and $\tilde{p}(\theta_{i}|\mathbf{y})$; and explanations of mode-finding and CCD.
+
+
+# Illustrations
+
+## Simple Normal Example
 
 @rinla section 4.9
 
 
-# Trees in a Rainforest
+## Spatial Point Pattern: Trees in a Rainforest
 
 ```{r beiplot}
 plot(bei, asp = 1)
@@ -47,4 +79,6 @@ bei_df <- as.SpatialPoints.ppp(bei)
 ```
 
 # References
+
+## References
 
