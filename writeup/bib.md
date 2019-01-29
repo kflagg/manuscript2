@@ -1,6 +1,4 @@
 ---
-title: INLA Bibliography
-author: K. A. Flagg
 bibliography: ../references.bib
 ---
 
@@ -34,4 +32,4 @@ bibliography: ../references.bib
 
 # @scottetal
 
-# Refernces
+# References

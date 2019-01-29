@@ -17,11 +17,13 @@ output:
 ---
 
 
-```{r setup, cache=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE}
 knitr::opts_chunk$set(cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE,
   fig.width=10, fig.height=6, dpi=150, fig.align='center',
   dev.args=list(family='sans', pointsize=21))
+```
 
+```{r packages, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE}
 library(spatstat)
 library(INLA)
 library(inlabru)
@@ -38,7 +40,7 @@ library(maptools)
 - Monte Carlo methods impractical
  - Approximate posterior marginals using Laplace expansions
      - Clever algebra, end up with posterior in denominator
-     - Taylor expand posterior about its mode
+     - Taylor expand log-posterior about its mode
      - Results in a Gaussian approximation
      - Some numerical integration needed
 
@@ -63,7 +65,142 @@ Include derivations of $\tilde{p}(\boldsymbol{\psi}|\mathbf{y})$, $\tilde{p}(\th
 
 ## Simple Normal Example
 
+```{r ex4_8_1, eval = FALSE}
+# f() specifies a Gaussian process.
+formula <- y ~ x1 + x2 + f(z1, model = '...')
+# Lists the names of possible models for f().
+names(inla.models()$latent)
+# Lists the names of possible likelihood families.
+names(inla.models()$likelihood)
+# Lists the names of possible priors. Default is flat?
+names(inla.models()$prior)
+# Example of fitting code.
+inla(formula, family = '...', data)
+```
+
+```{r ex4_8_2, eval = FALSE}
+lm1 <- lm(Petal.Length ~ Petal.Width, data = iris)
+summary(lm1)
+confint(lm1)
+
+inla1 <- inla(Petal.Length ~ Petal.Width, family = 'gaussian', data = iris)
+summary(inla1)
+# 95% HPD interval.
+inla.hpdmarginal(0.95, inla1$marginals.fixed$Petal.Width)
+
+# Plot of beta_1|data.
+plot(inla1$marginals.fixed$Petal.Width, type = 'l', xlab = expression(beta[1]), ylab = expression(tilde(p)(paste(beta[1], '|', y))))
+
+# Example of posterior mean of a function of a parameter.
+inla.emarginal(function(x)1/x, inla1$marginals.hyperpar$`Precision for the Gaussian observations`)
+mean(1 / sample(inla1$marginals.hyperpar$`Precision for the Gaussian observations`[,'x'], size = 10000, prob = inla1$marginals.hyperpar$`Precision for the Gaussian observations`[,'y'], replace = TRUE))
+```
+
 @rinla section 4.9
+
+- $\mathbf{y} = (y_{1}, \dots, y_{n})'$ independent Gaussian observations
+- $y_{i} \sim \mathsf{N}(\theta, \sigma)$
+- $\theta \sim \mathsf{N}(\mu_{0}, \sigma_{0})$
+- $\psi = 1/\sigma^{2}$, $\psi \sim \mathsf{Gamma}(a, b)$
+
+The posterior distribution of the nuisance parameter is
+
+$$p(\psi|\mathbf{y}) \propto \frac{p(\mathbf{y} | \theta, \psi) p(\theta) p(\psi)}
+{p(\theta | \psi, \mathbf{y})}$$
+
+```{r ex4_9_1}
+# Example data.
+y <- c(1.2697, 7.7637, 2.2532, 3.4557, 4.1776, 6.4320, -3.6623, 7.7567,
+       5.9032, 7.2671, -2.3447, 8.0160, 3.5013, 2.8495, 0.6467, 3.2371,
+       5.8573, -3.3749, 4.1507, 4.3092, 11.7327, 2.6174, 9.4942, -2.7639,
+       -1.5859, 3.6986, 2.4544, -0.3294, 0.2329, 5.2846)
+n <- length(y)
+ybar <- mean(y)
+
+# Hyperparameters.
+mu0 <- -3
+sigma2_0 <- 4
+a <- 1.6
+b <- 0.4
+
+# H grid points for evaluating the posterior of psi.
+H <- 101
+psi.min <- 0.001
+psi.max <- 0.3
+psi.grid <- seq(psi.min, psi.max, length.out = H)
+hprior <- dgamma(psi.grid, shape = a, rate = b)
+
+# Compute quantities in the posterior.
+theta.n <- sigma2.n <- lik <- num <- den <- prior <- numeric(H)
+for(h in 1:H){
+  theta.n[h] <- (psi.grid[h] * n * ybar + mu0/sigma2_0) / (psi.grid[h] * n + 1 / sigma2_0)
+  sigma2.n[h] <- 1 / (n * psi.grid[h] + 1 / sigma2_0)
+  prior[h] <- dnorm(theta.n[h], mu0, sd = sqrt(sigma2_0))
+  lik[h] <- prod(dnorm(y, theta.n[h], sd = 1 / sqrt(psi.grid[h])))
+  num[h] <- hprior[h] * prior[h] * lik[h]
+  den[h] <- dnorm(theta.n[h], theta.n[h], sd = sqrt(sigma2.n[h]))
+}
+# Unnormalised marginal posterior for psi.
+post.psi <- num / den 
+
+# Normalise the density 
+f.psi <- approxfun(psi.grid, post.psi, yleft = min(psi.grid), yright = max(psi.grid))
+const <- integrate(f.psi, min(psi.grid), max(psi.grid))
+post.psi <- post.psi / const$value
+
+# Plot it.
+plot(psi.grid, post.psi, xlab = expression(psi), ylab = '', pch = 20, cex = 0.7, ylim = c(0, max(post.psi)), main = expression(bold(paste('Posterior Distribution of ', psi))))
+lines(psi.grid, post.psi)
+```
+
+## Simple Normal Example
+
+```{r ex4_9_2}
+# J grid points for the evaluating the posterior for theta.
+J <- 201
+min.theta <- -8
+max.theta <- 5
+theta.grid <- seq(min.theta, max.theta, length.out = J)
+
+# Full conditional distributions theta | psi,y 
+full.cond.theta <- matrix(NA_real_, J, H)
+for(j in 1:J){
+  for(h in 1:H){
+    full.cond.theta[j,h] <- dnorm(theta.grid[j], theta.n[h], sd = sqrt(sigma2.n[h]))
+  }
+}
+
+# Plot.
+plot(theta.grid, full.cond.theta[,1], t = 'l', lwd = 0.7, ylab = '', xlab = expression(theta), ylim = c(0, max(full.cond.theta)), cex = 0.7, main = expression(bold(paste('Full Conditional of ', theta, ' for Varying ', psi))))
+for(h in 1:H){
+  lines(theta.grid, full.cond.theta[,h], lwd = 0.7)
+}
+
+# Weighted joint posterior for theta and psi.
+Delta <- 1 / sum(post.psi)
+joint.post.theta.psi <- matrix(NA_real_, J, H)
+for(h in 1:H){
+  joint.post.theta.psi[,h] <- full.cond.theta[,h] * post.psi[h] * Delta
+}
+
+# Plot (weighted) joint.
+image(theta.grid, psi.grid, joint.post.theta.psi, zlim = c(0, max(joint.post.theta.psi)), main = 'Joint Posterior', xlab = expression(theta), ylab = expression(psi))
+
+# Integrate out psi to obtain the marginal posterior of theta.
+marg.post.theta <- rowSums(joint.post.theta.psi)
+
+# Normalise the posterior marginal.
+f.theta <- approxfun(theta.grid, marg.post.theta, yleft = min(theta.grid), yright = max(theta.grid))
+const <- integrate(f.theta, min(theta.grid), max(theta.grid))
+marg.post.theta <- marg.post.theta / const$value
+
+# Plot the marginal.
+rg <- c(-0.839603 , 5.836238)
+plot(theta.grid, marg.post.theta, t = 'l', xlab = expression(theta), ylab = '', xlim = c(rg[1], max(theta.grid)), lty = 2, lwd = 3)  
+for(h in 1:H){
+  lines(theta.grid, joint.post.theta.psi[,h], lwd= 0.25)
+}
+```
 
 
 ## Spatial Point Pattern: Trees in a Rainforest
