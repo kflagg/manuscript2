@@ -108,6 +108,8 @@ The posterior distribution of the nuisance parameter is
 $$p(\psi|\mathbf{y}) \propto \frac{p(\mathbf{y} | \theta, \psi) p(\theta) p(\psi)}
 {p(\theta | \psi, \mathbf{y})}$$
 
+## Simple Normal Example
+
 ```{r ex4_9_1}
 # Example data.
 y <- c(1.2697, 7.7637, 2.2532, 3.4557, 4.1776, 6.4320, -3.6623, 7.7567,
@@ -175,7 +177,11 @@ plot(theta.grid, full.cond.theta[,1], t = 'l', lwd = 0.7, ylab = '', xlab = expr
 for(h in 1:H){
   lines(theta.grid, full.cond.theta[,h], lwd = 0.7)
 }
+```
 
+## Simple Normal Example
+
+```{r ex4_9_3}
 # Weighted joint posterior for theta and psi.
 Delta <- 1 / sum(post.psi)
 joint.post.theta.psi <- matrix(NA_real_, J, H)
@@ -185,7 +191,11 @@ for(h in 1:H){
 
 # Plot (weighted) joint.
 image(theta.grid, psi.grid, joint.post.theta.psi, zlim = c(0, max(joint.post.theta.psi)), main = 'Joint Posterior', xlab = expression(theta), ylab = expression(psi))
+```
 
+## Simple Normal Example
+
+```{r ex4_9_4}
 # Integrate out psi to obtain the marginal posterior of theta.
 marg.post.theta <- rowSums(joint.post.theta.psi)
 
