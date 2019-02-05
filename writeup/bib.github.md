@@ -1,8 +1,20 @@
-Banerjee et al. (2008)
-======================
+Banerjee et al. (2008) \*
+=========================
 
-Andrieu, Doucet, and Holenstein (2010)
-======================================
+-   Simplify high-dimensional spatial and spatiotemporal predictions by projecting the spatial process into a lower-dimensional subset observed at "knots"
+-   Smaller covariance matrix to invert
+-   MCMC requires "reasonably informative priors"
+-   Useful with tens of thousands of prediction points, needs hundreds of knots
+-   "\[F\]aster alternatives that avoid MCMC sampling can be employed" (cites the INLA paper)
+
+Andrieu, Doucet, and Holenstein (2010) \*
+=========================================
+
+-   PMCMC combines SMC and MCMC to handle high-dimensional models
+-   SMC used to generate proposals
+-   Focus on state space models
+-   Particle degeneracy less of a problem than with pure SMC
+-   Efficient exploration wthout a lot of MCMC tuning but slower than INLA
 
 Girolami and Calderhead (2011)
 ==============================
@@ -43,8 +55,8 @@ Fong, Rue, and Wakefield (2010)
 Scott et al. (2016)
 ===================
 
-Refernces
-=========
+References
+==========
 
 Andrieu, Christophe, Arnaud Doucet, and Roman Holenstein. 2010. “Particle Markov Chain Monte Carlo Methods.” *Journal of the Royal Statistical Society: Series B (Statistical Methodology)* 72 (3): 269–342.
 
