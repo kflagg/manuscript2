@@ -19,8 +19,15 @@ Andrieu, Doucet, and Holenstein (2010) \*
 Girolami and Calderhead (2011)
 ==============================
 
-Marin et al. (2012)
-===================
+-   Exploits Riemann manifold structure of parameter space for efficient MC sampling without tuning in high-dimensional situations
+-   LGCP example, notes that INLA could speed up computation
+-   Langevin diffusion/Metropolis adjusted Langevin algorithm(MALA)?
+-   Extend HMC and MALA, stochastic differential equations are involved
+
+Marin et al. (2012) \*
+======================
+
+-   Review paper
 
 Murray, Adams, and MacKay (2010)
 ================================
