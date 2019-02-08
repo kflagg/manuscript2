@@ -33,11 +33,29 @@ bibliography: ../references.bib
 - Review paper
 
 
-# @murrayadamsmackayl
+# @murrayadamsmackayl \*
+
+- MCMC for models with multivariate Gaussian priors
+- Slower but more general than approximations
+- No tuning parameters
+- Better than Gibbs sampling when latent variables are correlated
+- Sort of a modified MH with proposals on an ellipse that passes through the current state
+
 
 # @bagchietal
 
-# @digglemenezessu
+- Experiment applying insecticide and fungicide in a rainforest to see the effects on plant development
+- Weekly seed and seedling counts over 17 weeks
+- Hierarchical model with negative binomial response and latent normal variables fit in R-INLA
+- Priors not stated
+
+# @digglemenezessu \*
+
+- Geostatistical process model expanded by conditioning on a point process model for the observation locations
+- Needed when the process of selecting observation locations depends on the response
+- Describes ML inference by conditional simulation
+- Discussion response by Rue, Martino, Mondal, and Chopin mentions INLA as applicable
+
 
 # @schroedleheld
 

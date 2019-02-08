@@ -29,14 +29,30 @@ Marin et al. (2012) \*
 
 -   Review paper
 
-Murray, Adams, and MacKay (2010)
-================================
+Murray, Adams, and MacKay (2010) \*
+===================================
+
+-   MCMC for models with multivariate Gaussian priors
+-   Slower but more general than approximations
+-   No tuning parameters
+-   Better than Gibbs sampling when latent variables are correlated
+-   Sort of a modified MH with proposals on an ellipse that passes through the current state
 
 Bagchi et al. (2014)
 ====================
 
-Diggle, Menezes, and Su (2010)
-==============================
+-   Experiment applying insecticide and fungicide in a rainforest to see the effects on plant development
+-   Weekly seed and seedling counts over 17 weeks
+-   Hierarchical model with negative binomial response and latent normal variables fit in R-INLA
+-   Priors not stated
+
+Diggle, Menezes, and Su (2010) \*
+=================================
+
+-   Geostatistical process model expanded by conditioning on a point process model for the observation locations
+-   Needed when the process of selecting observation locations depends on the response
+-   Describes ML inference by conditional simulation
+-   Discussion response by Rue, Martino, Mondal, and Chopin mentions INLA as applicable
 
 Schrödle and Held (2011)
 ========================

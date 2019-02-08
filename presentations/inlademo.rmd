@@ -216,13 +216,36 @@ for(h in 1:H){
 ## Spatial Point Pattern: Trees in a Rainforest
 
 ```{r beiplot}
+# 1000m by 500m
 plot(bei, asp = 1)
 ```
 
+## Spatial Point Pattern: Trees in a Rainforest
+
+```{r beiinla}
+centers <- gridcenters(window(bei), 100, 50)
+dx <- sum(unique(centers$x)[1:2] * c(-1, 1)) / 2
+dy <- sum(unique(centers$y)[1:2] * c(-1, 1)) / 2
+bei_df <- data.frame(x = centers$x, y = centers$y,
+                     count = NA_integer_, area = NA_real_)
+
+for(r in seq_len(nrow(bei_df))){
+  bei_df$count[r] <- sum(bei$x >= bei_df$x[r] - dx &
+                         bei$x < bei_df$x[r] + dx &
+                         bei$y >= bei_df$y[r] - dy &
+                         bei$y < bei_df$y[r] + dy)
+  bei_df$area[r] <- area(Window(bei)[owin(c(bei_df$x[r] - dx, bei_df$x[r] + dx), c(bei_df$y[r] - dy, bei_df$y[r] + dy))])
+}
+
+image(unique(bei_df$x), unique(bei_df$y), matrix(bei_df$count, nrow = length(unique(bei_df$x))), asp = 1)
+
+bei_inla <- inla(count ~ 1, family = 'poisson', data = bei_df)
+```
+
 ```{r beilgcp}
-bei_df <- as.SpatialPoints.ppp(bei)
+bei_spdf <- as.SpatialPoints.ppp(bei)
 # Need mesh and prior for GP.
-#bei_lgcp <- lgcp(, data = bei_df)
+#bei_lgcp <- lgcp(, data = bei_spdf)
 ```
 
 # References
