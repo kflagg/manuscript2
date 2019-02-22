@@ -57,6 +57,9 @@ Diggle, Menezes, and Su (2010) \*
 Schrödle and Held (2011)
 ========================
 
+-   Use INLA to fit hierarchical model with Poisson observations and a latent spatiotemporal Gaussian process to annual region-level counts of cattle salmonellosis in Switzerland
+-   Describe how to fit an Intrinsic Gaussian Markov random field model (with linear constraints to ensure parameter identifiability) in INLA
+
 Miller et al. (2013)
 ====================
 
