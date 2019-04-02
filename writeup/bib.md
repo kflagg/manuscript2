@@ -65,9 +65,25 @@ bibliography: ../references.bib
 
 # @milleretal
 
-# @wangblei
+- Discusses mapping dolphin population density using distance sampling along transects and a GAM for Poisson process intensity
+- INLA mentioned as a way to quickly fit Bayesian models
+
+
+# @wangblei \*
+
+
+- Discusses Laplace variational inference and delta method variational inference as generic approaches for non-conjugate exponential family models
+- Describes Laplace approximation as Taylor expansion around MAP point, resulting in Gaussian approximation
+- Conclude that Laplace approximation is more accurate than delta method
+
 
 # @camelettilindgrensimpsonrue
+
+- Discusses Gaussian Markov random field as lower-dimensional alternative to Gaussian process with dense covariance for spatiotemporal prediction
+- Can be computed quickly using INLA and stochastic PDEs
+- SPDE approach uses finite element approximation (linear combination of basis functions) of spatial field on triangular grid
+- Illustration of particulate matter modeling fit in R-INLA
+
 
 # @martinssimpsonlingrenrue
 

@@ -63,11 +63,23 @@ Schrödle and Held (2011)
 Miller et al. (2013)
 ====================
 
-Wang and Blei (n.d.)
-====================
+-   Discusses mapping dolphin population density using distance sampling along transects and a GAM for Poisson process intensity
+-   INLA mentioned as a way to quickly fit Bayesian models
+
+Wang and Blei (2013) \*
+=======================
+
+-   Discusses Laplace variational inference and delta method variational inference as generic approaches for non-conjugate exponential family models
+-   Describes Laplace approximation as Taylor expansion around MAP point, resulting in Gaussian approximation
+-   Conclude that Laplace approximation is more accurate than delta method
 
 Cameletti et al. (2013)
 =======================
+
+-   Discusses Gaussian Markov random field as lower-dimensional alternative to Gaussian process with dense covariance for spatiotemporal prediction
+-   Can be computed quickly using INLA and stochastic PDEs
+-   SPDE approach uses finite element approximation (linear combination of basis functions) of spatial field on triangular grid
+-   Illustration of particulate matter modeling fit in R-INLA
 
 Martins et al. (2013)
 =====================
@@ -90,7 +102,7 @@ Bagchi, Robert, Rachel E Gallery, Sofia Gripenberg, Sarah J Gurr, Lakshmi Naraya
 
 Banerjee, Sudipto, Alan E Gelfand, Andrew O Finley, and Huiyan Sang. 2008. “Gaussian Predictive Process Models for Large Spatial Data Sets.” *Journal of the Royal Statistical Society: Series B (Statistical Methodology)* 70 (4): 825–48.
 
-Cameletti, Michela, Finn Lindgren, Daniel Simpson, and Håvard Rue. 2013. “Spatio-Temporal Modeling of Particulate Matter Concentration Through the Spde Approach.” *AStA Advances in Statistical Analysis* 97 (2): 109–31.
+Cameletti, Michela, Finn Lindgren, Daniel Simpson, and Håvard Rue. 2013. “Spatio-Temporal Modeling of Particulate Matter Concentration Through the SPDE Approach.” *AStA Advances in Statistical Analysis* 97 (2): 109–31.
 
 Diggle, Peter J, Raquel Menezes, and Ting-li Su. 2010. “Geostatistical Inference Under Preferential Sampling.” *Journal of the Royal Statistical Society: Series C (Applied Statistics)* 59 (2): 191–232.
 
@@ -112,6 +124,6 @@ Schrödle, Birgit, and Leonhard Held. 2011. “Spatio-Temporal Disease Mapping U
 
 Scott, Steven L, Alexander W Blocker, Fernando V Bonassi, Hugh A Chipman, Edward I George, and Robert E McCulloch. 2016. “Bayes and Big Data: The Consensus Monte Carlo Algorithm.” *International Journal of Management Science and Engineering Management* 11 (2): 78–88.
 
-Wang, Chong, and David M Blei. n.d. “Variational Inference in Nonconjugate Models.” *Journal of Machine Learning Research* 14 (Apr): 1005–31.
+Wang, Chong, and David M Blei. 2013. “Variational Inference in Nonconjugate Models.” *Journal of Machine Learning Research* 14 (Apr): 1005–31.
 
 
