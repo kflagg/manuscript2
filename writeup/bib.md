@@ -87,10 +87,32 @@ bibliography: ../references.bib
 
 # @martinssimpsonlingrenrue
 
+- Presents improvements implemented in R-INLA in the four years after the original INLA paper
+- Reviews a variety of applications where INLA had been previously shown to do well
+- Summarizes INLA
+- Adds some flexibility to allow more complicated dependence structures
+
+
 # @nooretal
+
+- Spatialtemporal model used to map prevalence of a malaria-spreading parasite across Africa
+- Fit using R-INLA and the SPDE approach [@camelettilindgrensimpsonrue]
+- Possibly questionable data collection and variable selection
+
 
 # @fongruewakefield
 
-# @scottetal
+- Compares PQL and INLA for several biostatistical examples
+- Points out that INLA approximation can be inaccurate for binomial GLMMs with small denominators
+
+
+# @scottetal \*
+
+- Setting where datasets are so large that communication within a computing cluster is cost-prohibitive
+- "Consensus Monte Carlo operates by running a separate Monte Carlo algorithm on each machine, and then averaging individual Monte Carlo draws across machines."
+- Authors suggest this is useful when the parameter space is too high-dimensional for INLA to be efficient or when joint posteriors are needed
+- Data partitioned into "shards" and MC samplers run independently on each shard
+- "Consensus posterior" constructed from draws which are weighted averages of draws from each sampler
+
 
 # References
