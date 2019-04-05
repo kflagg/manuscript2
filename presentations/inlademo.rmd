@@ -1,5 +1,5 @@
 ---
-title: "INLA Demonstration"
+title: "Integrated Nested Laplace Approximations (INLA) Demonstration"
 author: "Kenneth A. Flagg"
 bibliography: "../references.bib"
 output:
@@ -12,32 +12,81 @@ output:
     theme: "black"
     slide_level: 2
     transition: "slide"
-    incremental: TRUE
+    incremental: FALSE
     self_contained: TRUE
 ---
 
 
 ```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE}
-knitr::opts_chunk$set(cache=TRUE, echo=FALSE, warning=FALSE, message=FALSE,
-  fig.width=10, fig.height=6, dpi=150, fig.align='center',
-  dev.args=list(family='sans', pointsize=21))
+knitr::opts_chunk$set(cache = TRUE, echo = FALSE, warning = FALSE,
+  message = FALSE, fig.width = 7, fig.height = 4, dpi = 150, out.width = '70%',
+  fig.align = 'center',
+  dev.args = list(family = 'sans', pointsize = 21, bg = 'transparent'))
 ```
 
 ```{r packages, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE}
+set.seed(84323)
 library(spatstat)
 library(INLA)
 library(inlabru)
 library(maptools)
 ```
 
-# Introduction
+
+# Motivation
+
+## Point Processes and Sampling
+
+```{r beidens}
+par(mar = c(0.5, 0, 2, 0))
+plot(density(bei), ribbon = FALSE, main = 'Intensity Function')
+```
+
+- Modeled as (log of) latent Gaussian Process
+
+## Point Processes and Sampling
+
+```{r beipts}
+par(mar = c(0.5, 0, 2, 0))
+plot(bei, pch = '.', cols = 'black', main = 'Realized Point Pattern')
+```
+
+- Observe points
+- Make inferences about intensity function
+
+## Point Processes and Sampling
+
+```{r beisamp}
+par(mar = c(0.5, 0, 2, 0))
+n_quads <- 10
+botleft <- cbind(runif(n_quads, 0, 950), runif(n_quads, 0, 450))
+bei_win <- do.call(
+  union.owin,
+  apply(botleft, 1, function(x){return(
+    owin(x[1] + c(0, 50), x[2] + c(0, 50))
+  )})
+)
+plot(Window(bei), main = 'Observed Subset')
+plot(bei_win, add = TRUE)
+plot(bei[bei_win], pch = '.', cols = 'black', add = TRUE)
+```
+
+- @brixmoeller one of very few examples
+
+
+# INLA Introduction
 
 ## Why INLA?
 
+- @rueetal
 - Bayesian Hierarchical models
      - Many latent Gaussian variables
      - Few parameters
+     - E.g. spatial prediction using Gaussian process model
 - Monte Carlo methods impractical
+
+## Why INLA?
+
  - Approximate posterior marginals using Laplace expansions
      - Clever algebra, end up with posterior in denominator
      - Taylor expand log-posterior about its mode
@@ -54,16 +103,18 @@ library(maptools)
     - Slow with >4-6 parameters
 
 
+<!--
 ## Derivations
 
 From @rinla, Section 4.7
 
 Include derivations of $\tilde{p}(\boldsymbol{\psi}|\mathbf{y})$, $\tilde{p}(\theta_{i}|\boldsymbol{\psi},\mathbf{y})$, and $\tilde{p}(\theta_{i}|\mathbf{y})$; and explanations of mode-finding and CCD.
+-->
 
 
-# Illustrations
+# Normal Example
 
-## Simple Normal Example
+## Normal Example
 
 ```{r ex4_8_1, eval = FALSE}
 # f() specifies a Gaussian process.
@@ -99,26 +150,37 @@ mean(1 / sample(inla1$marginals.hyperpar$`Precision for the Gaussian observation
 @rinla section 4.9
 
 - $\mathbf{y} = (y_{1}, \dots, y_{n})'$ independent Gaussian observations
-- $y_{i} \sim \mathsf{N}(\theta, \sigma)$
-- $\theta \sim \mathsf{N}(\mu_{0}, \sigma_{0})$
-- $\psi = 1/\sigma^{2}$, $\psi \sim \mathsf{Gamma}(a, b)$
+- $y_{i} \sim \mathsf{N}(\theta, \sigma^{2})$
+- $\theta \sim \mathsf{N}(\mu_{0}, \sigma_{0}^{2})$
+- $\psi = 1/\sigma^{2}$, $\psi \sim \mathrm{Gamma}(a, b)$
 
 The posterior distribution of the nuisance parameter is
 
 $$p(\psi|\mathbf{y}) \propto \frac{p(\mathbf{y} | \theta, \psi) p(\theta) p(\psi)}
 {p(\theta | \psi, \mathbf{y})}$$
 
-## Simple Normal Example
+## Normal Example
 
-```{r ex4_9_1}
+- Priors: $\mu_{0} = -3$, $\sigma_{0}^{2} = 4$, $a = 1.6$, $b = 0.4$
+- 30 observed points
+
+```{r ex4_9_0, out.width = '100%', fig.height = 4, fig.width = 10}
 # Example data.
-y <- c(1.2697, 7.7637, 2.2532, 3.4557, 4.1776, 6.4320, -3.6623, 7.7567,
-       5.9032, 7.2671, -2.3447, 8.0160, 3.5013, 2.8495, 0.6467, 3.2371,
-       5.8573, -3.3749, 4.1507, 4.3092, 11.7327, 2.6174, 9.4942, -2.7639,
-       -1.5859, 3.6986, 2.4544, -0.3294, 0.2329, 5.2846)
+y <- c( 1.2697,  7.7637,  2.2532,  3.4557,  4.1776,  6.4320, -3.6623,  7.7567,
+        5.9032,  7.2671, -2.3447,  8.0160,  3.5013,  2.8495,  0.6467,  3.2371,
+        5.8573, -3.3749,  4.1507,  4.3092, 11.7327,  2.6174,  9.4942, -2.7639,
+       -1.5859,  3.6986,  2.4544, -0.3294,  0.2329,  5.2846)
 n <- length(y)
 ybar <- mean(y)
 
+par(mar = c(4, 1, 2, 1))
+plot(x = y, y = rep(1, n), col = '#000000C0',
+     main = '30 Observations', ylab = '', yaxt = 'n')
+```
+
+## Normal Example
+
+```{r ex4_9_1, out.width = '100%', fig.height = 6, fig.width = 10}
 # Hyperparameters.
 mu0 <- -3
 sigma2_0 <- 4
@@ -151,13 +213,14 @@ const <- integrate(f.psi, min(psi.grid), max(psi.grid))
 post.psi <- post.psi / const$value
 
 # Plot it.
-plot(psi.grid, post.psi, xlab = expression(psi), ylab = '', pch = 20, cex = 0.7, ylim = c(0, max(post.psi)), main = expression(bold(paste('Posterior Distribution of ', psi))))
+par(mar = c(4, 1, 2, 1))
+plot(psi.grid, post.psi, xlab = expression(psi), ylab = '', pch = 20, cex = 0.7, ylim = c(0, max(post.psi)), yaxt = 'n', main = expression(bold(paste('Posterior Distribution of ', psi))))
 lines(psi.grid, post.psi)
 ```
 
-## Simple Normal Example
+## Normal Example
 
-```{r ex4_9_2}
+```{r ex4_9_2, out.width = '100%', fig.height = 6, fig.width = 10}
 # J grid points for the evaluating the posterior for theta.
 J <- 201
 min.theta <- -8
@@ -173,15 +236,16 @@ for(j in 1:J){
 }
 
 # Plot.
-plot(theta.grid, full.cond.theta[,1], t = 'l', lwd = 0.7, ylab = '', xlab = expression(theta), ylim = c(0, max(full.cond.theta)), cex = 0.7, main = expression(bold(paste('Full Conditional of ', theta, ' for Varying ', psi))))
+par(mar = c(4, 1, 2, 1))
+plot(theta.grid, full.cond.theta[,1], t = 'l', lwd = 0.7, ylab = '', xlab = expression(theta), ylim = c(0, max(full.cond.theta)), yaxt = 'n', cex = 0.7, main = expression(bold(paste('Full Conditional of ', theta, ' for Varying ', psi))))
 for(h in 1:H){
   lines(theta.grid, full.cond.theta[,h], lwd = 0.7)
 }
 ```
 
-## Simple Normal Example
+## Normal Example
 
-```{r ex4_9_3}
+```{r ex4_9_3, out.width = '100%', fig.height = 6, fig.width = 10}
 # Weighted joint posterior for theta and psi.
 Delta <- 1 / sum(post.psi)
 joint.post.theta.psi <- matrix(NA_real_, J, H)
@@ -190,12 +254,13 @@ for(h in 1:H){
 }
 
 # Plot (weighted) joint.
+par(mar = c(4, 4, 2, 1))
 image(theta.grid, psi.grid, joint.post.theta.psi, zlim = c(0, max(joint.post.theta.psi)), main = 'Joint Posterior', xlab = expression(theta), ylab = expression(psi))
 ```
 
-## Simple Normal Example
+## Normal Example
 
-```{r ex4_9_4}
+```{r ex4_9_4, out.width = '100%', fig.height = 6, fig.width = 10}
 # Integrate out psi to obtain the marginal posterior of theta.
 marg.post.theta <- rowSums(joint.post.theta.psi)
 
@@ -206,21 +271,23 @@ marg.post.theta <- marg.post.theta / const$value
 
 # Plot the marginal.
 rg <- c(-0.839603 , 5.836238)
-plot(theta.grid, marg.post.theta, t = 'l', xlab = expression(theta), ylab = '', xlim = c(rg[1], max(theta.grid)), lty = 2, lwd = 3)  
+par(mar = c(4, 1, 2, 1))
+plot(theta.grid, marg.post.theta, t = 'l', xlab = expression(theta), ylab = '', xlim = c(rg[1], max(theta.grid)), yaxt = 'n', lty = 2, lwd = 3, main = expression(bold(paste('Posterior Distribution of ', theta)))) 
 for(h in 1:H){
   lines(theta.grid, joint.post.theta.psi[,h], lwd= 0.25)
 }
 ```
 
+# Spatial Point Pattern: Trees in a Rainforest
 
-## Spatial Point Pattern: Trees in a Rainforest
+## Spatial Point Pattern
 
 ```{r beiplot}
 # 1000m by 500m
 plot(bei, asp = 1)
 ```
 
-## Spatial Point Pattern: Trees in a Rainforest
+## Spatial Point Pattern
 
 ```{r beiinla}
 centers <- gridcenters(window(bei), 100, 50)
