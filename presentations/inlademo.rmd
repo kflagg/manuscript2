@@ -35,7 +35,7 @@ library(maptools)
 
 # Motivation
 
-## Point Processes and Sampling
+## Poisson Processes and Sampling
 
 ```{r beidens}
 par(mar = c(0.5, 0, 2, 0))
@@ -44,7 +44,7 @@ plot(density(bei), ribbon = FALSE, main = 'Intensity Function')
 
 - Modeled as (log of) latent Gaussian Process
 
-## Point Processes and Sampling
+## Poisson Processes and Sampling
 
 ```{r beipts}
 par(mar = c(0.5, 0, 2, 0))
@@ -54,7 +54,7 @@ plot(bei, pch = '.', cols = 'black', main = 'Realized Point Pattern')
 - Observe points
 - Make inferences about intensity function
 
-## Point Processes and Sampling
+## Poisson Processes and Sampling
 
 ```{r beisamp}
 par(mar = c(0.5, 0, 2, 0))
@@ -283,14 +283,19 @@ for(h in 1:H){
 ## Spatial Point Pattern
 
 ```{r beiplot}
-# 1000m by 500m
-plot(bei, asp = 1)
+par(mar = c(0.5, 0, 2, 0))
+plot(bei, pch = '.', cols = 'black', main = 'Tree Locations')
 ```
+
+- _Beilschmiedia pendula Lauraceae_ locations in a plot in Panama
+  [@moellerwaagepetersen]
+- `bei` dataset in `spatstat` [@spatstat]
+
 
 ## Spatial Point Pattern
 
 ```{r beiinla}
-centers <- gridcenters(window(bei), 100, 50)
+centers <- gridcenters(window(bei), 200, 100)
 dx <- sum(unique(centers$x)[1:2] * c(-1, 1)) / 2
 dy <- sum(unique(centers$y)[1:2] * c(-1, 1)) / 2
 bei_df <- data.frame(x = centers$x, y = centers$y,
@@ -304,10 +309,31 @@ for(r in seq_len(nrow(bei_df))){
   bei_df$area[r] <- area(Window(bei)[owin(c(bei_df$x[r] - dx, bei_df$x[r] + dx), c(bei_df$y[r] - dy, bei_df$y[r] + dy))])
 }
 
-image(unique(bei_df$x), unique(bei_df$y), matrix(bei_df$count, nrow = length(unique(bei_df$x))), asp = 1)
-
-bei_inla <- inla(count ~ 1, family = 'poisson', data = bei_df)
+par(mar = c(0.5, 0, 2, 2))
+plot(im(t(matrix(bei_df$count, nrow = length(unique(bei_df$x)))), unique(bei_df$x), unique(bei_df$y), unitname = 'meters'), ncolcours = range(bei_df$counts) %*% c(-1, 1) + 1, main = 'Binned Tree Counts')
+points(bei, pch = '.', col = '#00000040')
 ```
+
+## Spatial Point Pattern
+
+- Model from @moellerwaagepetersen
+    - Log-intensity: $\log(\Lambda(u)) = \beta + \Psi(u)$
+    - $\Psi$ a GP with exponential covariariance, variance $\sigma^{2}$, and
+      practical range $\alpha$
+- Priors
+    - $\beta \sim \mathrm{Unif}(\infty, \infty)$
+    - $\sigma \sim \mathrm{Unif}(0.001, \infty)$
+    - $\log(\alpha) \sim \mathrm{Unif}(1, 235)$
+
+```{r inlafit, eval = FALSE}
+ct_matrix <- matrix(bei_df$count, nrow = length(unique(bei_df$x)))
+ct <- inla.matrix2vector(ct_matrix)
+cell <- seq_along(ct)
+bei_inla <- inla(ct ~ 1 + f(cell, model = 'matern2d', nu = 1,
+                            nrow = nrow(ct_matrix), ncol = ncol(ct_matrix)),
+                 family = 'poisson', data = bei_df)
+```
+
 
 ```{r beilgcp}
 bei_spdf <- as.SpatialPoints.ppp(bei)
