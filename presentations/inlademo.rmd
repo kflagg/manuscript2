@@ -295,7 +295,7 @@ plot(bei, pch = '.', cols = 'black', main = 'Tree Locations')
 ## Spatial Point Pattern
 
 ```{r beiinla}
-centers <- gridcenters(window(bei), 200, 100)
+centers <- gridcenters(window(bei), 40, 20)
 dx <- sum(unique(centers$x)[1:2] * c(-1, 1)) / 2
 dy <- sum(unique(centers$y)[1:2] * c(-1, 1)) / 2
 bei_df <- data.frame(x = centers$x, y = centers$y,
@@ -325,13 +325,34 @@ points(bei, pch = '.', col = '#00000040')
     - $\sigma \sim \mathrm{Unif}(0.001, \infty)$
     - $\log(\alpha) \sim \mathrm{Unif}(1, 235)$
 
-```{r inlafit, eval = FALSE}
+```{r inlafit}
 ct_matrix <- matrix(bei_df$count, nrow = length(unique(bei_df$x)))
+larea_matrix <- matrix(log(bei_df$area), nrow = length(unique(bei_df$x)))
 ct <- inla.matrix2vector(ct_matrix)
-cell <- seq_along(ct)
+larea <- inla.matrix2vector(larea_matrix)
+cell <- inla.matrix2vector(inla.lattice2node.mapping(nrow(ct_matrix), ncol(ct_matrix)))
 bei_inla <- inla(ct ~ 1 + f(cell, model = 'matern2d', nu = 1,
                             nrow = nrow(ct_matrix), ncol = ncol(ct_matrix)),
-                 family = 'poisson', data = bei_df)
+                 offset = larea, family = 'poisson', data = bei_df)
+# TODO: Specify priors (currently using default flat priors).
+```
+
+## Spatial Point Pattern
+
+```{r inlalogpred}
+pred_matrix <- inla.vector2matrix(bei_inla$summary.random$cell$mean, nrow = nrow(ct_matrix), ncol = ncol(ct_matrix))
+
+par(mar = c(0.5, 0, 2, 2))
+plot(im(t(pred_matrix), unique(bei_df$x), unique(bei_df$y), unitname = 'meters'), main = 'Posterior Mean Cell Counts\n(Log Scale)')
+points(bei, pch = '.', col = '#00000040')
+```
+
+## Spatial Point Pattern
+
+```{r inlapred}
+par(mar = c(0.5, 0, 2, 2))
+plot(im(t(exp(pred_matrix)), unique(bei_df$x), unique(bei_df$y), unitname = 'meters'), main = 'Posterior Mean Cell Counts\n(Backtransformed)')
+points(bei, pch = '.', col = '#00000040')
 ```
 
 
