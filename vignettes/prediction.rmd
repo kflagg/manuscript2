@@ -53,6 +53,7 @@ toyA <- inla.spde.make.A(toymesh, as.matrix(SPDEtoy[,c('s1', 's2')]))
 toyspde <- inla.spde2.matern(toymesh, alpha = 2)
 
 # Fit the model with INLA.
+# Can't find the intercept??
 toyfit <- inla(
 #  y ~ -1 + intercept + f(spatial_field, model = toyspde),
   y ~ f(spatial_field, model = toyspde),
@@ -76,6 +77,17 @@ in a plot in Panama. `bei` dataset in `spatstat` [@spatstat].
 plot(bei, pch = '.', cols = 'black', main = 'Realized Point Pattern')
 ```
 
+```{r beinmesh}
+beimesh <- inla.mesh.2d(cbind(bei$x, bei$y), cutoff = 1, max.edge = c(10, 20))
+plot(beimesh, asp = 1)
+```
+
+```{r beilgcp}
+bei_spdf <- as.SpatialPoints.ppp(bei)
+# Need mesh and prior for GP.
+#bei_lgcp <- lgcp(, data = bei_spdf)
+```
+
 ```{r beisamp}
 # Take a sample of quadrats and plot the observed point pattern.
 set.seed(84323)
@@ -87,15 +99,19 @@ bei_win <- do.call(
     owin(x[1] + c(0, 50), x[2] + c(0, 50))
   )})
 )
-plot(Window(bei), main = 'Observed Subset')
+bei_samp <- bei[bei_win]
+bei_window_full <- Window(bei)
+
+plot(bei_window_full, main = 'Observed Subset')
 plot(bei_win, add = TRUE)
-plot(bei[bei_win], pch = '.', cols = 'black', add = TRUE)
+plot(bei_samp, pch = '.', cols = 'black', add = TRUE)
 ```
 
-```{r beilgcp}
-bei_spdf <- as.SpatialPoints.ppp(bei)
-# Need mesh and prior for GP.
-#bei_lgcp <- lgcp(, data = bei_spdf)
+```{r beinsampmesh}
+beisampmesh <- inla.mesh.2d(cbind(bei_samp$x, bei_samp$y),
+                            cutoff = 1, max.edge = c(10, 20), offset = 100)
+plot(beisampmesh, asp = 1)
+plot(bei_window_full, border = 'red', add = TRUE)
 ```
 
 # References
