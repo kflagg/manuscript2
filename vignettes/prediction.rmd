@@ -3,7 +3,7 @@ title: "Spatial Prediction with INLA"
 author: "Kenneth A. Flagg"
 bibliography: "../references.bib"
 output:
-  html_document:
+  html_notebook:
     fig_height: 6
     fig_width: 10
     fig_crop: FALSE
@@ -52,17 +52,21 @@ toyA <- inla.spde.make.A(toymesh, as.matrix(SPDEtoy[,c('s1', 's2')]))
 # Initialize exponential covariance structure for SPDE.
 toyspde <- inla.spde2.matern(toymesh, alpha = 2)
 
-# Fit the model with INLA.
-# Can't find the intercept??
-toyfit <- inla(
-#  y ~ -1 + intercept + f(spatial_field, model = toyspde),
-  y ~ f(spatial_field, model = toyspde),
-  data = list(
+toy_formula <-  y ~ -1 + intercept + f(spatial_field, model = toyspde)
+toy_data <- list(
     y = SPDEtoy$y,
     intercept = rep(1, nrow(SPDEtoy)),
     spatial_field = seq_len(nrow(SPDEtoy))
-  )#,
+  )
+
+# Fit the model with INLA.
+# Can't find the intercept??
+toyfit <- inla(
+  toy_formula,
+#  y ~ f(spatial_field, model = toyspde),
+  data = toy_data,
 #  control.predictor = list(A = toyA, compute = TRUE)
+#  control.predictor = list(compute = TRUE)
 )
 ```
 
@@ -77,42 +81,121 @@ in a plot in Panama. `bei` dataset in `spatstat` [@spatstat].
 plot(bei, pch = '.', cols = 'black', main = 'Realized Point Pattern')
 ```
 
-```{r beinmesh}
-beimesh <- inla.mesh.2d(cbind(bei$x, bei$y), cutoff = 1, max.edge = c(10, 20))
-plot(beimesh, asp = 1)
+```{r beimesh}
+bei_corners <- vertices.owin(Window(bei))
+bei_domain <- cbind(bei_corners$x, bei_corners$y)
+bei_full_mesh <- inla.mesh.2d(cbind(bei$x, bei$y),
+                              cutoff = 50, max.edge = c(50, 100),
+                              loc.domain = bei_domain)
+plot(bei_full_mesh, asp = 1)
+plot(Window(bei), border = 'blue', add = TRUE)
+points(bei, pch = '.', col = 'blue')
 ```
 
-```{r beilgcp}
-bei_spdf <- as.SpatialPoints.ppp(bei)
-# Need mesh and prior for GP.
-#bei_lgcp <- lgcp(, data = bei_spdf)
+```{r beifulllgcp, cache = TRUE}
+bei_full_spdf <- as.SpatialPoints.ppp(bei)
+# CHECK PRIORS!
+matern_full <- inla.spde2.pcmatern(bei_full_mesh,
+                                   prior.sigma = c(0.1, 0.99),
+                                   prior.range = c(5, 0.01))
+cmp_full <- coordinates ~ mySmooth(map = coordinates, model = matern_full) + Intercept
+bei_full_lgcp <- lgcp(cmp_full, bei_full_spdf)
+lambda_full <- predict(bei_full_lgcp, pixels(bei_full_mesh), ~ exp(mySmooth + Intercept))
+
+# Plot posterior means and posterior sd.
+plot(lambda_full)
+plot(Window(bei), border = '#ffffff20', add = TRUE)
+points(bei, pch = '.', col = '#ffffff20')
+plot(lambda_full['sd'])
+plot(Window(bei), border = '#ffffff20', add = TRUE)
+points(bei, pch = '.', col = '#ffffff20')
 ```
 
-```{r beisamp}
+```{r beihole}
 # Take a sample of quadrats and plot the observed point pattern.
 set.seed(84323)
 n_quads <- 10
 botleft <- cbind(runif(n_quads, 0, 950), runif(n_quads, 0, 450))
+bei_interior <- lapply(seq_len(nrow(botleft)), function(r){return(
+    cbind(
+      botleft[r, 1] + c(0, 0, 50, 50),
+      botleft[r, 2] + c(0, 50, 50, 0)
+    )
+  )})
 bei_win <- do.call(
   union.owin,
   apply(botleft, 1, function(x){return(
     owin(x[1] + c(0, 50), x[2] + c(0, 50))
   )})
 )
+bei_hole <- bei[complement.owin(bei_win)]
 bei_samp <- bei[bei_win]
 bei_window_full <- Window(bei)
 
-plot(bei_window_full, main = 'Observed Subset')
+plot(bei_hole, main = 'Observed Subregion', pch = '.', cols = 'black')
+```
+
+```{r beiholemesh}
+bei_hole_mesh <- inla.mesh.2d(cbind(bei_hole$x, bei_hole$y),
+                              cutoff = 50, max.edge = c(50, 100),
+                              loc.domain = bei_domain)
+plot(bei_hole_mesh, asp = 1)
+plot(Window(bei), border = 'blue', add = TRUE)
+points(bei_hole, pch = '.', col = 'blue')
+```
+
+```{r beiholelgcp, eval = FALSE, cache = TRUE}
+bei_hole_spdf <- as.SpatialPoints.ppp(bei_hole)
+# CHECK PRIORS!
+matern_hole <- inla.spde2.pcmatern(bei_hole_mesh,
+                                   prior.sigma = c(0.1, 0.99),
+                                   prior.range = c(5, 0.01))
+cmp_hole <- coordinates ~ mySmooth(map = coordinates, model = matern_hole) + Intercept
+bei_hole_lgcp <- lgcp(cmp_hole, bei_hole_spdf)
+lambda_hole <- predict(bei_hole_lgcp, pixels(bei_hole_mesh), ~ exp(mySmooth + Intercept))
+
+# Plot posterior means and posterior sd.
+plot(lambda_hole)
+plot(Window(bei_hole), border = '#ffffff20', add = TRUE)
+points(bei_hole, pch = '.', col = '#ffffff20')
+plot(lambda_hole['sd'])
+plot(Window(bei_hole), border = '#ffffff20', add = TRUE)
+points(bei_hole, pch = '.', col = '#ffffff20')
+```
+
+```{r beisamp}
+plot(bei_window_full, main = 'Observed Sample')
 plot(bei_win, add = TRUE)
 plot(bei_samp, pch = '.', cols = 'black', add = TRUE)
 ```
 
-```{r beinsampmesh}
-beisampmesh <- inla.mesh.2d(cbind(bei_samp$x, bei_samp$y),
-                            cutoff = 1, max.edge = c(10, 20), offset = 100)
-plot(beisampmesh, asp = 1)
-plot(bei_window_full, border = 'red', add = TRUE)
+```{r beisampmesh}
+bei_samp_mesh <- inla.mesh.2d(cbind(bei_samp$x, bei_samp$y),
+                              cutoff = 50, max.edge = c(50, 100),
+                              loc.domain = bei_domain)
+plot(bei_samp_mesh, asp = 1)
+points(bei_samp, pch = '.', col = 'blue')
 ```
+
+```{r beisamplgcp, cache = TRUE}
+bei_samp_spdf <- as.SpatialPoints.ppp(bei_samp)
+# CHECK PRIORS!
+matern_samp <- inla.spde2.pcmatern(bei_samp_mesh,
+                                   prior.sigma = c(0.1, 0.99),
+                                   prior.range = c(5, 0.01))
+cmp_samp <- coordinates ~ mySmooth(map = coordinates, model = matern_samp) + Intercept
+bei_samp_lgcp <- lgcp(cmp_samp, bei_samp_spdf)
+lambda_samp <- predict(bei_samp_lgcp, pixels(bei_samp_mesh), ~ exp(mySmooth + Intercept))
+
+# Plot posterior means and posterior sd.
+plot(lambda_samp)
+plot(Window(bei_samp), border = '#ffffff20', add = TRUE)
+points(bei_samp, pch = '.', col = '#ffffff20')
+plot(lambda_samp['sd'])
+plot(Window(bei_samp), border = '#ffffff20', add = TRUE)
+points(bei_samp, pch = '.', col = '#ffffff20')
+```
+
 
 # References
 

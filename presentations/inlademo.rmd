@@ -362,6 +362,17 @@ bei_spdf <- as.SpatialPoints.ppp(bei)
 #bei_lgcp <- lgcp(, data = bei_spdf)
 ```
 
+# Things to Address
+
+- `inlabru` discards the observation window
+    - Cannot be used with nonconvex observation windows!
+    - Unsurveyed regions are treated as surveyed with no points observed
+    - Predicts very low intensity in unsurveyed regions
+- Develop a new wrapper for `RINLA` that correctly handles observation window
+- Evaluate performance
+- Then address where to sample
+
+
 # References
 
 ## References
