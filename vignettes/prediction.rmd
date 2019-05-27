@@ -26,7 +26,54 @@ library(maptools)
 ```
 
 
-# SPDE Toy Example
+# Introduction
+
+This vignette illustrates the use of INLA for spatial prediction using examples
+from @rinla and @illianetal. For prediction of continuous spatial processes,
+the stochastic partial differential equations (SPDE) approach is used to
+approximate the process through an areal Gaussian Markov random field (GMRF)
+representation.
+
+
+# GMRF Background
+
+@rinla section 6.1.
+
+- Observations aggregated to disjoint areal regions indexed by $i$.
+- Each region has unique parameter $\theta_{i}$.
+- $\mathcal{N}(i)$ is the set of indices of neighbors of region $i$ and
+  $\mathcal{N}_{i} = |\mathcal{N}(i)|$ is the number of neighbor of region $i$.
+- Local Markov property: given $\boldsymbol{\theta}_{\mathcal{N}(i)}$,
+  $\theta_{i}$ is independent of all other $\theta_{j}$.
+- Then the precision matrix $\mathbf{Q}$ of $\boldsymbol{\theta}$ is sparse
+  because only neighbors have nonzero coprecisions.
+
+- Besag-York-Molli&#x00e8; model:
+    - Exchangeable random effects $u_{i}$ with intrinsic conditional
+      autoregressive (iCAR) structure.
+    - $u_{i}|\mathbf{u}_{-i} \sim \mathrm{N}\left(\mu_{i} + \sum_{j} a_{ij} (u_{j} - \mu_{j}) / \mathcal{N}_{i}, \sigma_{u}^{2} / \mathcal{N}_{i}\right)$
+    - (What are the $a_{ij}?$).
+    - iCAR is an improper prior because covariance matrix not positive definite
+      but this is ok for random effects.
+
+
+# SPDE Background
+
+*Find Lindgren et. al. (2011) and fill in motivation*
+
+- Spatial process $\xi(\mathbf{s})$.
+
+- Solve $(\kappa^{2} - \Delta)^{\alpha / 2}(\tau \xi(\mathbf{s})) = \mathcal{W}(\mathbf{s})$.
+    - $\kappa$ is a range parameter.
+    - $\Delta$ is the Laplacian.
+    - $\alpha$ is a smoothness parameter.
+    - $\tau$ a precision parameter.
+    - Exact and sationary solution: $\xi(\mathbf{s})$ is a Gaussian field with Mat&#x00e8;rn covariance function.
+
+- Finite element approximation $$.
+
+
+# Geostatistics Example
 
 Toy dataset from @rinla.
 
@@ -38,36 +85,58 @@ plot(s2 ~ s1, col = rgb(SPDEtoy$y / max(SPDEtoy$y), 0, 0), data = SPDEtoy,
 
 ```{r spdemesh, fig.width = 6, out.width = '60%'}
 # Create a mesh for the SPDE method and then plot it.
-toymesh <- inla.mesh.2d(as.matrix(SPDEtoy[,c('s1', 's2')]),
-                        max.edge = c(0.1, 0.2))
-plot(toymesh, asp = 1)
+toy_mesh <- inla.mesh.2d(as.matrix(SPDEtoy[,c('s1', 's2')]),
+                         max.edge = c(0.1, 0.2))
+plot(toy_mesh, asp = 1)
 points(SPDEtoy$s1, SPDEtoy$s2, col = rgb(SPDEtoy$y / max(SPDEtoy$y), 0, 0, 0.5),
-       pch = 19)
+       pch = 20)
 ```
 
 ```{r spdefit}
-# Initialize SPDE projector matrix.
-toyA <- inla.spde.make.A(toymesh, as.matrix(SPDEtoy[,c('s1', 's2')]))
+# SPDE projector matrix for estimation.
+A_est <- inla.spde.make.A(toy_mesh, as.matrix(SPDEtoy[,c('s1', 's2')]))
 
 # Initialize exponential covariance structure for SPDE.
-toyspde <- inla.spde2.matern(toymesh, alpha = 2)
+spde <- inla.spde2.matern(mesh = toy_mesh, alpha = 2)
 
-toy_formula <-  y ~ -1 + intercept + f(spatial_field, model = toyspde)
-toy_data <- list(
-    y = SPDEtoy$y,
-    intercept = rep(1, nrow(SPDEtoy)),
-    spatial_field = seq_len(nrow(SPDEtoy))
-  )
+# Set up stack for estimation.
+stack_index <- inla.spde.make.index(name = 'spatial_field', n.spde = spde$n.spde)
+stack_est <- inla.stack(data = list(y = SPDEtoy$y), A = list(A_est), effects = list(c(stack_index, list(intercept = 1))), tag = 'est')
+
+# Create a grid for prediction.
+toy_nx <- 50
+toy_ny <- 50
+toy_grid <- expand.grid(x = seq(0, 1, length.out = toy_nx), y = seq(0, 1, length.out = toy_ny))
+
+# SPDE projector matrix for prediction.
+A_pred <- inla.spde.make.A(mesh = toy_mesh, loc = as.matrix(toy_grid))
+
+# Set up stacks for prediction.
+stack_latent <- inla.stack(data = list(xi = NA), A = list(A_pred), effects = list(stack_index), tag = 'pred_latent')
+stack_response <- inla.stack(data = list(y = NA), A = list(A_pred), effects = list(c(stack_index, list(intercept = 1))), tag = 'pred_response')
+
+# Join all three stacks.
+stacks <- inla.stack(stack_est, stack_latent, stack_response)
 
 # Fit the model with INLA.
-# Can't find the intercept??
-toyfit <- inla(
-  toy_formula,
-#  y ~ f(spatial_field, model = toyspde),
-  data = toy_data,
-#  control.predictor = list(A = toyA, compute = TRUE)
-#  control.predictor = list(compute = TRUE)
+toy_fit <- inla(
+  y ~ -1 + intercept + f(spatial_field, model = spde),
+  data = inla.stack.data(stacks),
+  control.predictor = list(A = inla.stack.A(stacks), compute = TRUE)
 )
+
+# Output posterior summaries.
+toy_fit$summary.fixed
+toy_fit$summary.hyperpar
+
+# Extract posterior mean of latent spatial field.
+index_latent <- inla.stack.index(stacks, tag = 'pred_latent')$data
+post_mean <- toy_fit$summary.linear.predictor[index_latent, 'mean']
+post_sd <- toy_fit$summary.linear.predictor[index_latent, 'sd']
+
+# Plot the posterior mean and SD of the latent spatial field.
+plot(im(matrix(post_mean, nrow = toy_nx, ncol = toy_ny), xrange = range(toy_grid$x), yrange = range(toy_grid$y)), main = 'Posterior Mean of Spatial Field')
+plot(im(matrix(post_sd, nrow = toy_nx, ncol = toy_ny), xrange = range(toy_grid$x), yrange = range(toy_grid$y)), main = 'Posterior SD of Spatial Field')
 ```
 
 
