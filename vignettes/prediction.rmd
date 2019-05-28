@@ -328,10 +328,10 @@ post_mean <- bei_full_fit$summary.linear.predictor[index_pred, 'mean']
 post_sd <- bei_full_fit$summary.linear.predictor[index_pred, 'sd']
 
 # Plot the posterior mean and SD of the latent spatial field.
-plot(im(t(matrix(post_mean, nrow = length(unique(centers$x)), ncol = length(unique(centers$y)))), xrange = range(centers$x), yrange = range(centers$y)), main = 'Posterior Mean of Spatial Field')
+plot(im(t(matrix(post_mean, nrow = length(unique(centers$x)), ncol = length(unique(centers$y)))), unique(centers$x), unique(centers$y)), main = 'Posterior Mean of Spatial Field')
 plot(bei_window_full, add = TRUE)
 points(bei, pch = '.', col = 'black')
-plot(im(t(matrix(post_sd, nrow = length(unique(centers$x)), ncol = length(unique(centers$y)))), xrange = range(centers$x), yrange = range(centers$y)), main = 'Posterior SD of Spatial Field')
+plot(im(t(matrix(post_sd, nrow = length(unique(centers$x)), ncol = length(unique(centers$y)))), unique(centers$x), unique(centers$y)), main = 'Posterior SD of Spatial Field')
 plot(bei_window_full, add = TRUE)
 points(bei, pch = '.', col = 'black')
 ```
