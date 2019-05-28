@@ -79,17 +79,14 @@ Toy dataset from @rinla.
 
 ```{r spdetoy, fig.width = 6, out.width = '60%'}
 # Plot the data.
-plot(s2 ~ s1, col = rgb(SPDEtoy$y / max(SPDEtoy$y), 0, 0), data = SPDEtoy,
-     pch = 19, asp = 1, main = 'Toy Data')
+plot(s2 ~ s1, col = rgb(SPDEtoy$y / max(SPDEtoy$y), 0, 0), data = SPDEtoy, pch = 19, asp = 1, main = 'Toy Data')
 ```
 
 ```{r spdemesh, fig.width = 6, out.width = '60%'}
 # Create a mesh for the SPDE method and then plot it.
-toy_mesh <- inla.mesh.2d(as.matrix(SPDEtoy[,c('s1', 's2')]),
-                         max.edge = c(0.1, 0.2))
+toy_mesh <- inla.mesh.2d(as.matrix(SPDEtoy[,c('s1', 's2')]), max.edge = c(0.1, 0.2))
 plot(toy_mesh, asp = 1)
-points(SPDEtoy$s1, SPDEtoy$s2, col = rgb(SPDEtoy$y / max(SPDEtoy$y), 0, 0, 0.5),
-       pch = 20)
+points(SPDEtoy$s1, SPDEtoy$s2, col = rgb(SPDEtoy$y / max(SPDEtoy$y), 0, 0, 0.5), pch = 20)
 ```
 
 ```{r spdefit}
@@ -136,11 +133,13 @@ post_sd <- toy_fit$summary.linear.predictor[index_latent, 'sd']
 
 # Plot the posterior mean and SD of the latent spatial field.
 plot(im(matrix(post_mean, nrow = toy_nx, ncol = toy_ny), xrange = range(toy_grid$x), yrange = range(toy_grid$y)), main = 'Posterior Mean of Spatial Field')
+points(SPDEtoy$s1, SPDEtoy$s2, col = rgb(SPDEtoy$y / max(SPDEtoy$y), 0, 0, 0.5), pch = 20)
 plot(im(matrix(post_sd, nrow = toy_nx, ncol = toy_ny), xrange = range(toy_grid$x), yrange = range(toy_grid$y)), main = 'Posterior SD of Spatial Field')
+points(SPDEtoy$s1, SPDEtoy$s2, col = rgb(SPDEtoy$y / max(SPDEtoy$y), 0, 0, 0.5), pch = 20)
 ```
 
 
-# Bei Dataset
+# Bei Dataset and `inlabru`
 
 Example from @moellerwaagepetersen, _Beilschmiedia pendula Lauraceae_ locations
 in a plot in Panama. `bei` dataset in `spatstat` [@spatstat].
@@ -267,6 +266,92 @@ plot(lambda_samp['sd'])
 plot(Window(bei), border = 'white', add = TRUE)
 plot(Window(bei_samp), border = 'white', add = TRUE)
 points(bei_samp, pch = '.', col = 'white')
+```
+
+# Bei Dataset without `inlabru`
+
+```{r beiinla, cache = TRUE}
+centers <- gridcenters(dilation(bei_window_full, 40), 40, 20)
+dx <- sum(unique(centers$x)[1:2] * c(-1, 1)) / 2
+dy <- sum(unique(centers$y)[1:2] * c(-1, 1)) / 2
+bei_df <- data.frame(x = centers$x, y = centers$y,
+                     count = NA_integer_, area = NA_real_)
+
+for(r in seq_len(nrow(bei_df))){
+  bei_df$count[r] <- sum(bei$x >= bei_df$x[r] - dx &
+                         bei$x < bei_df$x[r] + dx &
+                         bei$y >= bei_df$y[r] - dy &
+                         bei$y < bei_df$y[r] + dy)
+  bei_df$area[r] <- area(Window(bei)[owin(c(bei_df$x[r] - dx, bei_df$x[r] + dx), c(bei_df$y[r] - dy, bei_df$y[r] + dy))])
+}
+
+par(mar = c(0.5, 0, 2, 2))
+plot(im(t(matrix(bei_df$count, nrow = length(unique(bei_df$x)))), unique(bei_df$x), unique(bei_df$y), unitname = 'meters'), ncolcours = range(bei_df$count) %*% c(-1, 1) + 1, main = 'Binned Tree Counts')
+plot(bei_window_full, border = 'white', add = TRUE)
+points(bei, pch = '.', col = 'black')
+
+# SPDE projector matrix for estimation.
+full_A_est <- inla.spde.make.A(bei_full_mesh, as.matrix(bei_df[bei_df$area > 0, c('x', 'y')]))
+
+# Initialize exponential covariance structure for SPDE.
+full_spde <- inla.spde2.matern(mesh = bei_full_mesh, alpha = 2)
+
+# Set up stack for estimation.
+stack_index <- inla.spde.make.index(name = 'spatial_field', n.spde = full_spde$n.spde)
+stack_est <- inla.stack(data = list(count = bei_df$count[bei_df$area > 0], larea = log(bei_df$area[bei_df$area > 0])), A = list(full_A_est), effects = list(c(stack_index, list(intercept = 1))), tag = 'est')
+
+# SPDE projector matrix for prediction.
+full_A_pred <- inla.spde.make.A(mesh = bei_full_mesh, loc = as.matrix(bei_df[,c('x', 'y')]))
+
+# Set up stacks for prediction.
+stack_latent <- inla.stack(data = list(xi = NA), A = list(full_A_pred), effects = list(stack_index), tag = 'pred_latent')
+stack_response <- inla.stack(data = list(count = NA), A = list(full_A_pred), effects = list(c(stack_index, list(intercept = 1))), tag = 'pred_response')
+
+# Join all three stacks.
+stacks <- inla.stack(stack_est, stack_latent, stack_response)
+
+# Fit the model with INLA.
+bei_full_fit <- inla(
+  count ~ -1 + intercept + f(spatial_field, model = full_spde),
+  offset = larea, family = 'poisson',
+  data = inla.stack.data(stacks),
+  control.predictor = list(A = inla.stack.A(stacks), compute = TRUE)
+)
+
+# Output posterior summaries.
+bei_full_fit$summary.fixed
+bei_full_fit$summary.hyperpar
+
+# Extract posterior mean of latent spatial field.
+index_pred <- inla.stack.index(stacks, tag = 'pred_latent')$data
+post_mean <- bei_full_fit$summary.linear.predictor[index_pred, 'mean']
+post_sd <- bei_full_fit$summary.linear.predictor[index_pred, 'sd']
+
+# Plot the posterior mean and SD of the latent spatial field.
+plot(im(t(matrix(post_mean, nrow = length(unique(centers$x)), ncol = length(unique(centers$y)))), xrange = range(centers$x), yrange = range(centers$y)), main = 'Posterior Mean of Spatial Field')
+plot(bei_window_full, add = TRUE)
+points(bei, pch = '.', col = 'black')
+plot(im(t(matrix(post_sd, nrow = length(unique(centers$x)), ncol = length(unique(centers$y)))), xrange = range(centers$x), yrange = range(centers$y)), main = 'Posterior SD of Spatial Field')
+plot(bei_window_full, add = TRUE)
+points(bei, pch = '.', col = 'black')
+```
+
+```{r beiholeinla}
+beihole_df <- data.frame(x = centers$x, y = centers$y,
+                         count = NA_integer_, area = NA_real_)
+
+for(r in seq_len(nrow(beihole_df))){
+  beihole_df$count[r] <- sum(bei_hole$x >= beihole_df$x[r] - dx &
+                             bei_hole$x < beihole_df$x[r] + dx &
+                             bei_hole$y >= beihole_df$y[r] - dy &
+                             bei_hole$y < beihole_df$y[r] + dy)
+  beihole_df$area[r] <- area(Window(bei_hole)[owin(c(beihole_df$x[r] - dx, beihole_df$x[r] + dx), c(beihole_df$y[r] - dy, beihole_df$y[r] + dy))])
+}
+
+par(mar = c(0.5, 0, 2, 2))
+plot(im(t(matrix(beihole_df$count, nrow = length(unique(beihole_df$x)))), unique(beihole_df$x), unique(beihole_df$y), unitname = 'meters'), ncolcours = range(beihole_df$count) %*% c(-1, 1) + 1, main = 'Binned Tree Counts')
+plot(Window(bei_hole), border = 'white', add = TRUE)
+points(bei, pch = '.', col = '#00000040')
 ```
 
 
