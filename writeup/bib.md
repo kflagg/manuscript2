@@ -2,6 +2,33 @@
 bibliography: ../references.bib
 ---
 
+
+# @illianetal \*
+
+- Presents a methodological "toolbox" for using INLA to fit spatial marked Markov processes driven by latent Gaussian process intensity functions
+- Discretize window into cells and model cell counts via Poisson GLMM with log link
+- Linear predictor includes _p_ spatial functions and a nonlinear function of a constructed covariate
+    - Spatial functions modeled as random walks constrained to sum to zero
+    - Constructed covariate is a summary describing small-scale interaction among points
+    - Constructed covariate allows interaction-like behavior in LGCP, easier to fit than Gibbs process because interaction acts directly on intensity
+    - Relationship between constructed covariate and intensity modeled as random walk constrained to sum to zero
+    - Constructed covariate used in the paper is distance from grid cell center to nearest point outside grid cell
+- Also includes a residual term which can be used to assess model adequacy
+- Choice of prior for spatial effect is tied to choice of grid size
+- Suggest a grid "not finer than that given by the data"
+- Model fit to a simulated repulsive Strauss process and posterior predictive check of _L_-function appeared reasonable
+- Model fit to a simulated Thomas cluster process did not have strong enough clustering
+- Example with many small clusters and a spatial trend in the intensity of cluster centers described the trend well but underestimated the strength of clustering
+- Fit to homogeneous Poisson process does not include spurious spatial effects
+- Discussion of other possible constructed covariates and difficulties of identifying different effects at same scale
+- Can include covariates observed at different locations that the points being modeled
+- Covariate term in linear predictor for intensity is prediction from spatial model for covariate
+- Also illustrate model for marks with spatial GLMM for marks
+
+
+# @simpsonetal \*
+
+
 # @banerjeegelfandfinley \*
 
 - Simplify high-dimensional spatial and spatiotemporal predictions by projecting the spatial process into a lower-dimensional subset observed at "knots"

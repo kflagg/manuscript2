@@ -1,3 +1,29 @@
+Illian, Sørbye, and Rue (2012) \*
+=================================
+
+-   Presents a methodological "toolbox" for using INLA to fit spatial marked Markov processes driven by latent Gaussian process intensity functions
+-   Discretize window into cells and model cell counts via Poisson GLMM with log link
+-   Linear predictor includes *p* spatial functions and a nonlinear function of a constructed covariate
+    -   Spatial functions modeled as random walks constrained to sum to zero
+    -   Constructed covariate is a summary describing small-scale interaction among points
+    -   Constructed covariate allows interaction-like behavior in LGCP, easier to fit than Gibbs process because interaction acts directly on intensity
+    -   Relationship between constructed covariate and intensity modeled as random walk constrained to sum to zero
+    -   Constructed covariate used in the paper is distance from grid cell center to nearest point outside grid cell
+-   Also includes a residual term which can be used to assess model adequacy
+-   Choice of prior for spatial effect is tied to choice of grid size
+-   Suggest a grid "not finer than that given by the data"
+-   Model fit to a simulated repulsive Strauss process and posterior predictive check of *L*-function appeared reasonable
+-   Model fit to a simulated Thomas cluster process did not have strong enough clustering
+-   Example with many small clusters and a spatial trend in the intensity of cluster centers described the trend well but underestimated the strength of clustering
+-   Fit to homogeneous Poisson process does not include spurious spatial effects
+-   Discussion of other possible constructed covariates and difficulties of identifying different effects at same scale
+-   Can include covariates observed at different locations that the points being modeled
+-   Covariate term in linear predictor for intensity is prediction from spatial model for covariate
+-   Also illustrate model for marks with spatial GLMM for marks
+
+Simpson et al. (2016) \*
+========================
+
 Banerjee et al. (2008) \*
 =========================
 
@@ -128,6 +154,8 @@ Fong, Youyi, Håvard Rue, and Jon Wakefield. 2010. “Bayesian Inference for Gen
 
 Girolami, Mark, and Ben Calderhead. 2011. “Riemann Manifold Langevin and Hamiltonian Monte Carlo Methods.” *Journal of the Royal Statistical Society: Series B (Statistical Methodology)* 73 (2): 123–214.
 
+Illian, Janine B, Sigrunn H Sørbye, and Håvard Rue. 2012. “A Toolbox for Fitting Complex Spatial Point Process Models Using Integrated Nested Laplace Approximation (Inla).” *The Annals of Applied Statistics*, 1499–1530.
+
 Marin, Jean-Michel, Pierre Pudlo, Christian P Robert, and Robin J Ryder. 2012. “Approximate Bayesian Computational Methods.” *Statistics and Computing* 22 (6): 1167–80.
 
 Martins, Thiago G, Daniel Simpson, Finn Lindgren, and Håvard Rue. 2013. “Bayesian Computing with Inla: New Features.” *Computational Statistics & Data Analysis* 67: 68–83.
@@ -141,6 +169,8 @@ Noor, Abdisalan M, Damaris K Kinyoki, Clara W Mundia, Caroline W Kabaria, Jonesm
 Schrödle, Birgit, and Leonhard Held. 2011. “Spatio-Temporal Disease Mapping Using Inla.” *Environmetrics* 22 (6): 725–34.
 
 Scott, Steven L, Alexander W Blocker, Fernando V Bonassi, Hugh A Chipman, Edward I George, and Robert E McCulloch. 2016. “Bayes and Big Data: The Consensus Monte Carlo Algorithm.” *International Journal of Management Science and Engineering Management* 11 (2): 78–88.
+
+Simpson, Daniel, Janine B Illian, Finn Lindgren, Sigrunn H Sørbye, and Havard Rue. 2016. “Going Off Grid: Computationally Efficient Inference for Log-Gaussian Cox Processes.” *Biometrika* 103 (1): 49–70.
 
 Wang, Chong, and David M Blei. 2013. “Variational Inference in Nonconjugate Models.” *Journal of Machine Learning Research* 14 (Apr): 1005–31.
 
