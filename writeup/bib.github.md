@@ -24,6 +24,17 @@ Illian, Sørbye, and Rue (2012) \*
 Simpson et al. (2016) \*
 ========================
 
+-   Includes a clear look at the math of the likelihood and approximation
+-   Fine grid method of Illian, Sørbye, and Rue (2012) is accurate but computationally wasteful because it induces a dense covariance matrix
+    -   CAR alleviates this but requires regular lattice
+    -   Lattice needs to be fine enough to accurately represent the locations of points which is finer than needed to accurately represent the latent spatial field
+    -   Keeping constant resolution of the lattice (espicially in unsurveyed regions) is particularly wasteful
+-   Better approximation represents spatial field as a linear combination of a finite number of basis functions
+-   Explains the **A** matrix
+-   Ends up using a Baddeley and Turner style approximation to the likelihood
+    -   Looks like independent Poisson random variables at point locations (with mean 1) and at numerical integration nodes (with mean equal to the appoximated intensity at the node)
+    -   Requires a good numerical integration scheme
+
 Banerjee et al. (2008) \*
 =========================
 
