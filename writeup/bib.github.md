@@ -34,6 +34,16 @@ Simpson et al. (2016) \*
 -   Ends up using a Baddeley and Turner style approximation to the likelihood
     -   Looks like independent Poisson random variables at point locations (with mean 1) and at numerical integration nodes (with mean equal to the appoximated intensity at the node)
     -   Requires a good numerical integration scheme
+-   Good review of SPDE approach
+    -   Low-dimensional respresentation of surface constructed by piesewise-linear interpolating between carefully-chosen points on the surface
+    -   For a certain subset of Matern processes, computationally-efficient interpolants are solutions to a certain SPDE
+    -   Solutions are CAR models
+-   Suggest using a triangular mesh that is finer in regions with relatively many points
+-   Approximate posterior converges to true posterior as mesh gets finer (assuming convex window)
+-   Examples included:
+    -   Rainforest trees with soil covariates
+    -   Simulated dataset with rectangular hole in window
+    -   Freak waves across all oceans on a sphere
 
 Banerjee et al. (2008) \*
 =========================
