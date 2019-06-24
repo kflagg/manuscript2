@@ -68,7 +68,6 @@ the pseudodata approach of @simpsonetal.
     - $\alpha$ is a smoothness parameter.
     - $\tau$ a precision parameter.
     - Exact and sationary solution: $\xi(\mathbf{s})$ is a Gaussian field with Mat&#x00e8;rn covariance function.
-
 - Finite element approximation...
 
 
@@ -208,6 +207,7 @@ margin_mesh <- inla.mesh.2d(
   offset = MARGIN,
   max.edge = MAX_EDGE_EXT # Fill in the rest with a coarser triangulation.
 )
+margin_spde <- inla.spde2.matern(mesh = margin_mesh)
 plot(margin_mesh, asp = 1)
 points(bei, pch = 19, cex = 0.25, col = 'red')
 
@@ -230,6 +230,7 @@ bei_hole_mesh <- inla.mesh.create(
   boundary = bei_boundary,
   refine = list(max.edge = MAX_EDGE_EXT) # Fill in the rest with a coarser triangulation.
 )
+bei_hole_spde <- inla.spde2.matern(mesh = bei_hole_mesh)
 plot(bei_hole_mesh, asp = 1)
 points(bei_hole, pch = 19, cex = 0.25, col = 'red')
 
@@ -251,6 +252,7 @@ bei_samp_mesh <- inla.mesh.create(
   boundary = bei_boundary,
   refine = list(max.edge = MAX_EDGE_EXT) # Fill in the rest with a coarser triangulation.
 )
+bei_samp_spde <- inla.spde2.matern(mesh = bei_samp_mesh)
 plot(bei_samp_mesh, asp = 1)
 points(bei_samp, pch = 19, cex = 0.25, col = 'red')
 
@@ -260,6 +262,7 @@ margin_hole <- inla.mesh.2d(
   offset = MARGIN,
   max.edge = MAX_EDGE_EXT # Fill in the rest with a coarser triangulation.
 )
+margin_hole_spde <- inla.spde2.matern(mesh = margin_hole)
 plot(margin_hole, asp = 1)
 points(bei_hole, pch = 19, cex = 0.25, col = 'red')
 margin_samp <- inla.mesh.2d(
@@ -267,8 +270,20 @@ margin_samp <- inla.mesh.2d(
   offset = MARGIN,
   max.edge = MAX_EDGE_EXT # Fill in the rest with a coarser triangulation.
 )
+margin_samp_spde <- inla.spde2.matern(mesh = margin_samp)
 plot(margin_samp, asp = 1)
 points(bei_samp, pch = 19, cex = 0.25, col = 'red')
+```
+
+```{r effort}
+obs_full <- rep(0, margin_mesh$n)
+obs_full[inla.over_sp_mesh(as(Window(bei), 'SpatialPolygons'), margin_mesh, 'vertex')] <- 1
+
+obs_hole <- rep(0, margin_hole$n)
+obs_hole[inla.over_sp_mesh(as(Window(bei_hole), 'SpatialPolygons'), margin_hole, 'vertex')] <- 1
+
+obs_samp <- rep(0, margin_samp$n)
+obs_samp[inla.over_sp_mesh(as(Window(bei_samp), 'SpatialPolygons'), margin_samp, 'vertex')] <- 1
 ```
 
 
@@ -303,19 +318,16 @@ points(bei, pch = '.', col = 'black')
 
 # SPDE projector matrix for estimation.
 full_A_est <- inla.spde.make.A(
-  bei_full_mesh,
+  margin_mesh,
   as.matrix(bei_df[bei_df$area > 0, c('x', 'y')])
 )
 
-# Initialize exponential covariance structure for SPDE.
-full_spde <- inla.spde2.matern(mesh = bei_full_mesh)
-
 # Set up stack for estimation.
-stack_index <- inla.spde.make.index(name = 'spatial_field', n.spde = full_spde$n.spde)
+stack_index <- inla.spde.make.index(name = 'spatial_field', n.spde = margin_spde$n.spde)
 stack_est <- inla.stack(data = list(count = bei_df$count[bei_df$area > 0], larea = log(bei_df$area[bei_df$area > 0])), A = list(full_A_est), effects = list(c(stack_index, list(intercept = 1))), tag = 'est')
 
 # SPDE projector matrix for prediction.
-full_A_pred <- inla.spde.make.A(mesh = bei_full_mesh, loc = as.matrix(bei_df[,c('x', 'y')]))
+full_A_pred <- inla.spde.make.A(mesh = margin_mesh, loc = as.matrix(bei_df[,c('x', 'y')]))
 
 # Set up stacks for prediction.
 stack_latent <- inla.stack(data = list(xi = NA), A = list(full_A_pred), effects = list(stack_index), tag = 'pred_latent')
@@ -327,7 +339,7 @@ stacks <- inla.stack(stack_est, stack_latent, stack_response)
 # Fit the model with INLA.
 message('gridded full: ', system.time(
 bei_full_fit <- inla(
-  count ~ -1 + intercept + f(spatial_field, model = full_spde),
+  count ~ -1 + intercept + f(spatial_field, model = margin_spde),
   offset = larea, family = 'poisson',
   data = inla.stack.data(stacks),
   control.predictor = list(A = inla.stack.A(stacks), compute = TRUE),
@@ -374,12 +386,9 @@ points(bei_hole, pch = '.', col = '#00000040')
 
 # SPDE projector matrix for estimation.
 hole_A_est <- inla.spde.make.A(
-  bei_hole_mesh0,
+  margin_hole,
   as.matrix(bei_df[beihole_df$area > 0, c('x', 'y')])
 )
-
-# Initialize exponential covariance structure for SPDE.
-hole_spde <- inla.spde2.matern(mesh = bei_hole_mesh0)
 ```
 
 ```{r beisampinla}
@@ -403,12 +412,9 @@ points(bei_samp, pch = '.', col = '#00000040')
 
 # SPDE projector matrix for estimation.
 samp_A_est <- inla.spde.make.A(
-  bei_samp_mesh0,
+  margin_samp,
   as.matrix(bei_df[beisamp_df$area > 0, c('x', 'y')])
 )
-
-# Initialize exponential covariance structure for SPDE.
-samp_spde <- inla.spde2.matern(mesh = bei_samp_mesh0)
 ```
 
 
@@ -453,24 +459,27 @@ $
 
 
 ```{r beinogrid, cache = TRUE}
+NPIX_X <- 400
+NPIX_Y <- 200
+
 full_pts <- cbind(bei$x, bei$y)
 
 # Contruct the SPDE A matrix for nodes and points.
-full_nV <- bei_full_mesh$n
+full_nV <- margin_mesh$n
 full_nData <- dim(full_pts)[1]
-full_LocationMatrix <- inla.mesh.project(bei_full_mesh, full_pts)$A
+full_LocationMatrix <- inla.mesh.project(margin_mesh, full_pts)$A
 full_IntegrationMatrix <- sparseMatrix(i = 1:full_nV, j = 1:full_nV, x = rep(1, full_nV))
 full_ObservationMatrix <- rbind(full_IntegrationMatrix, full_LocationMatrix)
 
 # Get the integration weights.
-full_IntegrationWeights <- diag(inla.mesh.fem(bei_full_mesh)$c0)
-full_E_point_process <- c(full_IntegrationWeights, rep(0, full_nData))
+full_IntegrationWeights <- diag(inla.mesh.fem(margin_mesh)$c0)
+full_E_point_process <- c(obs_full * full_IntegrationWeights, rep(0, full_nData))
 
 # Create the psuedodata.
 full_fake_data <- c(rep(0, full_nV), rep(1, full_nData))
 
 # Fit model to full site.
-full_formula <- y ~ -1 + intercept + f(idx, model = full_spde) # No covariates.
+full_formula <- y ~ -1 + intercept + f(idx, model = margin_spde) # No covariates.
 full_data <- list(y = full_fake_data, idx = 1:full_nV, intercept = rep(1, full_nV))
 message('pseudodata full: ', system.time(
 result_full <- inla(
@@ -485,11 +494,122 @@ result_full <- inla(
 result_full$summary.fixed
 result_full$summary.hyperpar
 
+# Plot surface.
+proj_margin_mesh <- inla.mesh.projector(margin_mesh, dims = c(NPIX_X, NPIX_Y))
+plot(im(t(inla.mesh.project(proj_margin_mesh, result_full$summary.random$idx[,'mean'])),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior Mean Log-Intensity')
+plot(Window(bei), border = 'white', add = TRUE)
+points(bei, pch = '.', col = 'white')
+plot(im(t(inla.mesh.project(proj_margin_mesh, result_full$summary.random$idx[,'sd'])),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior SD Log-Intensity')
+plot(Window(bei), border = 'white', add = TRUE)
+points(bei, pch = '.', col = 'white')
 
-# Fit model to point site with holes.
 
+hole_pts <- cbind(bei_hole$x, bei_hole$y)
+
+# Contruct the SPDE A matrix for nodes and points.
+hole_nV <- margin_hole$n
+hole_nData <- dim(hole_pts)[1]
+hole_LocationMatrix <- inla.mesh.project(margin_hole, hole_pts)$A
+hole_IntegrationMatrix <- sparseMatrix(i = 1:hole_nV, j = 1:hole_nV, x = rep(1, hole_nV))
+hole_ObservationMatrix <- rbind(hole_IntegrationMatrix, hole_LocationMatrix)
+
+# Get the integration weights.
+hole_IntegrationWeights <- diag(inla.mesh.fem(margin_hole)$c0)
+hole_E_point_process <- c(obs_hole * hole_IntegrationWeights, rep(0, hole_nData))
+
+# Create the psuedodata.
+hole_fake_data <- c(rep(0, hole_nV), rep(1, hole_nData))
+
+# Fit model to site with holes.
+hole_formula <- y ~ -1 + intercept + f(idx, model = margin_hole_spde) # No covariates.
+hole_data <- list(y = hole_fake_data, idx = 1:hole_nV, intercept = rep(1, hole_nV))
+message('pseudodata hole: ', system.time(
+result_hole <- inla(
+  formula = hole_formula,
+  data = hole_data,
+  family = 'poisson',
+  control.predictor = list(A = hole_ObservationMatrix),
+  E = hole_E_point_process,
+  verbose = TRUE
+)
+)['elapsed'], ' seconds')
+result_hole$summary.fixed
+result_hole$summary.hyperpar
+
+# Plot surface.
+proj_margin_hole <- inla.mesh.projector(margin_hole, dims = c(NPIX_X, NPIX_Y))
+plot(im(t(inla.mesh.project(proj_margin_hole, result_hole$summary.random$idx[,'mean'])),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior Mean Log-Intensity')
+plot(Window(bei_hole), border = 'white', add = TRUE)
+points(bei_hole, pch = '.', col = 'white')
+plot(im(t(inla.mesh.project(proj_margin_hole, result_hole$summary.random$idx[,'sd'])),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior SD Log-Intensity')
+plot(Window(bei_hole), border = 'white', add = TRUE)
+points(bei_hole, pch = '.', col = 'white')
+
+
+samp_pts <- cbind(bei_samp$x, bei_samp$y)
+
+# Contruct the SPDE A matrix for nodes and points.
+samp_nV <- margin_samp$n
+samp_nData <- dim(samp_pts)[1]
+samp_LocationMatrix <- inla.mesh.project(margin_samp, samp_pts)$A
+samp_IntegrationMatrix <- sparseMatrix(i = 1:samp_nV, j = 1:samp_nV, x = rep(1, samp_nV))
+samp_ObservationMatrix <- rbind(samp_IntegrationMatrix, samp_LocationMatrix)
+
+# Get the integration weights.
+samp_IntegrationWeights <- diag(inla.mesh.fem(margin_samp)$c0)
+samp_E_point_process <- c(obs_samp * samp_IntegrationWeights, rep(0, samp_nData))
+
+# Create the psuedodata.
+samp_fake_data <- c(rep(0, samp_nV), rep(1, samp_nData))
 
 # Fit model to quadrat-sampled site.
+samp_formula <- y ~ -1 + intercept + f(idx, model = margin_samp_spde) # No covariates.
+samp_data <- list(y = samp_fake_data, idx = 1:samp_nV, intercept = rep(1, samp_nV))
+message('pseudodata sampled: ', system.time(
+result_samp <- inla(
+  formula = samp_formula,
+  data = samp_data,
+  family = 'poisson',
+  control.predictor = list(A = samp_ObservationMatrix),
+  E = samp_E_point_process,
+  verbose = TRUE
+)
+)['elapsed'], ' seconds')
+result_samp$summary.fixed
+result_samp$summary.hyperpar
+
+# Plot surface.
+proj_margin_samp <- inla.mesh.projector(margin_samp, dims = c(NPIX_X, NPIX_Y))
+plot(im(t(inla.mesh.project(proj_margin_samp, result_samp$summary.random$idx[,'mean'])),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior Mean Log-Intensity')
+plot(Window(bei_samp), border = 'white', add = TRUE)
+points(bei_samp, pch = '.', col = 'white')
+plot(im(t(inla.mesh.project(proj_margin_samp, result_samp$summary.random$idx[,'sd'])),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior SD Log-Intensity')
+plot(Window(bei_samp), border = 'white', add = TRUE)
+points(bei_samp, pch = '.', col = 'white')
 ```
 
 
@@ -497,7 +617,7 @@ result_full$summary.hyperpar
 
 ```{r beifulllgcp, cache = TRUE}
 bei_full_spdf <- as.SpatialPoints.ppp(bei)
-cmp_full <- coordinates ~ mySmooth(map = coordinates, model = full_spde) + Intercept
+cmp_full <- coordinates ~ mySmooth(map = coordinates, model = margin_spde) + Intercept
 message('inlabru full: ', system.time(
 bei_full_lgcp <- lgcp(cmp_full, bei_full_spdf, options = list(verbose = TRUE))
 )['elapsed'], ' seconds')
@@ -516,7 +636,7 @@ points(bei, pch = '.', col = 'white')
 
 ```{r beiholelgcp, cache = TRUE}
 bei_hole_spdf <- as.SpatialPoints.ppp(bei_hole)
-cmp_hole <- coordinates ~ mySmooth(map = coordinates, model = hole_spde) + Intercept
+cmp_hole <- coordinates ~ mySmooth(map = coordinates, model = margin_hole_spde) + Intercept
 message('inlabru with holes: ', system.time(
 bei_hole_lgcp <- lgcp(cmp_hole, bei_hole_spdf, options = list(verbose = TRUE))
 )['elapsed'], ' seconds')
@@ -535,7 +655,7 @@ points(bei_hole, pch = '.', col = 'white')
 
 ```{r beisamplgcp, cache = TRUE}
 bei_samp_spdf <- as.SpatialPoints.ppp(bei_samp)
-cmp_samp <- coordinates ~ mySmooth(map = coordinates, model = samp_spde) + Intercept
+cmp_samp <- coordinates ~ mySmooth(map = coordinates, model = margin_samp_spde) + Intercept
 message('inlabru quadrats: ', system.time(
 bei_samp_lgcp <- lgcp(cmp_samp, bei_samp_spdf, options = list(verbose = TRUE))
 )['elapsed'], ' seconds')
