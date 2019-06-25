@@ -61,16 +61,17 @@ the pseudodata approach of @simpsonetal.
 
 - Spatial process $Z(\mathbf{s})$ is to be modeled.
 - Solve $\tau (\kappa^{2} - \Delta)^{\alpha / 2} Z(\mathbf{s})
-  = \mathcal{W}(\mathbf{s})$.
+  = W(\mathbf{s})$.
     - $\kappa$ is a range parameter.
     - $\Delta$ is the Laplacian.
     - $\alpha$ is a smoothness parameter.
-    - $\tau$ a precision parameter.
+    - $\tau$ is a precision parameter.
+    - $W(\mathbf{s})$ is a Gaussian white noise process.
     - Exact and sationary solution: $Z(\mathbf{s})$ is a Gaussian field with
       Mat&#x00e8;rn covariance function with $\nu = 1$.
-- Finite element approximation $Z(s) = \sum_{i = 1}^{n} z_{i} \psi_{i}(s)$
+- Finite element approximation $Z(\mathbf{s}) = \sum_{i = 1}^{n} z_{i} \psi_{i}(\mathbf{s})$
   where $\mathbf{z} = (z_{1}, \dots, z_{n})')$ is multivariate normal and
-  $\{\psi_{i}(s)\}_{i = 1}^{n}$ is a set of piecewise linear basis functions.
+  $\{\psi_{i}(\mathbf{s})\}_{i = 1}^{n}$ is a set of piecewise linear basis functions.
 
 
 # Geostatistics Example
@@ -584,24 +585,27 @@ The pseudodata are constructed as follows.
 Then $y_{i} \sim Poisson(\alpha_{i}\eta_{i})$ where $\log(\eta_{i})$ is the
 SPDE representation of the GF at the location of the $i$th pseudodatum. See
 the paper for tedious notation regarding the definition of $\eta_{i}$.
-Ultimately, the nodes become Poisson random variables with means equal to the
-intensity at that their respective locations, observed points become Poisson
-random variables with means of 1, and the likelihood is approximately
+Ultimately, the nodes become Poisson random variables with means equal to their
+respective integration weights times the intensity at that their locations
+(so the integration weight is an exposure variable), observed points become
+Poisson random variables with means of 1, and the likelihood is approximately
 proportional to
 
 $$\prod_{i=1}^{p+n} \eta_{i}^{y_{i}} \exp(-\alpha_{i} \eta_{i}).$$
 
 _(Is there a missing_ $\alpha_{i}$_?)_
 
-Sampling effort is accomodated by scaling the integration weights by the
-probability that a point would have been observed at that node (given the
+Known "sampling effort" is accomodated by scaling the integration weights by
+the probability that a point would have been observed at that node (given the
 sampling plan), i.e. nodes in observed regions have the $\alpha_{i}$ defined
 above and nodes in unobserved regions have $\alpha_{i} = 0$. Weights can be
 scaled by values other than 0 or 1 to account for e.g. distance sampling with
-a (known) detection function [@yuanetal] or a (known) false negative rate for
-detection equipment. This adjustment assumes the point process of interest is
-observed through a known thinning process and then allows inference back to the
-intensity function of the unthinned process.
+a (known) detection function or a (known) false negative rate for detection
+equipment. This adjustment assumes the point process of interest is observed
+through a known thinning process and then allows inference back to the
+intensity function of the unthinned process. More complicated detection
+processes are possible, e.g. @yuanetal fit an LGCP to data obtianed through
+distance sampling while using splines to model the detection function.
 
 ```{r beinogrid, cache = TRUE}
 full_pts <- cbind(bei$x, bei$y)
@@ -844,8 +848,8 @@ points(bei_samp, pch = '.', col = 'white')
 
 All three methods give similar results for the full dataset and the dataset
 with holes, even when the gridding method uses a coarse grid. The intercept and
-random effects are shifted from method to method, but theses are not separately
-indentifyable and the shifts cancel each other out. The methods each have
+random effects are shifted from method to method, but these are not separately
+indentifiable and the shifts cancel each other out. The methods each have
 different artifacts and edge effects apparent in the results from the sampled
 dataset. The pseudodata approach is the fastest except when a very coarse grid
 is used and a small region is observed.
