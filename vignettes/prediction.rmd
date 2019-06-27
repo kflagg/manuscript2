@@ -29,11 +29,11 @@ library(maptools)
 # Introduction
 
 This vignette illustrates the use of INLA for spatial prediction using examples
-from @rinla and @illianetal. For prediction of continuous spatial processes,
-the @lindgrenetal stochastic partial differential equations (SPDE) approach is
-used to approximate the process through an areal Gaussian Markov random field
-(GMRF) representation. Finally, Log-Gaussian Cox process models are fit using
-the pseudodata approach of @simpsonetal.
+from @rinla and a classic point process dataset. For prediction of continuous
+spatial processes, the @lindgrenetal stochastic partial differential equations
+(SPDE) approach is used to approximate the process through an areal Gaussian
+Markov random field (GMRF) representation. Finally, Log-Gaussian Cox process
+models are fit using the pseudodata approach of @simpsonetal.
 
 
 # GMRF Background
@@ -59,19 +59,31 @@ the pseudodata approach of @simpsonetal.
 
 # SPDE Background
 
-- Spatial process $Z(\mathbf{s})$ is to be modeled.
-- Solve $\tau (\kappa^{2} - \Delta)^{\alpha / 2} Z(\mathbf{s})
+- Spatial process $Z(\mathbf{s})$ with $d$-dimensional domain is to be modeled.
+- Solve $(\kappa^{2} - \Delta)^{\alpha / 2} (\tau Z(\mathbf{s}))
   = W(\mathbf{s})$.
     - $\kappa$ is a range parameter.
     - $\Delta$ is the Laplacian.
     - $\alpha$ is a smoothness parameter.
     - $\tau$ is a precision parameter.
-    - $W(\mathbf{s})$ is a Gaussian white noise process.
-    - Exact and sationary solution: $Z(\mathbf{s})$ is a Gaussian field with
-      Mat&#x00e8;rn covariance function with $\nu = 1$.
+    - $W(\mathbf{s})$ is a Gaussian white noise process with mean 0 and
+      variance 1.
+    - Exact solution for stationary isotropic processes and integer $\alpha$:
+      $Z(\mathbf{s})$ is a GMRF that well-approximates a Gaussian field with
+      Mat&#x00e8;rn covariance function with $\nu = \alpha - d/2$.
+        - Note for $d = 2$ this excludes the exponential covariance ($\nu = 1/2$).
+    - Some other results for non-stationary and anisotropic processes.
 - Finite element approximation $Z(\mathbf{s}) = \sum_{i = 1}^{n} z_{i} \psi_{i}(\mathbf{s})$
-  where $\mathbf{z} = (z_{1}, \dots, z_{n})')$ is multivariate normal and
-  $\{\psi_{i}(\mathbf{s})\}_{i = 1}^{n}$ is a set of piecewise linear basis functions.
+  where $\mathbf{z} = (z_{1}, \dots, z_{n})'$ is multivariate normal and
+  $\{\psi_{i}(\mathbf{s})\}_{i = 1}^{n}$ is a set of piecewise linear basis
+  functions.
+    - Specifically, $\psi_{i}(\mathbf{s}) = 1$ at the $i$th node of a
+      triangulation of the domain and 0 elsewhere.
+    - $Z(\mathbf{s})$ for arbitrary $\mathbf{s}$ found by linear interpolation.
+- Implemented as a black box in INLA.
+    - User defines the triangulation but never sees the GMRF representation.
+- Reduces covariance/precision matrix calculations from $\mathcal{O}(n^{3})$
+  to $\mathcal{O}(n^{3/2})$.
 
 
 # Geostatistics Example
@@ -91,7 +103,7 @@ plot(toy_mesh, asp = 1)
 points(SPDEtoy$s1, SPDEtoy$s2, col = rgb(SPDEtoy$y / max(SPDEtoy$y), 0, 0, 0.5), pch = 20)
 ```
 
-```{r spdefit}
+```{r spdefit, cache = TRUE}
 # SPDE projector matrix for estimation.
 A_est <- inla.spde.make.A(toy_mesh, as.matrix(SPDEtoy[,c('s1', 's2')]))
 
@@ -153,7 +165,7 @@ parameters.
 plot(bei, pch = '.', cols = 'black', main = 'Realized Point Pattern')
 ```
 
-```{r beihole}
+```{r beihole, cache = TRUE}
 # Take a sample of quadrats and plot the observed point pattern.
 set.seed(84323)
 N_QUADS <- 10
@@ -187,7 +199,7 @@ bei_window_full <- Window(bei)
 plot(bei_hole, main = 'Observed Region with Holes', pch = '.', cols = 'black')
 ```
 
-```{r beisamp}
+```{r beisamp, cache = TRUE, dependson = 'beihole'}
 plot(bei_window_full, main = 'Observed Sample')
 plot(bei_win, add = TRUE)
 plot(bei_samp, pch = '.', cols = 'black', add = TRUE)
@@ -200,7 +212,7 @@ local structure but can be coarsened in unobserved regions where the model
 cannot infer as much detail. I am including margins to explore model behavior
 away from the observed regions.
 
-```{r beimesh}
+```{r beimesh, cache = TRUE, dependson = 'beihole'}
 # Parameters to experiment with.
 MAX_EDGE_LENGTH <- 25
 MAX_EDGE_EXT <- 50
@@ -300,7 +312,7 @@ points(bei_samp, pch = 19, cex = 0.25, col = 'red')
 title('Fine Quadrats and Coarse Margin')
 ```
 
-```{r effort}
+```{r effort, cache = TRUE, dependson = 'beimesh'}
 # Identify which mesh nodes are in the oberserved region
 # and create SPDE projectors for spatial mapping.
 NPIX_X <- 400
@@ -323,10 +335,11 @@ proj_margin_samp <- inla.mesh.projector(margin_samp, dims = c(NPIX_X, NPIX_Y))
 ## Bei Dataset with gridding
 
 Count the points in grid cells and fit a Poisson GLMM with the observed area
-in the cell as an exposure variable. The plots of the cell coutns are blank
-(white) where cells have no observed area.
+in the cell as an exposure variable, as done in @illianetal and many other
+examples. The plots of the cell counts are blank (white) where cells have no
+observed area.
 
-```{r beiinla, cache = TRUE}
+```{r beiinla, cache = TRUE, dependson = 'effort'}
 NGRID_X <- 40
 NGRID_Y <- 20
 
@@ -388,27 +401,29 @@ bei_full_fit <- inla(
 # Output posterior summaries.
 bei_full_fit$summary.fixed
 bei_full_fit$summary.hyperpar
+```
 
+```{r beiinlaplot, cache = TRUE, dependson = 'beiinla'}
 # Plot surface.
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_mesh, bei_full_fit$summary.random$spatial_field$mean)),
+plot(im(t(inla.mesh.project(proj_margin_mesh, bei_full_fit$summary.fixed$mean + bei_full_fit$summary.random$spatial_field$mean)),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior Mean of Spatial Field')
+        main = 'Posterior Mean of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 points(bei, pch = '.', col = 'white')
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_mesh, bei_full_fit$summary.random$spatial_field$sd)),
+plot(im(t(inla.mesh.project(proj_margin_mesh, sqrt(bei_full_fit$summary.fixed$sd^2 + bei_full_fit$summary.random$spatial_field$sd^2))),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior SD of Spatial Field')
+        main = 'Posterior SD of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 points(bei, pch = '.', col = 'white')
 ```
 
-```{r beiholeinla, cache = TRUE}
+```{r beiholeinla, cache = TRUE, dependson = 'effort'}
 bei_hole_df <- data.frame(x = centers$x, y = centers$y,
                           count = NA_integer_, area = NA_real_)
 
@@ -461,27 +476,29 @@ bei_hole_fit <- inla(
 # Output posterior summaries.
 bei_hole_fit$summary.fixed
 bei_hole_fit$summary.hyperpar
+```
 
+```{r beiholeinlaplot, cache = TRUE, dependson = 'beiholeinla'}
 # Plot surface.
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_hole, bei_hole_fit$summary.random$spatial_field$mean)),
+plot(im(t(inla.mesh.project(proj_margin_hole, bei_hole_fit$summary.fixed$mean + bei_hole_fit$summary.random$spatial_field$mean)),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior Mean of Spatial Field')
+        main = 'Posterior Mean of Log-Intensity')
 plot(Window(bei_hole), border = 'white', add = TRUE)
 points(bei_hole, pch = '.', col = 'white')
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_hole, bei_hole_fit$summary.random$spatial_field$sd)),
+plot(im(t(inla.mesh.project(proj_margin_hole, sqrt(bei_hole_fit$summary.fixed$sd^2 + bei_hole_fit$summary.random$spatial_field$sd^2))),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior SD of Spatial Field')
+        main = 'Posterior SD of Log-Intensity')
 plot(Window(bei_hole), border = 'white', add = TRUE)
 points(bei_hole, pch = '.', col = 'white')
 ```
 
-```{r beisampinla, cache = TRUE}
+```{r beisampinla, cache = TRUE, dependson = 'effort'}
 bei_samp_df <- data.frame(x = centers$x, y = centers$y,
                           count = NA_integer_, area = NA_real_)
 
@@ -534,23 +551,25 @@ bei_samp_fit <- inla(
 # Output posterior summaries.
 bei_samp_fit$summary.fixed
 bei_samp_fit$summary.hyperpar
+```
 
+```{r beisampinlaplot, cache = TRUE, dependson = 'beisampinla'}
 # Plot surface.
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_samp, bei_samp_fit$summary.random$spatial_field$mean)),
+plot(im(t(inla.mesh.project(proj_margin_samp, bei_samp_fit$summary.fixed$mean + bei_samp_fit$summary.random$spatial_field$mean)),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior Mean of Spatial Field')
+        main = 'Posterior Mean of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 plot(Window(bei_samp), border = 'white', add = TRUE)
 points(bei_samp, pch = '.', col = 'white')
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_samp, bei_samp_fit$summary.random$spatial_field$sd)),
+plot(im(t(inla.mesh.project(proj_margin_samp, sqrt(bei_samp_fit$summary.fixed$sd^2 + bei_samp_fit$summary.random$spatial_field$sd^2))),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior SD of Spatial Field')
+        main = 'Posterior SD of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 plot(Window(bei_samp), border = 'white', add = TRUE)
 points(bei_samp, pch = '.', col = 'white')
@@ -595,6 +614,7 @@ $$\prod_{i=1}^{p+n} \eta_{i}^{y_{i}} \exp(-\alpha_{i} \eta_{i}).$$
 
 _(Is there a missing_ $\alpha_{i}$_?)_
 
+Covariates can easily be included when they are observed at the mesh nodes.
 Known "sampling effort" is accomodated by scaling the integration weights by
 the probability that a point would have been observed at that node (given the
 sampling plan), i.e. nodes in observed regions have the $\alpha_{i}$ defined
@@ -607,7 +627,7 @@ intensity function of the unthinned process. More complicated detection
 processes are possible, e.g. @yuanetal fit an LGCP to data obtianed through
 distance sampling while using splines to model the detection function.
 
-```{r beinogrid, cache = TRUE}
+```{r beinogridfull, cache = TRUE, dependson = 'effort'}
 full_pts <- cbind(bei$x, bei$y)
 
 # Contruct the SPDE A matrix for nodes and points.
@@ -641,26 +661,29 @@ result_full <- inla(
 
 result_full$summary.fixed
 result_full$summary.hyperpar
+```
 
+```{r beinogridfullplot, cache = TRUE, dependson = 'beinogridfull'}
 # Plot surface.
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_mesh, result_full$summary.random$idx$mean)),
+plot(im(t(inla.mesh.project(proj_margin_mesh, result_full$summary.fixed$mean + result_full$summary.random$idx$mean)),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior Mean of Spatial Field')
+        main = 'Posterior Mean of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 points(bei, pch = '.', col = 'white')
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_mesh, result_full$summary.random$idx$sd)),
+plot(im(t(inla.mesh.project(proj_margin_mesh, sqrt(result_full$summary.fixed$sd^2 + result_full$summary.random$idx$sd^2))),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior SD of Spatial Field')
+        main = 'Posterior SD of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 points(bei, pch = '.', col = 'white')
+```
 
-
+```{r beinogridhole, cache = TRUE, dependson = 'effort'}
 hole_pts <- cbind(bei_hole$x, bei_hole$y)
 
 # Contruct the SPDE A matrix for nodes and points.
@@ -694,26 +717,29 @@ result_hole <- inla(
 
 result_hole$summary.fixed
 result_hole$summary.hyperpar
+```
 
+```{r beinogridholeplot, cache = TRUE, dependson = 'beinogridhole'}
 # Plot surface.
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_hole, result_hole$summary.random$idx$mean)),
+plot(im(t(inla.mesh.project(proj_margin_hole, result_hole$summary.fixed$mean + result_hole$summary.random$idx$mean)),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior Mean of Spatial Field')
+        main = 'Posterior Mean of Log-Intensity')
 plot(Window(bei_hole), border = 'white', add = TRUE)
 points(bei_hole, pch = '.', col = 'white')
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_hole, result_hole$summary.random$idx$sd)),
+plot(im(t(inla.mesh.project(proj_margin_hole, sqrt(result_hole$summary.fixed$sd^2 + result_hole$summary.random$idx$sd^2))),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior SD of Spatial Field')
+        main = 'Posterior SD of Log-Intensity')
 plot(Window(bei_hole), border = 'white', add = TRUE)
 points(bei_hole, pch = '.', col = 'white')
+```
 
-
+```{r beinogridsamp, cache = TRUE, dependson = 'effort'}
 samp_pts <- cbind(bei_samp$x, bei_samp$y)
 
 # Contruct the SPDE A matrix for nodes and points.
@@ -747,23 +773,25 @@ result_samp <- inla(
 
 result_samp$summary.fixed
 result_samp$summary.hyperpar
+```
 
+```{r beinogridsampplot, cache = TRUE, dependson = 'beinogridsamp'}
 # Plot surface.
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_samp, result_samp$summary.random$idx$mean)),
+plot(im(t(inla.mesh.project(proj_margin_samp, result_samp$summary.fixed$mean + result_samp$summary.random$idx$mean)),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior Mean of Spatial Field')
+        main = 'Posterior Mean of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 plot(Window(bei_samp), border = 'white', add = TRUE)
 points(bei_samp, pch = '.', col = 'white')
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(proj_margin_samp, result_samp$summary.random$idx$sd)),
+plot(im(t(inla.mesh.project(proj_margin_samp, sqrt(result_samp$summary.fixed$sd^2 + result_samp$summary.random$idx$sd^2))),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
-        main = 'Posterior SD of Spatial Field')
+        main = 'Posterior SD of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 plot(Window(bei_samp), border = 'white', add = TRUE)
 points(bei_samp, pch = '.', col = 'white')
@@ -778,7 +806,7 @@ latent variables. However, it is poorly documented, slow, and the documentation
 seems to imply that it does not support variable sampling effort (even though
 this appears to work).
 
-```{r beifulllgcp, cache = TRUE}
+```{r beifulllgcp, cache = TRUE, dependson = 'effort'}
 bei_full_spdf <- as.SpatialPoints.ppp(bei)
 cmp_full <- coordinates ~ mySmooth(map = coordinates, model = margin_spde) + Intercept
 
@@ -788,18 +816,20 @@ bei_full_lgcp <- lgcp(cmp_full, bei_full_spdf, E = obs_full, options = list(verb
 
 bei_full_lgcp$summary.fixed
 bei_full_lgcp$summary.hyperpar
+```
 
+```{r beifulllgcpplot, cache = TRUE, dependson = 'beifulllgcpplot'}
 # Plot posterior means and posterior sd.
-lambda_full <- predict(bei_full_lgcp, pixels(margin_mesh), ~ mySmooth)
-plot(lambda_full, main = 'Posterior Mean of Spatial Field')
+lambda_full <- predict(bei_full_lgcp, pixels(margin_mesh), ~ Intercept + mySmooth)
+plot(lambda_full, main = 'Posterior Mean of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 points(bei, pch = '.', col = 'white')
-plot(lambda_full['sd'] ,main = 'Posterior SD of Spatial Field')
+plot(lambda_full['sd'] ,main = 'Posterior SD of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 points(bei, pch = '.', col = 'white')
 ```
 
-```{r beiholelgcp, cache = TRUE}
+```{r beiholelgcp, cache = TRUE, dependson = 'effort'}
 bei_hole_spdf <- as.SpatialPoints.ppp(bei_hole)
 cmp_hole <- coordinates ~ mySmooth(map = coordinates, model = margin_hole_spde) + Intercept
 
@@ -809,18 +839,20 @@ bei_hole_lgcp <- lgcp(cmp_hole, bei_hole_spdf, E = obs_hole, options = list(verb
 
 bei_hole_lgcp$summary.fixed
 bei_hole_lgcp$summary.hyperpar
+```
 
+```{r beiholelgcpplot, cache = TRUE, dependson = 'beiholelgcpplot'}
 # Plot posterior means and posterior sd.
-lambda_hole <- predict(bei_hole_lgcp, pixels(margin_hole), ~ mySmooth)
-plot(lambda_hole, main = 'Posterior Mean of Spatial Field')
+lambda_hole <- predict(bei_hole_lgcp, pixels(margin_hole), ~ Intercept + mySmooth)
+plot(lambda_hole, main = 'Posterior Mean of Log-Intensity')
 plot(Window(bei_hole), border = 'white', add = TRUE)
 points(bei_hole, pch = '.', col = 'white')
-plot(lambda_hole['sd'], main = 'Posterior SD of Spatial Field')
+plot(lambda_hole['sd'], main = 'Posterior SD of Log-Intensity')
 plot(Window(bei_hole), border = 'white', add = TRUE)
 points(bei_hole, pch = '.', col = 'white')
 ```
 
-```{r beisamplgcp, cache = TRUE}
+```{r beisamplgcp, cache = TRUE, dependson = 'effort'}
 bei_samp_spdf <- as.SpatialPoints.ppp(bei_samp)
 cmp_samp <- coordinates ~ mySmooth(map = coordinates, model = margin_samp_spde) + Intercept
 
@@ -830,14 +862,16 @@ bei_samp_lgcp <- lgcp(cmp_samp, bei_samp_spdf, E = obs_samp, options = list(verb
 
 bei_samp_lgcp$summary.fixed
 bei_samp_lgcp$summary.hyperpar
+```
 
+```{r beisamplgcpplot, cache = TRUE, dependson = 'beisamplgcpplot'}
 # Plot posterior means and posterior sd.
-lambda_samp <- predict(bei_samp_lgcp, pixels(margin_samp), ~ mySmooth)
-plot(lambda_samp, main = 'Posterior Mean  of Spatial Field')
+lambda_samp <- predict(bei_samp_lgcp, pixels(margin_samp), ~ Intercept + mySmooth)
+plot(lambda_samp, main = 'Posterior Mean of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 plot(Window(bei_samp), border = 'white', add = TRUE)
 points(bei_samp, pch = '.', col = 'white')
-plot(lambda_samp['sd'], main = 'Posterior SD of Spatial Field')
+plot(lambda_samp['sd'], main = 'Posterior SD of Log-Intensity')
 plot(Window(bei), border = 'white', add = TRUE)
 plot(Window(bei_samp), border = 'white', add = TRUE)
 points(bei_samp, pch = '.', col = 'white')

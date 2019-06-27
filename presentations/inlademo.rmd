@@ -56,22 +56,44 @@ plot(bei, pch = '.', cols = 'black', main = 'Realized Point Pattern')
 ## Poisson Processes and Sampling
 
 ```{r beisamp}
+# Take a sample of quadrats and plot the observed point pattern.
 set.seed(84323)
-par(mar = c(0.5, 0, 2, 0))
-n_quads <- 10
-botleft <- cbind(runif(n_quads, 0, 950), runif(n_quads, 0, 450))
+N_QUADS <- 10
+QUAD_SIZE <- 50
+
+w_edge <- Frame(bei)$xrange[1]
+e_edge <- Frame(bei)$xrange[2]
+s_edge <- Frame(bei)$yrange[1]
+n_edge <- Frame(bei)$yrange[2]
+
+botleft <- cbind(
+  runif(N_QUADS, w_edge, e_edge - QUAD_SIZE),
+  runif(N_QUADS, s_edge, n_edge - QUAD_SIZE)
+)
+bei_interior <- lapply(seq_len(nrow(botleft)), function(r){return(
+    cbind(
+      botleft[r, 1] + c(0, 0, QUAD_SIZE, QUAD_SIZE),
+      botleft[r, 2] + c(0, QUAD_SIZE, QUAD_SIZE, 0)
+    )
+  )})
 bei_win <- do.call(
   union.owin,
   apply(botleft, 1, function(x){return(
-    owin(x[1] + c(0, 50), x[2] + c(0, 50))
+    owin(x[1] + c(0, QUAD_SIZE), x[2] + c(0, QUAD_SIZE))
   )})
 )
-plot(Window(bei), main = 'Observed Subset')
+bei_hole <- bei[complement.owin(bei_win, frame = Frame(bei))]
+bei_samp <- bei[bei_win]
+bei_window_full <- Window(bei)
+
+par(mar = c(0.5, 0, 2, 0))
+plot(bei_window_full, main = 'Observed Subset')
 plot(bei_win, add = TRUE)
-plot(bei[bei_win], pch = '.', cols = 'black', add = TRUE)
+plot(bei_samp, pch = '.', cols = 'black', add = TRUE)
 ```
 
-- @brixmoeller one of very few examples
+- Not widely done; some work on point process models for distance sampling
+  data [@dspat, @yuanetal]
 
 
 # INLA Introduction
@@ -360,22 +382,105 @@ points(bei, pch = '.', col = '#00000040')
 ```
 
 ```{r beimesh}
-bei_corners <- vertices.owin(Window(bei))
-bei_domain <- cbind(bei_corners$x, bei_corners$y)
-bei_full_mesh <- inla.mesh.2d(cbind(bei$x, bei$y),
-                              cutoff = 50, max.edge = c(50, 100),
-                              loc.domain = bei_domain)
+# Parameters to experiment with.
+MAX_EDGE_LENGTH <- 25
+MAX_EDGE_EXT <- 50
+MARGIN <- 100
+
+# Mesh covering the site.
+bei_boundary <- inla.mesh.segment(loc = do.call(cbind, vertices.owin(Window(bei))))
+bei_full_mesh <- inla.mesh.create(
+  boundary = bei_boundary,
+  refine = list(max.edge = MAX_EDGE_LENGTH)
+)
+bei_full_spde <- inla.spde2.matern(mesh = bei_full_mesh)
+
+# Mesh including a margin outside the site.
+margin_mesh <- inla.mesh.2d(
+  loc = bei_full_mesh$loc[,1:2], # Include nodes from site.
+  offset = MARGIN,
+  max.edge = MAX_EDGE_EXT # Fill in the rest with a coarser triangulation.
+)
+margin_spde <- inla.spde2.matern(mesh = margin_mesh)
+
+
+# Meshs with coarser resolution in quadrats.
+quad_hole <- do.call(
+  inla.mesh.segment,
+  lapply(seq_along(bei_interior), function(i){
+    return(inla.mesh.segment(loc = bei_interior[[i]], grp = i - 1))
+  })
+)
+bei_hole_mesh0 <- inla.mesh.create(
+  boundary = list(bei_boundary, quad_hole),
+  refine = list(max.edge = MAX_EDGE_LENGTH)
+)
+bei_hole0_spde <- inla.spde2.matern(mesh = bei_hole_mesh0)
+bei_hole_mesh <- inla.mesh.create(
+  loc = bei_hole_mesh0$loc[,1:2], # Include nodes from mesh with holes.
+  boundary = bei_boundary,
+  refine = list(max.edge = MAX_EDGE_EXT) # Fill in the rest with a coarser triangulation.
+)
+bei_hole_spde <- inla.spde2.matern(mesh = bei_hole_mesh)
+
+# Meshs with finer resolution in quadrats.
+quad_bnd <- do.call(
+  inla.mesh.segment,
+  lapply(seq_along(bei_interior), function(i){
+    return(inla.mesh.segment(loc = apply(bei_interior[[i]], 2, rev), grp = i - 1))
+  })
+)
+bei_samp_mesh0 <- inla.mesh.create(
+  boundary = quad_bnd,
+  refine = list(max.edge = MAX_EDGE_LENGTH)
+)
+bei_samp0_spde <- inla.spde2.matern(mesh = bei_samp_mesh0)
+bei_samp_mesh <- inla.mesh.create(
+  loc = bei_samp_mesh0$loc[,1:2], # Include nodes from mesh in quads.
+  boundary = bei_boundary,
+  refine = list(max.edge = MAX_EDGE_EXT) # Fill in the rest with a coarser triangulation.
+)
+bei_samp_spde <- inla.spde2.matern(mesh = bei_samp_mesh)
+
+# Meshes with varying resolution in quadrats and a margin.
+margin_hole <- inla.mesh.2d(
+  loc = bei_hole_mesh$loc[,1:2], # Include nodes from mesh with holes.
+  offset = MARGIN,
+  max.edge = MAX_EDGE_EXT # Fill in the rest with a coarser triangulation.
+)
+margin_hole_spde <- inla.spde2.matern(mesh = margin_hole)
+margin_samp <- inla.mesh.2d(
+  loc = bei_samp_mesh$loc[,1:2], # Include nodes from quads.
+  offset = MARGIN,
+  max.edge = MAX_EDGE_EXT # Fill in the rest with a coarser triangulation.
+)
+margin_samp_spde <- inla.spde2.matern(mesh = margin_samp)
+```
+
+```{r effort}
+# Identify which mesh nodes are in the oberserved region
+# and create SPDE projectors for spatial mapping.
+NPIX_X <- 400
+NPIX_Y <- 200
+
+obs_full <- rep(0, margin_mesh$n)
+obs_full[inla.over_sp_mesh(as(Window(bei), 'SpatialPolygons'), margin_mesh, 'vertex')] <- 1
+proj_margin_mesh <- inla.mesh.projector(margin_mesh, dims = c(NPIX_X, NPIX_Y))
+
+obs_hole <- rep(0, margin_hole$n)
+obs_hole[inla.over_sp_mesh(as(Window(bei_hole), 'SpatialPolygons'), margin_hole, 'vertex')] <- 1
+proj_margin_hole <- inla.mesh.projector(margin_hole, dims = c(NPIX_X, NPIX_Y))
+
+obs_samp <- rep(0, margin_samp$n)
+obs_samp[inla.over_sp_mesh(as(Window(bei_samp), 'SpatialPolygons'), margin_samp, 'vertex')] <- 1
+proj_margin_samp <- inla.mesh.projector(margin_samp, dims = c(NPIX_X, NPIX_Y))
 ```
 
 ```{r beifulllgcp, cache = TRUE}
 bei_full_spdf <- as.SpatialPoints.ppp(bei)
-# CHECK PRIORS!
-matern_full <- inla.spde2.pcmatern(bei_full_mesh,
-                                   prior.sigma = c(0.1, 0.99),
-                                   prior.range = c(5, 0.01))
-cmp_full <- coordinates ~ mySmooth(map = coordinates, model = matern_full) + Intercept
-bei_full_lgcp <- lgcp(cmp_full, bei_full_spdf)
-lambda_full <- predict(bei_full_lgcp, pixels(bei_full_mesh), ~ exp(mySmooth + Intercept))
+cmp_full <- coordinates ~ mySmooth(map = coordinates, model = margin_spde) + Intercept
+bei_full_lgcp <- lgcp(cmp_full, bei_full_spdf, E = obs_full, options = list(verbose = TRUE))
+lambda_full <- predict(bei_full_lgcp, pixels(margin_mesh), ~ exp(mySmooth + Intercept))
 
 plot(lambda_full, main = 'Posterior Predicted Log-Intensity', what = 'image')
 plot(Window(bei), border = 'white', add = TRUE)
@@ -392,45 +497,11 @@ points(bei, pch = '.', col = 'white')
 
 ## Spatial Point Pattern
 
-```{r beihole}
-# Take a sample of quadrats and plot the observed point pattern.
-set.seed(84323)
-n_quads <- 10
-botleft <- cbind(runif(n_quads, 0, 950), runif(n_quads, 0, 450))
-bei_interior <- lapply(seq_len(nrow(botleft)), function(r){return(
-    cbind(
-      botleft[r, 1] + c(0, 0, 50, 50),
-      botleft[r, 2] + c(0, 50, 50, 0)
-    )
-  )})
-bei_win <- do.call(
-  union.owin,
-  apply(botleft, 1, function(x){return(
-    owin(x[1] + c(0, 50), x[2] + c(0, 50))
-  )})
-)
-bei_hole <- bei[complement.owin(bei_win)]
-bei_samp <- bei[bei_win]
-bei_window_full <- Window(bei)
-
-#plot(bei_hole, main = 'Observed Subregion', pch = '.', cols = 'black')
-```
-
-```{r beiholemesh}
-bei_hole_mesh <- inla.mesh.2d(cbind(bei_hole$x, bei_hole$y),
-                              cutoff = 50, max.edge = c(50, 100),
-                              loc.domain = bei_domain)
-```
-
 ```{r beiholelgcp, cache = TRUE}
 bei_hole_spdf <- as.SpatialPoints.ppp(bei_hole)
-# CHECK PRIORS!
-matern_hole <- inla.spde2.pcmatern(bei_hole_mesh,
-                                   prior.sigma = c(0.1, 0.99),
-                                   prior.range = c(5, 0.01))
-cmp_hole <- coordinates ~ mySmooth(map = coordinates, model = matern_hole) + Intercept
-bei_hole_lgcp <- lgcp(cmp_hole, bei_hole_spdf)
-lambda_hole <- predict(bei_hole_lgcp, pixels(bei_hole_mesh), ~ exp(mySmooth + Intercept))
+cmp_hole <- coordinates ~ mySmooth(map = coordinates, model = margin_hole_spde) + Intercept
+bei_hole_lgcp <- lgcp(cmp_hole, bei_hole_spdf, E = obs_hole, options = list(verbose = TRUE))
+lambda_hole <- predict(bei_hole_lgcp, pixels(margin_hole), ~ exp(mySmooth + Intercept))
 
 plot(lambda_hole, main = 'Posterior Predicted Log-Intensity', what = 'image')
 plot(Window(bei_hole), border = 'white', add = TRUE)
@@ -447,21 +518,11 @@ points(bei_hole, pch = '.', col = 'white')
 
 ## Spatial Point Pattern
 
-```{r beisampmesh}
-bei_samp_mesh <- inla.mesh.2d(cbind(bei_samp$x, bei_samp$y),
-                              cutoff = 50, max.edge = c(50, 100),
-                              loc.domain = bei_domain)
-```
-
 ```{r beisamplgcp, cache = TRUE}
 bei_samp_spdf <- as.SpatialPoints.ppp(bei_samp)
-# CHECK PRIORS!
-matern_samp <- inla.spde2.pcmatern(bei_samp_mesh,
-                                   prior.sigma = c(0.1, 0.99),
-                                   prior.range = c(5, 0.01))
-cmp_samp <- coordinates ~ mySmooth(map = coordinates, model = matern_samp) + Intercept
-bei_samp_lgcp <- lgcp(cmp_samp, bei_samp_spdf)
-lambda_samp <- predict(bei_samp_lgcp, pixels(bei_samp_mesh), ~ exp(mySmooth + Intercept))
+cmp_samp <- coordinates ~ mySmooth(map = coordinates, model = margin_samp_spde) + Intercept
+bei_samp_lgcp <- lgcp(cmp_samp, bei_samp_spdf, E = obs_samp, options = list(verbose = TRUE))
+lambda_samp <- predict(bei_samp_lgcp, pixels(margin_samp), ~ exp(mySmooth + Intercept))
 
 plot(lambda_samp, main = 'Posterior Predicted Log-Intensity', what = 'image')
 plot(Window(bei_samp), border = 'white', add = TRUE)
@@ -483,11 +544,9 @@ points(bei_samp, pch = '.', col = 'white')
 
 ## Things to Address
 
-- `inlabru` discards the observation window
-    - Cannot be used with nonconvex observation windows!
-    - Unsurveyed regions are treated as surveyed with no points observed
-    - Predicts very low intensity in unsurveyed regions
-- Develop new wrapper code for `R-INLA` that correctly handles observation window
+- `inlabru` has a nice interface but is slow and poorly documented
+- @simpsonetal present a faster method
+- Sampling region is easy to define in R-INLA
 - Evaluate performance
 - Then address where to sample
 
