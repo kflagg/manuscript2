@@ -171,7 +171,7 @@ plot(im(t(inla.mesh.project(margin_proj, result_full$summary.fixed$mean + result
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
         main = 'Posterior Mean of Log-Intensity')
-plot(bei_win, border = 'white', add = TRUE)
+plot(bei_win, border = '#808080ff', add = TRUE)
 points(bei, pch = '.', col = 'white')
 
 # Plot uncertainty.
@@ -182,7 +182,7 @@ plot(im(t(sqrt(result_full$summary.fixed$sd^2 + inla.mesh.project(margin_proj, r
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
         main = 'Posterior SD of Log-Intensity')
-plot(bei_win, border = 'white', add = TRUE)
+plot(bei_win, border = '#808080ff', add = TRUE)
 points(bei, pch = '.', col = 'white')
 # SD or variance is also approximately linear within each triangle.
 # A strange assumption?
@@ -309,8 +309,8 @@ plot(im(t(inla.mesh.project(margin_proj, result_srs$summary.fixed$mean + result_
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
         main = 'Posterior Mean of Log-Intensity')
-plot(bei_win, border = 'white', add = TRUE)
-plot(Window(observed_ppp), border = 'white', add = TRUE)
+plot(bei_win, border = '#808080ff', add = TRUE)
+plot(Window(observed_ppp), border = '#80808080', add = TRUE)
 points(observed_ppp, pch = '.', col = 'white')
 
 # Plot uncertainty.
@@ -321,8 +321,8 @@ plot(im(t(sqrt(result_srs$summary.fixed$sd^2 + inla.mesh.project(margin_proj, re
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
         main = 'Posterior SD of Log-Intensity')
-plot(bei_win, border = 'white', add = TRUE)
-plot(Window(observed_ppp), border = 'white', add = TRUE)
+plot(bei_win, border = '#808080ff', add = TRUE)
+plot(Window(observed_ppp), border = '#80808080', add = TRUE)
 points(observed_ppp, pch = '.', col = 'white')
 
 # Spatially-averaged random effect variance.
@@ -339,6 +339,7 @@ print(srs_pathdist)
 # Open two more graphics devices to compare new plots to old plots.
 dev.new()
 dev.new()
+
 
 # Sample sequentially.
 while(tail(srs_pathdist, n = 1) < DIST_MAX){
@@ -446,8 +447,8 @@ plot(im(t(inla.mesh.project(margin_proj, result_srs$summary.fixed$mean + result_
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
         main = 'Posterior Mean of Log-Intensity')
-plot(bei_win, border = 'white', add = TRUE)
-plot(Window(observed_ppp), border = 'white', add = TRUE)
+plot(bei_win, border = '#808080ff', add = TRUE)
+plot(Window(observed_ppp), border = '#80808080', add = TRUE)
 points(observed_ppp, pch = '.', col = 'white')
 
 # Plot uncertainty.
@@ -458,8 +459,8 @@ plot(im(t(sqrt(result_srs$summary.fixed$sd^2 + inla.mesh.project(margin_proj, re
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
         main = 'Posterior SD of Log-Intensity')
-plot(bei_win, border = 'white', add = TRUE)
-plot(Window(observed_ppp), border = 'white', add = TRUE)
+plot(bei_win, border = '#808080ff', add = TRUE)
+plot(Window(observed_ppp), border = '#80808080', add = TRUE)
 points(observed_ppp, pch = '.', col = 'white')
 
 # Spatially-averaged random effect variance.
@@ -473,12 +474,276 @@ srs_pathdist <- c(srs_pathdist, tail(srs_pathdist, n = 1) + sum(cog_lengths_new)
 print(tail(srs_pathdist, n = 1))
 
 
-} # End loop.
+} # End SRS SRS loop.
 
 
-plot(srs_avgvar, type = 'l')
-plot(srs_maxvar, type = 'l')
-plot(srs_pathdist, type = 'l')
+########################################
+# Initial SRS and sequential perp SRS. #
+########################################
+
+# Start with SRS.
+set.seed(7352)
+srs_perp_x <- sort(runif(XSECT_NUM_INITIAL, min_x, max_x))
+waypoints <- cbind(x = rep(srs_perp_x, each = 2), y = c(min_y, max_y, max_y, min_y))
+n_waypoints <- nrow(waypoints)
+
+cog_psp <- psp(
+    x0 = waypoints[-n_waypoints, 'x'],
+    y0 = waypoints[-n_waypoints, 'y'],
+    x1 = waypoints[-1, 'x'],
+    y1 = waypoints[-1, 'y'],
+    window = Window(bei)
+  )
+observed_window <- dilation(cog_psp, XSECT_RADIUS)
+observed_ppp <- bei[observed_window]
+
+
+# Get numerical integration weights.
+#  - Get center and length of segment in each triangle.
+#  - Get barycentric coordinate of each center.
+#  - Multiply barycentric coordinates by length and width in each triangle?
+#  - Sum products for each node.
+
+# Take the intersection of cog_psp with each triangle.
+clusterExport(cl, c('cog_psp'))
+cog_subsegs <- parLapply(cl, mesh_tris, function(x){return(cog_psp[x])})
+
+# Track which triangle each segment came from.
+clusterExport(cl, 'cog_subsegs')
+seg_tri_idx <- unlist(parLapply(cl, seq_along(cog_subsegs), function(i){return(rep(i, cog_subsegs[[i]]$n))}))
+
+# Get the midpoints
+cog_midpoints <- as.matrix(do.call(rbind, parLapply(cl, parLapply(cl, cog_subsegs, midpoints.psp), as.data.frame)))
+
+# Get barycentric coordinates of the midpoints.
+cog_bary <- inla.mesh.projector(margin_mesh, loc = cog_midpoints)$proj$A
+
+# Get the lengths within each triangle.
+cog_lengths <- unlist(parSapply(cl, cog_subsegs, lengths.psp))
+
+# Calculate the integration weights.
+# For each row of the barycentric coordinates matrix (which is number of
+# segments by number of nodes), divide each entry by the portion of the
+# triangle's area represented by that node, which is 1/3rd of the area
+# of the triangle the segment is in.
+clusterExport(cl, c('cog_bary', 'tri_margin_areas', 'seg_tri_idx'))
+cog_bary_prop <- as(t(parSapply(cl, seq_along(seg_tri_idx),
+    function(i){return(cog_bary[i,] / tri_margin_areas[seg_tri_idx[i]] * 3)})),
+  'sparseMatrix')
+# Multiply by the observed area represented in each triangle.
+srs_perp_mesh_weights <- as.vector(XSECT_WIDTH * cog_lengths %*% cog_bary_prop)
+
+
+# Organize variables for inla().
+srs_perp_pts <- as.matrix(as.data.frame(observed_ppp))
+
+# Contruct the SPDE A matrix for nodes and points.
+srs_perp_nData <- nrow(srs_perp_pts)
+srs_perp_LocationMatrix <- inla.mesh.project(margin_mesh, srs_perp_pts)$A
+srs_perp_ObservationMatrix <- rbind(margin_IntegrationMatrix, srs_perp_LocationMatrix)
+
+# Get the integration weights.
+srs_perp_E <- c(srs_perp_mesh_weights * margin_IntegrationWeights, rep(0, srs_perp_nData))
+
+# Create the psuedodata.
+srs_perp_psuedodata <- c(rep(0, margin_nV), rep(1, srs_perp_nData))
+srs_perp_data_list <- list(
+  y = srs_perp_psuedodata,
+  idx = 1:margin_nV,
+  intercept = rep(1, margin_nV)
+)
+
+system.time(
+result_srs_perp <- inla(
+  formula = bei_formula,
+  data = srs_perp_data_list,
+  family = 'poisson',
+  control.predictor = list(A = srs_perp_ObservationMatrix),
+  control.compute = list(config = TRUE),
+  E = srs_perp_E,
+  verbose = TRUE
+)
+)
+print(result_srs_perp$summary.fixed)
+print(result_srs_perp$summary.hyperpar)
+
+# Plot surface.
+dev.set(dev.prev())
+par(mar = c(0.5, 0, 2, 2))
+plot(im(t(inla.mesh.project(margin_proj, result_srs_perp$summary.fixed$mean + result_srs_perp$summary.random$idx$mean)),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior Mean of Log-Intensity')
+plot(bei_win, border = '#808080ff', add = TRUE)
+plot(Window(observed_ppp), border = '#80808080', add = TRUE)
+points(observed_ppp, pch = '.', col = 'white')
+
+# Plot uncertainty.
+dev.set(dev.next())
+par(mar = c(0.5, 0, 2, 2))
+plot(im(t(sqrt(result_srs_perp$summary.fixed$sd^2 + inla.mesh.project(margin_proj, result_srs_perp$summary.random$idx$sd^2))),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior SD of Log-Intensity')
+plot(bei_win, border = '#808080ff', add = TRUE)
+plot(Window(observed_ppp), border = '#80808080', add = TRUE)
+points(observed_ppp, pch = '.', col = 'white')
+
+# Spatially-averaged random effect variance.
+srs_perp_avgvar <- (result_srs_perp$summary.random$idx$sd^2) %*% mesh_area / sum(mesh_area)
+print(srs_perp_avgvar)
+# Max random effect variance at any node. (Interpolated variance cannot exceed this.)
+srs_perp_maxvar <- max(result_srs_perp$summary.random$idx$sd[mesh_area > 0]^2)
+print(srs_perp_maxvar)
+# Distance traveled.
+srs_perp_pathdist <- sum(cog_lengths)
+print(srs_perp_pathdist)
+
+
+# Open two more graphics devices to compare new plots to old plots.
+dev.new()
+dev.new()
+
+
+# Sample sequentially.
+while(tail(srs_perp_pathdist, n = 1) < DIST_MAX){
+
+
+# Choose a new segment.
+srs_perp_y_new <- runif(1, min_y, max_y)
+waypoints_new <- cbind(
+  x = c(min_x, max_x)[order(abs(tail(waypoints[,'x'], n = 1) - c(min_x, max_x)))],
+  y = rep(srs_perp_y_new, 2)
+)
+
+# Create a path from the last waypoint through the new segment.
+cog_new <- psp(
+    x0 = c(waypoints[n_waypoints, 'x'], waypoints_new[1, 'x']),
+    y0 = c(waypoints[n_waypoints, 'y'], waypoints_new[1, 'y']),
+    x1 = waypoints_new[,'x'],
+    y1 = waypoints_new[,'y'],
+    window = Window(bei)
+  )
+observed_window_new <- dilation(cog_new, XSECT_RADIUS)
+observed_ppp_new <- bei[observed_window_new]
+
+# Triangulate the new segments.
+clusterExport(cl, 'cog_new')
+cog_subsegs_new <- parLapply(cl, mesh_tris, function(x){return(cog_new[x])})
+
+# Track which triangle each segment came from.
+clusterExport(cl, 'cog_subsegs_new')
+seg_tri_idx_new <- unlist(parLapply(cl, seq_along(cog_subsegs_new), function(i){return(rep(i, cog_subsegs_new[[i]]$n))}))
+
+# Get the midpoints
+cog_midpoints_new <- as.matrix(do.call(rbind, parLapply(cl, parLapply(cl, cog_subsegs_new, midpoints.psp), as.data.frame)))
+
+# Get barycentric coordinates of the midpoints.
+cog_bary_new <- inla.mesh.projector(margin_mesh, loc = cog_midpoints_new)$proj$A
+
+# Get the lengths within each triangle.
+cog_lengths_new <- unlist(parSapply(cl, cog_subsegs_new, lengths.psp))
+
+# Calculate the integration weights.
+clusterExport(cl, c('cog_bary_new', 'seg_tri_idx_new'))
+cog_bary_prop_new <- as(t(parSapply(cl, seq_along(seg_tri_idx_new),
+    function(i){return(cog_bary_new[i,] / tri_margin_areas[seg_tri_idx_new[i]] * 3)})),
+  'sparseMatrix')
+# Multiply by the observed area represented in each triangle.
+srs_perp_mesh_weights <- srs_perp_mesh_weights + as.vector(XSECT_WIDTH * cog_lengths_new %*% cog_bary_prop_new)
+
+
+# Combine old and new segments.
+waypoints <- rbind(waypoints, waypoints_new)
+n_waypoints <- nrow(waypoints)
+cog_psp <- psp(
+    x0 = waypoints[-n_waypoints, 'x'],
+    y0 = waypoints[-n_waypoints, 'y'],
+    x1 = waypoints[-1, 'x'],
+    y1 = waypoints[-1, 'y'],
+    window = Window(bei)
+  )
+observed_window <- dilation(cog_psp, XSECT_RADIUS)
+observed_ppp <- bei[observed_window]
+
+
+# Organize variables for inla().
+srs_perp_pts <- rbind(srs_perp_pts, as.matrix(as.data.frame(observed_ppp_new)))
+
+# Contruct the SPDE A matrix for nodes and points.
+srs_perp_nData <- nrow(srs_perp_pts)
+srs_perp_LocationMatrix <- inla.mesh.project(margin_mesh, srs_perp_pts)$A
+srs_perp_ObservationMatrix <- rbind(margin_IntegrationMatrix, srs_perp_LocationMatrix)
+
+# Get the integration weights.
+srs_perp_E <- c(srs_perp_mesh_weights * margin_IntegrationWeights, rep(0, srs_perp_nData))
+
+# Create the psuedodata.
+srs_perp_psuedodata <- c(rep(0, margin_nV), rep(1, srs_perp_nData))
+
+# Fit model to initial site.
+srs_perp_data_list <- list(
+  y = srs_perp_psuedodata,
+  idx = 1:margin_nV,
+  intercept = rep(1, margin_nV)
+)
+
+system.time(
+result_srs_perp <- inla(
+  formula = bei_formula,
+  data = srs_perp_data_list,
+  family = 'poisson',
+  control.predictor = list(A = srs_perp_ObservationMatrix),
+  control.compute = list(config = TRUE),
+  E = srs_perp_E,
+  verbose = TRUE
+)
+)
+print(result_srs_perp$summary.fixed)
+print(result_srs_perp$summary.hyperpar)
+
+# Plot surface.
+dev.set(dev.prev())
+par(mar = c(0.5, 0, 2, 2))
+plot(im(t(inla.mesh.project(margin_proj, result_srs_perp$summary.fixed$mean + result_srs_perp$summary.random$idx$mean)),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior Mean of Log-Intensity')
+plot(bei_win, border = '#808080ff', add = TRUE)
+plot(Window(observed_ppp), border = '#80808080', add = TRUE)
+points(observed_ppp, pch = '.', col = 'white')
+
+# Plot uncertainty.
+dev.set(dev.next())
+par(mar = c(0.5, 0, 2, 2))
+plot(im(t(sqrt(result_srs_perp$summary.fixed$sd^2 + inla.mesh.project(margin_proj, result_srs_perp$summary.random$idx$sd^2))),
+        xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
+        yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
+        unitname = c('meter', 'meters')),
+        main = 'Posterior SD of Log-Intensity')
+plot(bei_win, border = '#808080ff', add = TRUE)
+plot(Window(observed_ppp), border = '#80808080', add = TRUE)
+points(observed_ppp, pch = '.', col = 'white')
+
+# Spatially-averaged random effect variance.
+srs_perp_avgvar <- c(srs_perp_avgvar, (result_srs_perp$summary.random$idx$sd^2) %*% mesh_area / sum(mesh_area))
+print(tail(srs_perp_avgvar, n = 1))
+# Max random effect variance at any node. (Interpolated variance cannot exceed this.)
+srs_perp_maxvar <- c(srs_perp_maxvar, max(result_srs_perp$summary.random$idx$sd[mesh_area > 0]^2))
+print(tail(srs_perp_maxvar, n = 1))
+# Distance traveled.
+srs_perp_pathdist <- c(srs_perp_pathdist, tail(srs_perp_pathdist, n = 1) + sum(cog_lengths_new))
+print(tail(srs_perp_pathdist, n = 1))
+
+
+} # End SRS perp SRS loop.
+
+
+# Also do Strauss starting points and adapt by going through highest variance.
+# And transpose plans and use shorter sequential xsects.
 
 
 stopCluster(cl)
