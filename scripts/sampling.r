@@ -177,7 +177,7 @@ points(bei, pch = '.', col = 'white')
 # Plot uncertainty.
 dev.new()
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(margin_proj, sqrt(result_full$summary.fixed$sd^2 + result_full$summary.random$idx$sd^2))),
+plot(im(t(sqrt(result_full$summary.fixed$sd^2 + inla.mesh.project(margin_proj, result_full$summary.random$idx$sd^2))),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
@@ -316,7 +316,7 @@ points(observed_ppp, pch = '.', col = 'white')
 # Plot uncertainty.
 dev.set(dev.next())
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(margin_proj, sqrt(result_srs$summary.fixed$sd^2 + result_srs$summary.random$idx$sd^2))),
+plot(im(t(sqrt(result_srs$summary.fixed$sd^2 + inla.mesh.project(margin_proj, result_srs$summary.random$idx$sd^2))),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
@@ -453,7 +453,7 @@ points(observed_ppp, pch = '.', col = 'white')
 # Plot uncertainty.
 dev.set(dev.next())
 par(mar = c(0.5, 0, 2, 2))
-plot(im(t(inla.mesh.project(margin_proj, sqrt(result_srs$summary.fixed$sd^2 + result_srs$summary.random$idx$sd^2))),
+plot(im(t(sqrt(result_srs$summary.fixed$sd^2 + inla.mesh.project(margin_proj, result_srs$summary.random$idx$sd^2))),
         xrange = Frame(bei)$x + c(-MARGIN, MARGIN),
         yrange = Frame(bei)$y + c(-MARGIN, MARGIN),
         unitname = c('meter', 'meters')),
