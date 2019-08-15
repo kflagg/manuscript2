@@ -482,7 +482,7 @@ print(tail(srs_pathdist, n = 1))
 ########################################
 
 # Start with SRS.
-set.seed(7352)
+set.seed(352)
 srs_perp_x <- sort(runif(XSECT_NUM_INITIAL, min_x, max_x))
 waypoints <- cbind(x = rep(srs_perp_x, each = 2), y = c(min_y, max_y, max_y, min_y))
 n_waypoints <- nrow(waypoints)
@@ -742,7 +742,7 @@ print(tail(srs_perp_pathdist, n = 1))
 } # End SRS perp SRS loop.
 
 
-# Also do Strauss starting points and adapt by going through highest variance.
+# Also do regular starting points and adapt by going through highest variance.
 # And transpose plans and use shorter sequential xsects.
 
 
