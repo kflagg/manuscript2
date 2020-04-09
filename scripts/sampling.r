@@ -5,7 +5,6 @@
 # Load packages.
 library(parallel)
 library(spatstat)
-library(maptools)
 library(INLA)
 
 # Create a cluster for applying in parallel.
@@ -27,13 +26,13 @@ DIST_MAX <- 50000
 WAYPOINT_MARGIN <- XSECT_WIDTH / 2 # Minimum distance between waypoints and site boundary
 
 # Mesh parameters to experiment with.
-MAX_EDGE_LENGTH <- 25
-MAX_EDGE_EXT <- 50
-MARGIN <- 100
+MAX_EDGE_LENGTH <- 100
+MAX_EDGE_EXT <- 200
+MARGIN <- 200
 
 # Graphics parameters.
-NPIX_X <- 400
-NPIX_Y <- 200
+NPIX_X <- 500
+NPIX_Y <- 500
 
 
 # Define derived parameters
@@ -45,62 +44,61 @@ XSECT_NUM_INITIAL <- DIST_INITIAL / XSECT_LENGTH_MAX
 # Objects pertaining to the site. #
 ###################################
 
+# Site window.
+
+sim_R <- owin(poly = cbind(
+    x = c(   0, 1600, 1600, 2000, 2000,  500,    0),
+    y = c(   0,    0,  250,  250, 2000, 2000, 1500)
+  ), unitnames = c('meter', 'meters'))
+
 # Mesh covering the site.
-bei_win <- Window(bei)
-bei_boundary <- inla.mesh.segment(loc = do.call(cbind, vertices.owin(bei_win)))
-bei_full_mesh <- inla.mesh.create(
-  boundary = bei_boundary,
+R_boundary <- inla.mesh.segment(loc = do.call(cbind, vertices.owin(sim_R)))
+R_full_mesh <- inla.mesh.create(
+  boundary = R_boundary,
   refine = list(max.edge = MAX_EDGE_LENGTH)
 )
 
 # Mesh including a margin outside the site.
-margin_mesh <- inla.mesh.2d(
-  loc = bei_full_mesh$loc[,1:2], # Include nodes from site.
+R_margin_mesh <- inla.mesh.2d(
+  loc = R_full_mesh$loc[,1:2], # Include nodes from site.
   offset = MARGIN,
   max.edge = MAX_EDGE_EXT # Fill in the rest with a coarser triangulation.
 )
 
 # Convert the mesh edges to a psp.
-meshloc <- margin_mesh$loc[,-3]
-meshadj <- margin_mesh$graph$vv
-meshadj[lower.tri(meshadj)] <- 0
-meshsegidx0 <- do.call(c,
-  parApply(cl, cbind(seq_len(ncol(meshadj)), apply(meshadj, 2, sum)), 1,
+R_mesh_loc <- R_margin_mesh$loc[,-3]
+R_mesh_adj <- R_margin_mesh$graph$vv
+R_mesh_adj[lower.tri(R_mesh_adj)] <- 0
+R_mesh_seg_idx0 <- do.call(c,
+  parApply(cl, cbind(seq_len(ncol(R_mesh_adj)), apply(R_mesh_adj, 2, sum)), 1,
     function(x){return(rep(x[1], x[2]))})
   )
-meshsegidx1 <- do.call(c, parApply(cl, meshadj == 1, 2, which))
-meshseg0 <- meshloc[meshsegidx0,]
-meshseg1 <- meshloc[meshsegidx1,]
-mesh_psp <- psp(
-  x0 = meshseg0[,1],
-  y0 = meshseg0[,2],
-  x1 = meshseg1[,1],
-  y1 = meshseg1[,2],
-  window = owin(range(meshloc[,1]), range(meshloc[,2])))
-mesh_win <- convexhull(mesh_psp)
-Window(mesh_psp) <- mesh_win
+R_mesh_seg_idx1 <- do.call(c, parApply(cl, R_mesh_adj == 1, 2, which))
+R_mesh_seg0 <- R_mesh_loc[R_mesh_seg_idx0,]
+R_mesh_seg1 <- R_mesh_loc[R_mesh_seg_idx1,]
+R_mesh_psp <- psp(
+  x0 = R_mesh_seg0[,1],
+  y0 = R_mesh_seg0[,2],
+  x1 = R_mesh_seg1[,1],
+  y1 = R_mesh_seg1[,2],
+  window = owin(range(R_mesh_loc[,1]), range(R_mesh_loc[,2])))
+R_mesh_win <- convexhull(R_mesh_psp)
+Window(R_mesh_psp) <- R_mesh_win
 
 # Convert mesh triangles to owins.
-clusterExport(cl, c('meshloc', 'bei_win'))
-mesh_tris <- parApply(cl, margin_mesh$graph$tv, 1, function(x){
-  return(owin(poly = meshloc[x,]))
+clusterExport(cl, c('R_mesh_loc', 'sim_R'))
+R_mesh_tris <- parApply(cl, R_margin_mesh$graph$tv, 1, function(x){
+  return(owin(poly = R_mesh_loc[x,]))
 })
-tri_areas <- parSapply(cl, parLapply(cl, mesh_tris, '[', bei_win), area)
-tri_margin_areas <- parSapply(cl, mesh_tris, area)
+R_tri_areas <- parSapply(cl, parLapply(cl, R_mesh_tris, '[', sim_R), area)
+R_tri_margin_areas <- parSapply(cl, R_mesh_tris, area)
 
 # Calculate the area represented by each node.
-mesh_margin_area <- rep(0, margin_mesh$n)
-for(i in seq_along(tri_margin_areas)){
-  mesh_margin_area[margin_mesh$graph$tv[i,]] <- mesh_margin_area[margin_mesh$graph$tv[i,]] +
-    tri_margin_areas[i] / 3
-}
+R_nodes_margin_area <- diag(inla.mesh.fem(R_margin_mesh)$c0)
 
 # Calculate the interior area represented by each node.
-mesh_area <- rep(0, margin_mesh$n)
-for(i in seq_along(tri_areas)){
-  mesh_area[margin_mesh$graph$tv[i,]] <- mesh_area[margin_mesh$graph$tv[i,]] +
-    tri_areas[i] / 3
-}
+# WRONG LENGTH! Need to include 0s for nodes in the margin.
+R_nodes_area <- diag(inla.mesh.fem(R_full_mesh)$c0)
 
 # Set up the spatial numerical integration.
 margin_nV <- margin_mesh$n
@@ -109,6 +107,47 @@ margin_IntegrationWeights <- diag(inla.mesh.fem(margin_mesh)$c0)
 
 # Projector to interpolate over site.
 margin_proj <- inla.mesh.projector(margin_mesh, dims = c(NPIX_X, NPIX_Y))
+
+
+###################################
+# Objects pertaining to the data. #
+###################################
+
+# Function to simulate one realized point pattern. This includes an LGCP
+# background process with Matern (alpha = 2) covariance and a foreground
+# cluster process. The true intensity function is stored in an attribute
+# called Lambda.
+# Dots should include dimyx = c(NPIX_Y, NPIX_X).
+sim_data <- function(
+  R = sim_R,
+  matern_mu = log(1000 / area(R)), matern_sd = 1, matern_range = 200,
+  thomas_kappa = 2 / area(R), thomas_scale = 100, thomas_mu = 250,
+  ...){
+
+  # Simulate a background LGCP.
+  maternlgcp <- rLGCP(
+    model = 'matern',
+    mu = matern_mu,
+    param = list(nu = 1, var = matern_sd^2, scale = matern_range),
+    win = R, saveLambda = TRUE, nsim = 1, ...
+  )
+
+  # Simulate foreground hotspots as a Thomas cluster process.
+  thomas <- rThomas(
+    kappa = thomas_kappa,
+    scale = thomas_scale,
+    mu = thomas_mu,
+    win = R, saveLambda = TRUE, nsim = 1, expand = 0, ...
+  )
+
+  # Superimpose the two processes.
+  result <- superimpose(maternlgcp, thomas)
+
+  # Add the realized intensity functions.
+  attr(result, 'Lambda') <- attr(maternlgcp, 'Lambda') + attr(thomas, 'Lambda')
+
+  return(result)
+}
 
 
 ####################################################################

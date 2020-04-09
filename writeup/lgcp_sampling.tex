@@ -1,0 +1,197 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath,amsfonts,graphicx,natbib}
+\usepackage{subcaption}
+\usepackage{lineno}
+\usepackage{enumerate}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{xcolor}
+\usepackage{url}
+\def\spacingset#1{\renewcommand{\baselinestretch}
+{#1}\small\normalsize} \spacingset{2}
+
+\begin{document}
+
+
+\title{\bf Log-Gaussian Cox Processes and Line Transect Sampling: Optimal Sampling Critera}
+
+\author{}
+\date{}        
+\maketitle
+
+\bigskip
+\begin{abstract}
+
+\noindent insert abstract here
+
+\end{abstract}
+
+{\it Keywords:} log-Gaussian Cox process, optimal sampling, model-based design, spatial sampling design
+
+\linenumbers
+
+
+\section{Introduction}
+
+Spatial point processes models have long been considered generally infeasible
+because of their computational demands, but recent advances in Bayesian
+computing have made the Log-Gaussian Cox process an attainable model in
+practice \cite{rueetal, lindgrenetal, illianetal, simpsonetal}. Variable
+sampling effort leads to a degraded point pattern \cite{chakrabortyetal} and
+it is relatively simple to accomodate variable sampling effort in these models
+using modern computing tools \cite{yuanetal}. However, the literature on
+optimal sampling for spatial point process models is in its infancy
+\cite{liuvanhatalo}.
+
+Point pattern data are routinely collected in species distribution studies and
+ordnance response projects. These applications may use quadrat sampling or
+line-transect sampling, with transect sampling being more common. When the
+objective is mapping where events occur in space, various spatial mapping
+procedures have been used. Traditionally these have involved aggregating the
+data to grid cell counts or computing moving averages. These have the downside
+of introducing arbitrary structure into the data by the choice of gridding
+scheme or averaging window, and require uneccessary computation effort
+\cite{simpsonetal}. Software is now available to fit spatial point process
+models to data acquired via diastance sampling and simultaneously estimate the
+detection function \cite{dspat}.
+
+In ecological settings, sampling plans are often designed around the goal of
+estimating total abundance. Ordnance response surveys are typically designed
+with the objective of detecting (but not necessarily mapping) hotspots.
+However, to our knowledge, there has been very little work done in deciding
+\emph{where} to collect data when the goal is to map the intensity using a
+spatial point process model.
+
+
+\subsection{Notation and Terminology}
+
+\begin{itemize}
+
+\item process defined on \(\mathcal{D} \subset \mathbb{R}^{2}\), domain of the
+intensity function, define \(d = \mathrm{dim}(\mathcal{D})\)
+
+\item observation window \(\mathcal{S} \subset \mathcal{D}\)
+
+\item define three regions:
+\begin{itemize}
+\item the domain \(\mathcal{D}\) over which the process mathematically operates
+\item the study region \(\mathcal{R}\) over which inferences are desired
+\item the observed/sampled observation window \(\mathcal{S}\)
+\end{itemize}
+
+\item general relationship is \(\mathcal{S} \subset \mathcal{R}
+\subset \mathcal{D} \subset \mathbb{R}^{d}\) where all of the subset symbols
+taken to mean ``subset or equal''
+
+\item \(\mathcal{D}\) can be unbounded or bounded (often \(\mathbb{R}^{d}\)),
+$\mathcal{S}$ practically always bounded, \(\mathcal{R}\) bounded or unbounded
+depending on application and inferential goals
+
+\item the ``fully surveyed'' situation is \(\mathcal{S} = \mathcal{R}\)
+
+\item \(\mathbf{X}\) point process on \(\mathcal{R}\), \(\mathbf{x} = \{x_{1},
+\dots, x_{n}\}\) realized point pattern
+
+\item point \(x \in \mathbf{x}\) called an event
+
+\item intensity function \(\lambda(u)\)
+
+\item types of ``points'' in space:
+\begin{itemize}
+\item \(x\) event in the point pattern
+\item \(s\) numerical integration node
+\item \(u\) arbitrary location in \(\mathcal{D}\) used to index intensity
+function and predictors
+\end{itemize}
+
+\item \(z(u)\) a column vector of covariates/predictors at \(u\)
+
+\item ``point'' refers to a \(u\) unless clearly stated otherwise
+
+\item bold for sets and spatial processes, normal italics for spatial vectors
+
+\item \(y\) and variations will be used for objects derived from the point pattern,
+e.g. marks, pseudodata
+
+\end{itemize}
+
+
+\section{Model-Based Criteria}
+
+UXO: mapping a site for delineating high-intensity regions
+\begin{itemize}
+\item minimize time/distance
+\item minimize one of these:
+\begin{itemize}
+\item maximum variance in intensity surface
+\item maximum variance in intensity surface \emph{at contours near action level}
+\item integrated variance of intensity surface
+\item error rates in thresholding
+\end{itemize}
+\item minimize variance of coefficients for covariates
+\end{itemize}
+
+Ecology: mapping plants or animal nests using distance sampling
+\begin{itemize}
+\item minimize distance
+\item minimize variance in parameters of detection function and/or point process
+\item minimize one of these:
+\begin{itemize}
+\item maximum variance in intensity surface
+\item integrated variance of intensity surface
+\end{itemize}
+\item minimize variance of coefficients for covariates
+\end{itemize}
+
+Heuristics of a good transect sampling plan
+\begin{itemize}
+\item Space-filling, criteria might be maximizing the path integral of nearest
+neighbor distance along the transects
+\item Should start with a sparse design with regular spacing, then refine with
+infill
+\begin{itemize}
+\item Provides good spatial coverage even if aborted early
+\item Imagine downloading a high-resolution intensity jpeg over 56k
+\end{itemize}
+\item Path should avoid sharp turns but is allowed to cross itself
+\item One option is to generate two segments at a time, first a short-to-medium
+length segment to get to the start of the next transect, then a  medium-to-long
+segment for the transect
+\item Could have new segment length be negatively correlated with the previous
+segment length
+\end{itemize}
+
+add some citations: \cite{lark}, classical space-filling designs,
+space-filling fractals
+
+
+\section{Sampling Situations}
+
+\begin{itemize}
+
+\item SRS of parallel transects
+
+\item systematic sample of parallel transects
+
+\item fractal curves with random starting points
+
+\item movement model
+\begin{itemize}
+\item generate sequentially, two waypoints at a time
+\item generate a jump distance and a direction
+\item distance negatively correlated with previous distance (should
+approximately alternate between a short ``transition'' and a long ``transect'')
+\item direction bimodal with modes near \(\pm \pi / 2\)
+\item if using location/scale beta for direction, allow any direction when the
+support 
+\end{itemize}
+
+\end{itemize}
+
+set up to think about adaptive sampling (adding a transect at a time or
+stopping early but don't actually do it here)
+
+
+\bibliography{lgcp_sampling.bib}
+\bibliographystyle{agsm}
+\end{document}
