@@ -13,7 +13,7 @@
 \begin{document}
 
 
-\title{\bf Log-Gaussian Cox Processes and Line Transect Sampling: Optimal Sampling Critera}
+\title{\bf Log-Gaussian Cox processes and line transect sampling: optimal design critera}
 
 \author{}
 \date{}        
@@ -36,12 +36,14 @@
 Spatial point processes models have long been considered generally infeasible
 because of their computational demands, but recent advances in Bayesian
 computing have made the Log-Gaussian Cox process an attainable model in
-practice \cite{rueetal, lindgrenetal, illianetal, simpsonetal}. Variable
+practice \citep{rueetal, lindgrenetal, illianetal, simpsonetal}. Variable
 sampling effort leads to a degraded point pattern \cite{chakrabortyetal} and
 it is relatively simple to accomodate variable sampling effort in these models
-using modern computing tools \cite{yuanetal}. However, the literature on
+using modern computing tools \citep{yuanetal}. However, the literature on
 optimal sampling for spatial point process models is in its infancy
-\cite{liuvanhatalo}.
+\citep{liuvanhatalo}.
+% Note: Liu and Vanhatalo binned the events and used a Laplace approximation,
+% not INLA.
 
 Point pattern data are routinely collected in species distribution studies and
 ordnance response projects. These applications may use quadrat sampling or
@@ -51,9 +53,9 @@ procedures have been used. Traditionally these have involved aggregating the
 data to grid cell counts or computing moving averages. These have the downside
 of introducing arbitrary structure into the data by the choice of gridding
 scheme or averaging window, and require uneccessary computation effort
-\cite{simpsonetal}. Software is now available to fit spatial point process
+\citep{simpsonetal}. Software is now available to fit spatial point process
 models to data acquired via diastance sampling and simultaneously estimate the
-detection function \cite{dspat}.
+detection function \citep{dspat}.
 
 In ecological settings, sampling plans are often designed around the goal of
 estimating total abundance. Ordnance response surveys are typically designed
@@ -110,8 +112,8 @@ function and predictors
 
 \item bold for sets and spatial processes, normal italics for spatial vectors
 
-\item \(y\) and variations will be used for objects derived from the point pattern,
-e.g. marks, pseudodata
+\item \(y\) and variations will be used for objects derived from the point
+pattern, e.g. marks, pseudodata
 
 \end{itemize}
 
@@ -126,7 +128,7 @@ UXO: mapping a site for delineating high-intensity regions
 \item maximum variance in intensity surface
 \item maximum variance in intensity surface \emph{at contours near action level}
 \item integrated variance of intensity surface
-\item error rates in thresholding
+\item error rates in thresholding at AL (sensitivity/specificity/AUC)
 \end{itemize}
 \item minimize variance of coefficients for covariates
 \end{itemize}
@@ -143,10 +145,28 @@ Ecology: mapping plants or animal nests using distance sampling
 \item minimize variance of coefficients for covariates
 \end{itemize}
 
+Also remember the weighted criterion from my proposal:
+\begin{equation*}
+\int_{\mathcal{R}} \frac{\mathrm{Var}\left[\lambda(u)\right]}
+{p^{\left|\lambda(u)-A\right|}} \mathrm{d}u
+\end{equation*}
+
 Heuristics of a good transect sampling plan
 \begin{itemize}
 \item Space-filling, criteria might be maximizing the path integral of nearest
 neighbor distance along the transects
+\begin{itemize}
+\item nearest neighbor distance \(\mathrm{nnd}_{k}(u) = \min|u - v|\) where
+\(v\) is any point in the set of path segments at least \(k\) steps away from
+the segment containing \(u\)
+\item \(k = 0\) would include \(v\) in the same segment as \(u\) so trivially
+\(\mathrm{nnd}_{k}(u) = 0\) for all \(u\) in the path
+\item \(\mathrm{nnd}_{1}(u)\) includes all segments except the one containing \(u\)
+\item \(\mathrm{nnd}_{2}(u)\) excludes the segment containing \(u\) and segments
+connected to it
+\item segments not accessible by a connected path starting at \(u\) are always
+included
+\end{itemize}
 \item Should start with a sparse design with regular spacing, then refine with
 infill
 \begin{itemize}
@@ -161,7 +181,7 @@ segment for the transect
 segment length
 \end{itemize}
 
-add some citations: \cite{lark}, classical space-filling designs,
+add some citations: \citet{lark}, classical space-filling designs,
 space-filling fractals
 
 
@@ -172,6 +192,8 @@ space-filling fractals
 \item SRS of parallel transects
 
 \item systematic sample of parallel transects
+
+\item inhibitory plus close pairs of parallel transects
 
 \item fractal curves with random starting points
 
@@ -190,6 +212,13 @@ support
 
 set up to think about adaptive sampling (adding a transect at a time or
 stopping early but don't actually do it here)
+
+
+\section{Results}
+
+look at examples of designs that minimize each criterion
+
+look at examples of designs along the Pareto front
 
 
 \bibliography{lgcp_sampling.bib}

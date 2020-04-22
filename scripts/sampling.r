@@ -66,7 +66,7 @@ R_margin_mesh <- inla.mesh.2d(
 )
 
 # Convert the mesh edges to a psp.
-R_mesh_loc <- R_margin_mesh$loc[,-3]
+R_mesh_loc <- R_margin_mesh$loc[,1:2]
 R_mesh_adj <- R_margin_mesh$graph$vv
 R_mesh_adj[lower.tri(R_mesh_adj)] <- 0
 R_mesh_seg_idx0 <- do.call(c,
@@ -85,28 +85,69 @@ R_mesh_psp <- psp(
 R_mesh_win <- convexhull(R_mesh_psp)
 Window(R_mesh_psp) <- R_mesh_win
 
-# Convert mesh triangles to owins.
+# Convert mesh triangles to owins and create a tesselation.
 clusterExport(cl, c('R_mesh_loc', 'sim_R'))
-R_mesh_tris <- parApply(cl, R_margin_mesh$graph$tv, 1, function(x){
+R_margin_mesh_tess <- as.tess(parApply(cl, R_margin_mesh$graph$tv, 1, function(x){
   return(owin(poly = R_mesh_loc[x,]))
-})
-R_tri_areas <- parSapply(cl, parLapply(cl, R_mesh_tris, '[', sim_R), area)
-R_tri_margin_areas <- parSapply(cl, R_mesh_tris, area)
+}))
 
-# Calculate the area represented by each node.
+# Get the area of each triangle.
+R_tri_margin_areas <- tile.areas(R_margin_mesh_tess)
+
+# Get the interior area of each triangle.
+R_tri_areas <- parSapply(cl, parLapply(cl, tiles(R_margin_mesh_tess), '[', sim_R), area)
+
+# Construct the dual of the mesh.
+# Start by getting a list of triangles for each node.
+clusterExport(cl, 'R_margin_mesh')
+node_tris <- parLapply(cl,
+  parLapply(cl,
+    parLapply(cl,
+      parLapply(cl,
+        # Indicate which triangles have this node as a vertex.
+        seq_len(R_margin_mesh$n), `==`, R_margin_mesh$graph$tv
+      ),
+      # Flatten the indicator matrix.
+      rowSums),
+    # Make the indicator vector logical instead of integer 0/1.
+    as.logical),
+  # Find which rows of the matrix (triangles) had this node.
+  which)
+
+# Get the centroids of each triangle.
+tri_centroids <- t(parSapply(cl, tiles(R_margin_mesh_tess), centroid.owin))
+
+# Now, construct the dual mesh. Get the quadrilaterals made by cutting each
+# triangle from its edge midpoints to its centroid, indexed by the mesh nodes.
+# Then union the quadrilaterals for each node.
+clusterExport(cl, c('node_tris', 'tri_centroids'))
+dual_tess <- as.tess(parLapply(cl, seq_len(R_margin_mesh$n), function(i){return(
+  do.call(union.owin, lapply(node_tris[[i]], function(j){return(
+    convexhull.xy(rbind(
+      # jth triangle centroid.
+      tri_centroids[j,],
+      # Average of the ith node and all vertices of the jth triangle.
+      # This results in the ith node and the midpoints of its edges.
+      t((R_margin_mesh$loc[i, 1:2] + t(R_margin_mesh$loc[
+        R_margin_mesh$graph$tv[j,],
+      1:2])) / 2)
+    ))
+  )}))
+)}))
+
+# Get the area represented by each node.
 R_nodes_margin_area <- diag(inla.mesh.fem(R_margin_mesh)$c0)
 
 # Calculate the interior area represented by each node.
-# WRONG LENGTH! Need to include 0s for nodes in the margin.
-R_nodes_area <- diag(inla.mesh.fem(R_full_mesh)$c0)
+R_nodes_area <- parSapply(cl, parLapply(cl, tiles(dual_tess), `[`, sim_R), area)
 
 # Set up the spatial numerical integration.
-margin_nV <- margin_mesh$n
+margin_nV <- R_margin_mesh$n
 margin_IntegrationMatrix <- sparseMatrix(i = 1:margin_nV, j = 1:margin_nV, x = rep(1, margin_nV))
-margin_IntegrationWeights <- diag(inla.mesh.fem(margin_mesh)$c0)
+margin_IntegrationWeights <- R_nodes_area
 
 # Projector to interpolate over site.
-margin_proj <- inla.mesh.projector(margin_mesh, dims = c(NPIX_X, NPIX_Y))
+margin_proj <- inla.mesh.projector(R_margin_mesh, dims = c(NPIX_X, NPIX_Y))
 
 
 ###################################
@@ -155,7 +196,7 @@ sim_data <- function(
 ####################################################################
 
 # Define an SPDE representation of the spatial GP using INLA's default priors.
-margin_spde <- inla.spde2.matern(mesh = margin_mesh)
+margin_spde <- inla.spde2.matern(mesh = R_margin_mesh)
 
 # Model formula with no covariates.
 bei_formula <- y ~ -1 + intercept + f(idx, model = margin_spde)
