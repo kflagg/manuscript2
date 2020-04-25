@@ -21,8 +21,10 @@ XSECT_LENGTH_MIN <- 50
 XSECT_LENGTH_MAX <- 500
 XSECT_SEP_MIN <- 10
 XSECT_SEP_MAX <- 250
-DIST_INITIAL <- 5000
+DIST_INITIAL <- 10000
 DIST_MAX <- 50000
+NUM_PAIRS <- 3
+PAIR_RADIUS <- 20 * XSECT_WIDTH
 WAYPOINT_MARGIN <- XSECT_WIDTH / 2 # Minimum distance between waypoints and site boundary
 
 # Mesh parameters to experiment with.
@@ -37,7 +39,7 @@ NPIX_Y <- 500
 
 # Define derived parameters
 XSECT_RADIUS <- XSECT_WIDTH / 2 # Half the transect width
-XSECT_NUM_INITIAL <- DIST_INITIAL / XSECT_LENGTH_MAX
+XSECT_NUM_INITIAL <- floor(DIST_INITIAL / XSECT_LENGTH_MAX)
 
 
 #}}}##################################
@@ -73,6 +75,9 @@ clusterExport(cl, c('R_mesh_loc', 'sim_R'))
 R_mesh_tess <- as.tess(parApply(cl, R_mesh$graph$tv, 1, function(x){
   return(owin(poly = R_mesh_loc[x,]))
 }))
+
+# Convert mesh to linear network for plotting.
+R_mesh_net <- linnet(as.ppp(R_mesh_loc, sim_R), as.matrix(R_mesh$graph$vv == 1))
 
 # Get the area of each triangle.
 #R_tri_margin_areas <- tile.areas(R_margin_mesh_tess)
@@ -125,8 +130,8 @@ R_nodes_area <- parSapply(cl, parLapply(cl, tiles(dual_tess), `[`, sim_R), area)
 # Neat plot.
 plot(dual_tess, border = '#80808020', do.col = TRUE, values = R_nodes_area,
      main = 'Mesh with dual colored by node weight')
-plot(R_mesh_tess, add = TRUE, border = '#00000080')
-plot(sim_R, border = 'white', add = TRUE)
+plot(R_mesh_net, add = TRUE, col = '#00000080')
+#plot(sim_R, border = 'white', add = TRUE)
 points(R_mesh_loc[,], pch = 20)
 
 # Set up the spatial numerical integration.
@@ -177,7 +182,7 @@ sim_data <- function(
   return(result)
 }
 
-sim_dataset <- list(sim_data(dimyx = c(NPIX_Y, NPIX_X)))
+sim_datasets <- list(sim_data(dimyx = c(NPIX_Y, NPIX_X)))
 idx <- 1
 
 
@@ -193,9 +198,9 @@ R_spde <- inla.spde2.matern(R_mesh)
 R_formula <- y ~ -1 + intercept + f(idx, model = R_spde)
 
 
-#}}}###############
-# Fully surveyed. #
-###################
+#}}}##################
+#{{{ Fully surveyed. #
+######################
 
 # Observed event locations.
 full_pts <- cbind(sim_dataset[[idx]]$x, sim_dataset[[idx]]$y)
@@ -290,8 +295,8 @@ srs <- function(full_ppp, num_xsects = XSECT_NUM_INITIAL){
       y0 = waypoints[-n_waypoints, 'y'],
       x1 = waypoints[-1, 'x'],
       y1 = waypoints[-1, 'y'],
-      window = dilation(Frame(sim_R), XSECT_RADIUS)
-    )[sim_R]
+      window = dilation(Frame(full_ppp), XSECT_RADIUS)
+    )[Window(full_ppp)]
     srs_D <- dilation(cog_psp, XSECT_RADIUS)
     srs_ppp <- full_ppp[srs_D]
     return(structure(srs_ppp, cog = cog_psp))
@@ -314,17 +319,80 @@ sys <- function(full_ppp, num_xsects = XSECT_NUM_INITIAL){
       y0 = waypoints[-n_waypoints, 'y'],
       x1 = waypoints[-1, 'x'],
       y1 = waypoints[-1, 'y'],
-      window = dilation(Frame(sim_R), XSECT_RADIUS)
-    )[sim_R]
+      window = dilation(Frame(full_ppp), XSECT_RADIUS)
+    )[Window(full_ppp)]
     sys_D <- dilation(cog_psp, XSECT_RADIUS)
     sys_ppp <- full_ppp[sys_D]
     return(structure(sys_ppp, cog = cog_psp))
 }
 
 
+#}}}##############################
+#{{{ Inhibitory plus close pairs #
+##################################
+
+inhib <- function(full_ppp, num_primary = XSECT_NUM_INITIAL - num_paired,
+                  num_paired = NUM_PAIRS, pair_radius = PAIR_RADIUS,
+                  antirepulsion = 0.05,
+                  mc_iter = 1000, mc_radius = (max_x - min_x) / num_primary / 2){
+  initial_x <- runif(num_primary, min_x, max_x)
+
+  # A simple Metropolis-Hastings algorithm.
+  for(iter in seq_len(mc_iter)){
+    # Count the number of current close pairs.
+    current_pairs <- 0L
+    for(i in 1:(num_primary - 1)){
+      current_pairs <- current_pairs +
+        sum(abs(initial_x[i] - initial_x[-(1:i)]) < pair_radius)
+    }
+
+    # Choose a value to perturb.
+    perturb_idx <- sample.int(num_primary, 1)
+
+    # Perturb it.
+    prop_x <- initial_x
+    prop_x[perturb_idx] <- runif(1,
+       max(prop_x[perturb_idx] - mc_radius, min_x),
+       min(prop_x[perturb_idx] + mc_radius, max_x)
+    )
+
+    # Count the number of proposed close pairs.
+    prop_pairs <- 0L
+    for(i in 1:(num_primary - 1)){
+      prop_pairs <- prop_pairs +
+        sum(abs(prop_x[i] - prop_x[-(1:i)]) < pair_radius)
+    }
+
+    # Accept of reject the proposal.
+    if(runif(1) < antirepulsion^(prop_pairs - current_pairs)){
+      initial_x <- prop_x
+    }
+  }
+
+  paired_x <- sample(initial_x, num_paired)
+  pairs_x <- runif(num_paired,
+                   pmax(paired_x - pair_radius, min_x),
+                   pmin(paired_x + pair_radius, max_x))
+  inhib_x <- sort(c(initial_x, pairs_x))
+  waypoints <- cbind(x = rep(inhib_x, each = 2), y = c(min_y, max_y, max_y, min_y))
+  n_waypoints <- nrow(waypoints)
+
+  cog_psp <- psp(
+      x0 = waypoints[-n_waypoints, 'x'],
+      y0 = waypoints[-n_waypoints, 'y'],
+      x1 = waypoints[-1, 'x'],
+      y1 = waypoints[-1, 'y'],
+      window = dilation(Frame(full_ppp), XSECT_RADIUS)
+    )[Window(full_ppp)]
+    inhib_D <- dilation(cog_psp, XSECT_RADIUS)
+    inhib_ppp <- full_ppp[inhib_D]
+    return(structure(inhib_ppp, cog = cog_psp))
+}
+
 #}}}############################
 
-
 stopCluster(cl)
+
+rect_R <- owin(c(0, 1500), c(0, 700))
 
 # vim: foldmethod=marker:
