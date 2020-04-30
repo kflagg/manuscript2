@@ -5,6 +5,8 @@
 # Load packages.
 library(parallel)
 library(spatstat)
+library(lhs)
+library(TSP)
 library(INLA)
 
 # Create a cluster for applying in parallel.
@@ -23,9 +25,10 @@ XSECT_SEP_MIN <- 10
 XSECT_SEP_MAX <- 250
 DIST_INITIAL <- 10000
 DIST_MAX <- 50000
+WP_NUM_INITIAL <- 400
 NUM_PAIRS <- 3
 PAIR_RADIUS <- 20 * XSECT_WIDTH
-WAYPOINT_MARGIN <- XSECT_WIDTH / 2 # Minimum distance between waypoints and site boundary
+WP_MARGIN <- XSECT_WIDTH / 2 # Minimum distance between waypoints and site boundary
 
 # Mesh parameters to experiment with.
 MAX_EDGE_LENGTH <- 100
@@ -203,7 +206,7 @@ R_formula <- y ~ -1 + intercept + f(idx, model = R_spde)
 ######################
 
 # Observed event locations.
-full_pts <- cbind(sim_dataset[[idx]]$x, sim_dataset[[idx]]$y)
+full_pts <- cbind(sim_datasets[[idx]]$x, sim_datasets[[idx]]$y)
 full_n_events <- nrow(full_pts)
 
 # Create the psuedodata. This is a vector giving the count of events at each
@@ -272,34 +275,43 @@ points(sim_dataset[[idx]], pch = '.', col = 'white')
 ##########################################################
 
 # Define the region where waypoints are allowed
-sampleable <- erosion(sim_R, WAYPOINT_MARGIN)
-min_x <- min(vertices(sampleable)$x)
-max_x <- max(vertices(sampleable)$x)
+#sampleable <- erosion(sim_R, WP_MARGIN)
+#min_x <- min(vertices(sampleable)$x)
+#max_x <- max(vertices(sampleable)$x)
 #min_y <- min(vertices(sampleable)$y)
 #max_y <- max(vertices(sampleable)$y)
-min_y <- min(vertices(sim_R)$y) - XSECT_RADIUS
-max_y <- max(vertices(sim_R)$y) + XSECT_RADIUS
+
+# Function to subset a ppp to a region along a psp.
+sample_ppp <- function(full_ppp, path, xsect_radius = XSECT_RADIUS){
+  obs_D <- dilation(path, xsect_radius)
+  obs_ppp <- full_ppp[obs_D]
+  return(structure(obs_ppp, path = path))
+}
 
 
 #}}}#######
 #{{{ SRS. #
 ###########
 
-srs <- function(full_ppp, num_xsects = XSECT_NUM_INITIAL){
+srs <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_RADIUS){
+  full_frame <- Frame(full_win)
+  min_x <- min(full_frame$x) + xsect_radius
+  max_x <- max(full_frame$x) - xsect_radius
+  min_y <- min(full_frame$y) - xsect_radius
+  max_y <- max(full_frame$y) + xsect_radius
+
   srs_x <- sort(runif(num_xsects, min_x, max_x))
   waypoints <- cbind(x = rep(srs_x, each = 2), y = c(min_y, max_y, max_y, min_y))
   n_waypoints <- nrow(waypoints)
 
-  cog_psp <- psp(
-      x0 = waypoints[-n_waypoints, 'x'],
-      y0 = waypoints[-n_waypoints, 'y'],
-      x1 = waypoints[-1, 'x'],
-      y1 = waypoints[-1, 'y'],
-      window = dilation(Frame(full_ppp), XSECT_RADIUS)
-    )[Window(full_ppp)]
-    srs_D <- dilation(cog_psp, XSECT_RADIUS)
-    srs_ppp <- full_ppp[srs_D]
-    return(structure(srs_ppp, cog = cog_psp))
+  path_psp <- psp(
+    x0 = waypoints[-n_waypoints, 'x'],
+    y0 = waypoints[-n_waypoints, 'y'],
+    x1 = waypoints[-1, 'x'],
+    y1 = waypoints[-1, 'y'],
+    window = dilation(full_frame, xsect_radius)
+  )[full_win]
+  return(path_psp)
 }
 
 
@@ -307,23 +319,27 @@ srs <- function(full_ppp, num_xsects = XSECT_NUM_INITIAL){
 #{{{ Systematic random sample. #
 ################################
 
-sys <- function(full_ppp, num_xsects = XSECT_NUM_INITIAL){
+sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_RADIUS){
+  full_frame <- Frame(full_win)
+  min_x <- min(full_frame$x) + xsect_radius
+  max_x <- max(full_frame$x) - xsect_radius
+  min_y <- min(full_frame$y) - xsect_radius
+  max_y <- max(full_frame$y) + xsect_radius
+
   spacing <- (max_x - min_x) / num_xsects
-  edge2edge <- spacing - XSECT_WIDTH
+  edge2edge <- spacing - xsect_radius * 2
   sys_x <- runif(1, min_x, min_x + edge2edge) + (0:(num_xsects - 1)) * spacing
   waypoints <- cbind(x = rep(sys_x, each = 2), y = c(min_y, max_y, max_y, min_y))
   n_waypoints <- nrow(waypoints)
 
-  cog_psp <- psp(
-      x0 = waypoints[-n_waypoints, 'x'],
-      y0 = waypoints[-n_waypoints, 'y'],
-      x1 = waypoints[-1, 'x'],
-      y1 = waypoints[-1, 'y'],
-      window = dilation(Frame(full_ppp), XSECT_RADIUS)
-    )[Window(full_ppp)]
-    sys_D <- dilation(cog_psp, XSECT_RADIUS)
-    sys_ppp <- full_ppp[sys_D]
-    return(structure(sys_ppp, cog = cog_psp))
+  path_psp <- psp(
+    x0 = waypoints[-n_waypoints, 'x'],
+    y0 = waypoints[-n_waypoints, 'y'],
+    x1 = waypoints[-1, 'x'],
+    y1 = waypoints[-1, 'y'],
+    window = dilation(full_frame, xsect_radius)
+  )[full_win]
+  return(path_psp)
 }
 
 
@@ -331,10 +347,16 @@ sys <- function(full_ppp, num_xsects = XSECT_NUM_INITIAL){
 #{{{ Inhibitory plus close pairs #
 ##################################
 
-inhib <- function(full_ppp, num_primary = XSECT_NUM_INITIAL - num_paired,
+inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
                   num_paired = NUM_PAIRS, pair_radius = PAIR_RADIUS,
-                  antirepulsion = 0.05,
-                  mc_iter = 1000, mc_radius = (max_x - min_x) / num_primary / 2){
+                  antirepulsion = 0.05, xsect_radius = XSECT_RADIUS,
+                  mc_iter = 1000, mc_radius = pair_radius * 2){
+  full_frame <- Frame(full_win)
+  min_x <- min(full_frame$x) + xsect_radius
+  max_x <- max(full_frame$x) - xsect_radius
+  min_y <- min(full_frame$y) - xsect_radius
+  max_y <- max(full_frame$y) + xsect_radius
+
   initial_x <- runif(num_primary, min_x, max_x)
 
   # A simple Metropolis-Hastings algorithm.
@@ -346,7 +368,7 @@ inhib <- function(full_ppp, num_primary = XSECT_NUM_INITIAL - num_paired,
         sum(abs(initial_x[i] - initial_x[-(1:i)]) < pair_radius)
     }
 
-    # Choose a value to perturb.
+    # Choose one to perturb.
     perturb_idx <- sample.int(num_primary, 1)
 
     # Perturb it.
@@ -377,19 +399,51 @@ inhib <- function(full_ppp, num_primary = XSECT_NUM_INITIAL - num_paired,
   waypoints <- cbind(x = rep(inhib_x, each = 2), y = c(min_y, max_y, max_y, min_y))
   n_waypoints <- nrow(waypoints)
 
-  cog_psp <- psp(
+  path_psp <- psp(
       x0 = waypoints[-n_waypoints, 'x'],
       y0 = waypoints[-n_waypoints, 'y'],
       x1 = waypoints[-1, 'x'],
       y1 = waypoints[-1, 'y'],
-      window = dilation(Frame(full_ppp), XSECT_RADIUS)
-    )[Window(full_ppp)]
-    inhib_D <- dilation(cog_psp, XSECT_RADIUS)
-    inhib_ppp <- full_ppp[inhib_D]
-    return(structure(inhib_ppp, cog = cog_psp))
+      window = dilation(full_frame, xsect_radius)
+    )[full_frame]
+    return(path_psp)
 }
 
-#}}}############################
+
+#}}}########################
+#{{{ Latin Traveling Sales #
+############################
+
+lhstsp <- function(full_win, num_waypoints = WP_NUM_INITIAL, margin = WP_MARGIN, ...){
+  full_frame <- Frame(full_win)
+  min_x <- min(full_frame$x) + margin
+  max_x <- max(full_frame$x) - margin
+  min_y <- min(full_frame$y) + margin
+  max_y <- max(full_frame$y) - margin
+  sampleable <- erosion(full_win, margin)
+
+  wp_unscaled <- maximinLHS(n = floor(sqrt(num_waypoints)), k = 2, ...)
+  wp_x <- wp_unscaled[,1] * (max_x - min_x) + min_x
+  wp_y <- wp_unscaled[,2] * (max_y - min_y) + min_y
+  wp_ppp <- ppp(wp_x, wp_y, window = full_frame)[sampleable]
+  waypoints <- as.data.frame(wp_ppp)
+
+  wp_tsp <- ETSP(waypoints)
+  wp_tour <- waypoints[solve_TSP(wp_tsp, ...),]
+
+  path_psp <- psp(
+    x0 = wp_tour$x,
+    y0 = wp_tour$y,
+    x1 = c(wp_tour[-1, 'x'], wp_tour[1, 'x']),
+    y1 = c(wp_tour[-1, 'y'], wp_tour[1, 'y']),
+    window = full_frame
+  )[full_win]
+  return(path_psp)
+}
+
+
+#}}}########################
+
 
 stopCluster(cl)
 
