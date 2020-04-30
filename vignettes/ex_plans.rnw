@@ -1,25 +1,28 @@
+\documentclass{article}
+\usepackage{fullpage}
+
+\title{Example Spatial Sampling Paths}
+\author{Kenny Flagg}
+
+\begin{document}
+\maketitle
+
+<<setup, echo = FALSE, message = FALSE, warning = FALSE>>=
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, fig.path = 'plans_fig/',
+                      fig.height = 7, fig.width = 13)
+
 #########################
 #{{{ Setup environment. #
 #########################
 
 # Load packages.
-library(parallel)
 library(spatstat)
 library(lhs)
 library(TSP)
 library(HilbertVis)
-library(INLA)
-
-# Create a cluster for applying in parallel.
-cl <- makeCluster(ceiling(0.75) * detectCores())
-invisible(clusterEvalQ(cl, {
-  library(spatstat)
-  library(maptools)
-  library(INLA)
-}))
 
 # Define user-specified parameters.
-XSECT_WIDTH <- 2 # Width of transects.
+XSECT_WIDTH <- 4 # Width of transects.
 XSECT_LENGTH_MIN <- 50
 XSECT_LENGTH_MAX <- 500
 XSECT_SEP_MIN <- 10
@@ -39,7 +42,7 @@ MARGIN <- 200
 
 # Graphics parameters.
 NPIX_X <- 500
-NPIX_Y <- 500
+NPIX_Y <- 250
 
 
 # Define derived parameters
@@ -53,98 +56,7 @@ XSECT_NUM_INITIAL <- floor(DIST_INITIAL / XSECT_LENGTH_MAX)
 
 # Site window.
 
-sim_R <- owin(poly = cbind(
-    x = c(   0, 1600, 1600, 2000, 2000,  500,    0),
-    y = c(   0,    0,  250,  250, 2000, 2000, 1500)
-  ), unitnames = c('meter', 'meters'))
-
-# Mesh covering the site.
-R_boundary <- inla.mesh.segment(loc = do.call(cbind, vertices.owin(sim_R)))
-R_mesh <- inla.mesh.create(
-  boundary = R_boundary,
-  refine = list(max.edge = MAX_EDGE_LENGTH)
-)
-
-# Mesh including a margin outside the site.
-#R_margin_mesh <- inla.mesh.2d(
-#  loc = R_mesh$loc[,1:2], # Include nodes from site.
-#  offset = MARGIN,
-#  max.edge = MAX_EDGE_EXT # Fill in the rest with a coarser triangulation.
-#)
-
-# Get the mesh nodes.
-R_mesh_loc <- R_mesh$loc[,1:2]
-
-# Convert mesh triangles to owins and create a tesselation.
-clusterExport(cl, c('R_mesh_loc', 'sim_R'))
-R_mesh_tess <- as.tess(parApply(cl, R_mesh$graph$tv, 1, function(x){
-  return(owin(poly = R_mesh_loc[x,]))
-}))
-
-# Convert mesh to linear network for plotting.
-R_mesh_net <- linnet(as.ppp(R_mesh_loc, sim_R), as.matrix(R_mesh$graph$vv == 1))
-
-# Get the area of each triangle.
-#R_tri_margin_areas <- tile.areas(R_margin_mesh_tess)
-
-# Get the interior area of each triangle.
-R_tri_areas <- parSapply(cl, parLapply(cl, tiles(R_mesh_tess), '[', sim_R), area)
-
-# Construct the dual of the mesh.
-# Start by getting a list of triangles for each node.
-clusterExport(cl, 'R_mesh')
-node_tris <- parLapply(cl, parLapply(cl, parLapply(cl, parLapply(cl,
-  # Indicate which triangles have this node as a vertex.
-  seq_len(R_mesh$n), `==`, R_mesh$graph$tv),
-  # Flatten the indicator matrix.
-  rowSums),
-  # Make the indicator vector logical instead of integer 0/1.
-  as.logical),
-  # Find which rows of the matrix (triangles) had this node.
-  which)
-
-# Get the centroids of each triangle.
-tri_centroids <- t(parSapply(cl, tiles(R_mesh_tess), centroid.owin))
-
-# Now, construct the dual mesh. Get the quadrilaterals made by cutting each
-# triangle from its edge midpoints to its centroid, indexed by the mesh nodes.
-# Then union the quadrilaterals for each node.
-clusterExport(cl, c('node_tris', 'tri_centroids'))
-dual_tess <- as.tess(parLapply(cl, seq_len(R_mesh$n), function(i){return(
-  do.call(union.owin, lapply(node_tris[[i]], function(j){return(
-    convexhull.xy(rbind(
-      # jth triangle centroid.
-      tri_centroids[j,],
-      # Average of the ith node and all vertices of the jth triangle.
-      # This results in the ith node and the midpoints of its edges.
-      t((R_mesh_loc[i,] + t(R_mesh_loc[
-        R_mesh$graph$tv[j,],
-      1:2])) / 2)
-    ))
-  )}))
-)}))
-
-# Get the area represented by each node.
-#R_nodes_margin_area <- diag(inla.mesh.fem(R_margin_mesh)$c0)
-
-# Calculate the interior area represented by each node.
-R_nodes_area <- parSapply(cl, parLapply(cl, tiles(dual_tess), `[`, sim_R), area)
-
-# Will repeat for each sampling plan later, subseting using D.
-
-# Neat plot.
-plot(dual_tess, border = '#80808020', do.col = TRUE, values = R_nodes_area,
-     main = 'Mesh with dual colored by node weight')
-plot(R_mesh_net, add = TRUE, col = '#00000080')
-#plot(sim_R, border = 'white', add = TRUE)
-points(R_mesh_loc[,], pch = 20)
-
-# Set up the spatial numerical integration.
-R_mesh_size <- R_mesh$n
-R_node_bary <- inla.mesh.project(R_mesh, R_mesh_loc)$A
-
-# Projector to interpolate over site.
-R_proj <- inla.mesh.projector(R_mesh, dims = c(NPIX_X, NPIX_Y))
+sim_R <- owin(c(0, 1500), c(0, 700))
 
 
 #}}}##################################
@@ -187,101 +99,12 @@ sim_data <- function(
   return(result)
 }
 
-sim_datasets <- list(sim_data(dimyx = c(NPIX_Y, NPIX_X)))
-idx <- 1
+sim_dataset <- sim_data(dimyx = c(NPIX_Y, NPIX_X))
 
 
 #}}}###################################################################
-#{{{ Objects pertaining to the model but independent of survey plans. #
-#######################################################################
-
-# Define an SPDE representation of the spatial GP using PC priors.
-# TODO: update this with priors.
-R_spde <- inla.spde2.matern(R_mesh)
-
-# Model formula with no covariates.
-R_formula <- y ~ -1 + intercept + f(idx, model = R_spde)
-
-
-#}}}##################
-#{{{ Fully surveyed. #
-######################
-
-# Observed event locations.
-full_pts <- cbind(sim_datasets[[idx]]$x, sim_datasets[[idx]]$y)
-full_n_events <- nrow(full_pts)
-
-# Create the psuedodata. This is a vector giving the count of events at each
-# pseudopoint location, that is 0 at each mesh node and 1 at each event.
-full_pseudodata <- c(rep(0, R_mesh_size), rep(1, full_n_events))
-
-# Concatenate the weight vector with a vector of zeros for the observed events.
-# This is the vector of Poisson exposure parameters for the pseudodata.
-full_pseudodata_exp <- c(R_nodes_area, rep(0, full_n_events))
-
-# Compute the barycentric coordinates of the observed events
-# (i.e. project into the space spanned by the basis of mesh nodes).
-full_bary <- inla.mesh.project(R_mesh, full_pts)$A
-
-# Bind the node and event coordinates into a single matrix of pseudodata
-# locations in barycentric coordinates.
-full_pseudopoints <- rbind(R_node_bary, full_bary)
-
-# Create the data list to pass to inla().
-# Indices and intercepts are only needed for the nodes.
-full_inla_data <- list(
-  y = full_pseudodata, # The whole pseudodata vector.
-  idx = seq_len(R_mesh_size), # Indices of the nodes.
-  intercept = rep(1, R_mesh_size) # Intercept column.
-)
-
-# Fit the model as a Poisson GLM with exposures specified.
-full_result <- inla(
-  formula = R_formula,
-  data = full_inla_data,
-  family = 'poisson',
-  control.fixed = list(
-    # Prior means and precisions for coefficients.
-    mean.intercept = 0,
-    prec.intercept = 0,
-    mean = 0,
-    prec = 0
-  ),
-  control.predictor = list(A = full_pseudopoints),
-  E = full_pseudodata_exp
-)
-
-# Summarize the posterior marginals of the parameters.
-print(full_result$summary.fixed)
-print(full_result$summary.hyperpar)
-
-# Plot surface.
-plot(im(t(inla.mesh.project(R_proj, full_result$summary.fixed$mean + full_result$summary.random$idx$mean)),
-        xrange = Frame(sim_R)$x,
-        yrange = Frame(sim_R)$y),
-        main = 'Posterior Mean of Log-Intensity')
-plot(sim_R, border = '#808080ff', add = TRUE)
-points(sim_dataset[[idx]], pch = '.', col = 'white')
-
-# Spatially-averaged random effect variance.
-#full_avgvar <- (result_full$summary.random$idx$sd^2) %*% mesh_area / sum(mesh_area)
-#print(full_avgvar)
-
-# Max random effect variance at any node. (Interpolated variance cannot exceed this.)
-#full_maxvar <- max(result_full$summary.random$idx$sd[mesh_area > 0]^2)
-#print(full_maxvar)
-
-
-#}}}######################################################
 #{{{ Sampling parameters applicable to all survey plans. #
 ##########################################################
-
-# Define the region where waypoints are allowed
-#sampleable <- erosion(sim_R, WP_MARGIN)
-#min_x <- min(vertices(sampleable)$x)
-#max_x <- max(vertices(sampleable)$x)
-#min_y <- min(vertices(sampleable)$y)
-#max_y <- max(vertices(sampleable)$y)
 
 # Function to subset a ppp to a region along a psp.
 sample_ppp <- function(full_ppp, path, xsect_radius = XSECT_RADIUS){
@@ -416,7 +239,7 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
 #{{{ Latin Traveling Sales #
 ############################
 
-lhstsp <- function(full_win, num_waypoints = WP_NUM_INITIAL, margin = WP_MARGIN, ...){
+lhstsp <- function(full_win, num_bins = round(sqrt(WP_NUM_INITIAL)), margin = WP_MARGIN, ...){
   full_frame <- Frame(full_win)
   min_x <- min(full_frame$x) + margin
   max_x <- max(full_frame$x) - margin
@@ -424,7 +247,7 @@ lhstsp <- function(full_win, num_waypoints = WP_NUM_INITIAL, margin = WP_MARGIN,
   max_y <- max(full_frame$y) - margin
   sampleable <- erosion(full_win, margin)
 
-  wp_unscaled <- maximinLHS(n = floor(sqrt(num_waypoints)), k = 2, ...)
+  wp_unscaled <- maximinLHS(n = num_bins, k = 2, ...)
   wp_x <- wp_unscaled[,1] * (max_x - min_x) + min_x
   wp_y <- wp_unscaled[,2] * (max_y - min_y) + min_y
   wp_ppp <- ppp(wp_x, wp_y, window = full_frame)[sampleable]
@@ -476,9 +299,209 @@ hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGI
 
 #}}}########################
 
+@
 
-stopCluster(cl)
+\section*{Full Dataset}
 
-rect_R <- owin(c(0, 1500), c(0, 700))
+<<fulldata>>=
+par(mar = c(0, 1, 2, 1))
+plot(sim_dataset, pch = 20, main = 'Full Data')
+@
 
-# vim: foldmethod=marker:
+The dataset in a \(1500 \times 700\) rectangular region. It will be surveyed
+such that only events within 2 units of a path are observed.
+
+\pagebreak
+
+
+\section*{Simple Random Sample of Parallel Transects}
+
+<<srs, warnimg = FALSE>>=
+par(mfrow = c(2, 2), mar = c(0, 0, 1, 0), cex = 1)
+
+srs_s1 <- srs(sim_R, 25)
+plot(sim_R,
+     main = paste('SRS, length =',
+                  round(sum(lengths.psp(srs_s1)))))
+plot(srs_s1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, srs_s1), pch = 20, add = TRUE)
+
+srs_l1 <- srs(sim_R, 50)
+plot(sim_R,
+     main = paste('SRS, length =',
+                  round(sum(lengths.psp(srs_l1)))))
+plot(srs_l1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, srs_l1), pch = 20, add = TRUE)
+
+srs_s2 <- srs(sim_R, 25)
+plot(sim_R,
+     main = paste('SRS, length =',
+                  round(sum(lengths.psp(srs_s2)))))
+plot(srs_s2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, srs_s2), pch = 20, add = TRUE)
+
+srs_l2 <- srs(sim_R, 50)
+plot(sim_R,
+     main = paste('SRS, length =',
+                  round(sum(lengths.psp(srs_l2)))))
+plot(srs_l2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, srs_l2), pch = 20, add = TRUE)
+@
+
+\vfill
+
+
+\section*{Systematic Sample of Parallel Transects}
+
+<<sys, warnimg = FALSE>>=
+par(mfrow = c(2, 2), mar = c(1, 1, 2, 1), cex = 1)
+
+sys_s1 <- sys(sim_R, 25)
+plot(sim_R,
+     main = paste('Systematic Sample, length =',
+                  round(sum(lengths.psp(sys_s1)))))
+plot(sys_s1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, sys_s1), pch = 20, add = TRUE)
+
+sys_l1 <- sys(sim_R, 50)
+plot(sim_R,
+     main = paste('Systematic Sample, length =',
+                  round(sum(lengths.psp(sys_l1)))))
+plot(sys_l1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, sys_l1), pch = 20, add = TRUE)
+
+sys_s2 <- sys(sim_R, 25)
+plot(sim_R,
+     main = paste('Systematic Sample, length =',
+                  round(sum(lengths.psp(sys_s2)))))
+plot(sys_s2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, sys_s2), pch = 20, add = TRUE)
+
+sys_l2 <- sys(sim_R, 50)
+plot(sim_R,
+     main = paste('Systematic Sample, length =',
+                  round(sum(lengths.psp(sys_l2)))))
+plot(sys_l2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, sys_l2), pch = 20, add = TRUE)
+@
+
+\pagebreak
+
+
+\section*{Inhibitory Plus Close Pairs Parallel Transects}
+
+<<inhib, warnimg = FALSE>>=
+par(mfrow = c(2, 2), mar = c(1, 1, 2, 1), cex = 1)
+
+inh_s1 <- inhib(sim_R, 22, 3, 60)
+plot(sim_R,
+     main = paste('Inhibitory Plus Pairs, length =',
+                  round(sum(lengths.psp(inh_s1)))))
+plot(inh_s1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, inh_s1), pch = 20, add = TRUE)
+
+inh_l1 <- inhib(sim_R, 44, 6, 30)
+plot(sim_R,
+     main = paste('Inhibitory Plus Pairs, length =',
+                  round(sum(lengths.psp(inh_l1)))))
+plot(inh_l1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, inh_l1), pch = 20, add = TRUE)
+
+inh_s2 <- inhib(sim_R, 22, 3, 60)
+plot(sim_R,
+     main = paste('Inhibitory Plus Pairs, length =',
+                  round(sum(lengths.psp(inh_s2)))))
+plot(inh_s2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, inh_s2), pch = 20, add = TRUE)
+
+inh_l2 <- inhib(sim_R, 44, 6, 30)
+plot(sim_R,
+     main = paste('Inhibitory Plus Pairs, length =',
+                  round(sum(lengths.psp(inh_l2)))))
+plot(inh_l2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, inh_l2), pch = 20, add = TRUE)
+@
+
+\vfill
+
+
+\section*{Latin Hypercube Sampling-Traveling Salesperson}
+
+<<lhstsp>>=
+par(mfrow = c(2, 2), mar = c(1, 1, 2, 1), cex = 1)
+
+lhstsp_s1 <- lhstsp(sim_R, 300)
+plot(sim_R,
+     main = paste('LHS-TSP, length =',
+                  round(sum(lengths.psp(lhstsp_s1)))))
+plot(lhstsp_s1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, lhstsp_s1), pch = 20, add = TRUE)
+
+lhstsp_l1 <- lhstsp(sim_R, 1200)
+plot(sim_R,
+     main = paste('LHS-TSP, length =',
+                  round(sum(lengths.psp(lhstsp_l1)))))
+plot(lhstsp_l1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, lhstsp_l1), pch = 20, add = TRUE)
+
+lhstsp_s2 <- lhstsp(sim_R, 300)
+plot(sim_R,
+     main = paste('LHS-TSP, length =',
+                  round(sum(lengths.psp(lhstsp_s2)))))
+plot(lhstsp_s2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, lhstsp_s2), pch = 20, add = TRUE)
+
+lhstsp_l2 <- lhstsp(sim_R, 1200)
+plot(sim_R,
+     main = paste('LHS-TSP, length =',
+                  round(sum(lengths.psp(lhstsp_l2)))))
+plot(lhstsp_l2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, lhstsp_l2), pch = 20, add = TRUE)
+@
+
+\pagebreak
+
+
+\section*{Hilbert Curve}
+
+<<hilbert>>=
+par(mfrow = c(2, 2), mar = c(1, 1, 2, 1), cex = 1)
+
+hilbert_s1 <- hilbert(sim_R, 4)
+plot(sim_R,
+     main = paste('Hilbert Curve, length =',
+                  round(sum(lengths.psp(hilbert_s1)))))
+plot(hilbert_s1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, hilbert_s1), pch = 20, add = TRUE)
+
+hilbert_l1 <- hilbert(sim_R, 5)
+plot(sim_R,
+     main = paste('Hilbert Curve, length =',
+                  round(sum(lengths.psp(hilbert_l1)))))
+plot(hilbert_l1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, hilbert_l1), pch = 20, add = TRUE)
+
+hilbert_s2 <- hilbert(sim_R, 4)
+plot(sim_R,
+     main = paste('Hilbert Curve, length =',
+                  round(sum(lengths.psp(hilbert_s2)))))
+plot(hilbert_s2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, hilbert_s2), pch = 20, add = TRUE)
+
+hilbert_l2 <- hilbert(sim_R, 5)
+plot(sim_R,
+     main = paste('Hilbert Curve, length =',
+                  round(sum(lengths.psp(hilbert_l2)))))
+plot(hilbert_l2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, hilbert_l2), pch = 20, add = TRUE)
+@
+
+\vfill
+
+
+\section*{Particle Movement}
+
+
+\end{document}
+
+% vim: foldmethod=marker:
