@@ -25,6 +25,7 @@ library(HilbertVis)
 XSECT_WIDTH <- 4 # Width of transects.
 XSECT_LENGTH_MIN <- 50
 XSECT_LENGTH_MAX <- 500
+XSECT_LENGTH_CORR <- -0.8
 XSECT_SEP_MIN <- 10
 XSECT_SEP_MAX <- 250
 DIST_INITIAL <- 10000
@@ -297,7 +298,63 @@ hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGI
 }
 
 
-#}}}########################
+#}}}###########################
+#{{{ Random Particle Movement #
+###############################
+
+bim <- function(n, m = pi/3, s = pi/6){
+  return(sample(c(-1, 1), n, TRUE) * rnorm(n, m, s))
+}
+
+rpm <- function(full_win, max_dist = DIST_MAX, corr = XSECT_LENGTH_CORR,
+                seg_min = XSECT_LENGTH_MIN, seg_max = XSECT_LENGTH_MAX,
+                angle_dist = bim, a = 1, b = 1, margin = WP_MARGIN){
+  full_frame <- Frame(full_win)
+  min_x <- min(full_frame$x) + margin
+  max_x <- max(full_frame$x) - margin
+  min_y <- min(full_frame$y) + margin
+  max_y <- max(full_frame$y) - margin
+  sampleable <- erosion(full_win, margin)
+
+  if(corr > 0){
+    pos_corr <- TRUE
+    corr <- -corr
+  } else {
+    pos_corr <- FALSE
+  }
+  p <- corr * (a + b) / (corr + b)
+
+  cum_dist <- 0
+
+  # The BAR is
+  ##  X[i] <- U * (1 - W * X[i - 1])
+  # with U ~ Beta(b, a - p) and W ~ Beta(p, a - p).
+  # Check if pos_corr, and if so do
+  ##  X[i] <- 1 - X[i]
+
+  # To get distance of point to psp, make a psp with one segment starting and
+  # ending at the point then use
+  ##  min(crossdist(test_point, the_psp, type = 'separation'))
+
+  wp_unscaled <- hilbertCurve(h_order)
+  wp_x <- (wp_unscaled[,1] + runif(1)) / (2^h_order) * (max_x - min_x) + min_x
+  wp_y <- (wp_unscaled[,2] + runif(1)) / (2^h_order) * (max_y - min_y) + min_y
+  wp_ppp <- ppp(wp_x, wp_y, window = full_frame)#[sampleable]
+  waypoints <- as.data.frame(wp_ppp)
+  n_waypoints <- nrow(waypoints)
+
+  path_psp <- psp(
+    x0 = waypoints[-n_waypoints, 'x'],
+    y0 = waypoints[-n_waypoints, 'y'],
+    x1 = waypoints[-1, 'x'],
+    y1 = waypoints[-1, 'y'],
+    window = full_frame
+  )[full_win]
+  return(path_psp)
+}
+
+
+#}}}###########################
 
 @
 
@@ -310,6 +367,20 @@ plot(sim_dataset, pch = 20, main = 'Full Data')
 
 The dataset in a \(1500 \times 700\) rectangular region. It will be surveyed
 such that only events within 2 units of a path are observed.
+
+\begin{itemize}
+\item Parallel transect designs
+\begin{itemize}
+\item Simple random sample
+\item Systematic sample, evenly spaced, with random starting point
+\item Inhibitory plus close pairs
+\end{itemize}
+\item Hilbert curve, a deterministic space-filling curve, with random starting
+point
+\item Shortest path (traveliing salesperson) through a Latin hypercube
+sampling design
+\item Random particle movement
+\end{itemize}
 
 \pagebreak
 
@@ -388,7 +459,7 @@ plot(sample_ppp(sim_dataset, sys_l2), pch = 20, add = TRUE)
 \pagebreak
 
 
-\section*{Inhibitory Plus Close Pairs Parallel Transects}
+\section*{Inhibitory Plus Close Pairs of Parallel Transects}
 
 <<inhib, warnimg = FALSE>>=
 par(mfrow = c(2, 2), mar = c(1, 1, 2, 1), cex = 1)
@@ -496,7 +567,7 @@ plot(hilbert_l2, col = 'grey', add = TRUE)
 plot(sample_ppp(sim_dataset, hilbert_l2), pch = 20, add = TRUE)
 @
 
-\vfill
+%\vfill
 
 
 \section*{Particle Movement}
