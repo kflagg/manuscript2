@@ -8,7 +8,7 @@
 \maketitle
 
 <<setup, echo = FALSE, message = FALSE, warning = FALSE>>=
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, fig.path = 'plans_fig/',
+knitr::opts_chunk$set(echo = FALSE, fig.path = 'plans_fig/',
                       fig.height = 7, fig.width = 13)
 
 #########################
@@ -127,7 +127,12 @@ srs <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
   max_y <- max(full_frame$y) + xsect_radius
 
   srs_x <- sort(runif(num_xsects, min_x, max_x))
-  waypoints <- cbind(x = rep(srs_x, each = 2), y = c(min_y, max_y, max_y, min_y))
+  waypoints <- cbind(
+    x = rep(srs_x, each = 2),
+    y = rep(c(min_y, max_y, max_y, min_y), ceiling(num_xsects / 2))[
+      1:(2 * num_xsects)
+    ]
+  )
   n_waypoints <- nrow(waypoints)
 
   path_psp <- psp(
@@ -155,7 +160,12 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
   spacing <- (max_x - min_x) / num_xsects
   edge2edge <- spacing - xsect_radius * 2
   sys_x <- runif(1, min_x, min_x + edge2edge) + (0:(num_xsects - 1)) * spacing
-  waypoints <- cbind(x = rep(sys_x, each = 2), y = c(min_y, max_y, max_y, min_y))
+  waypoints <- cbind(
+    x = rep(sys_x, each = 2),
+    y = rep(c(min_y, max_y, max_y, min_y), ceiling(num_xsects / 2))[
+      1:(2 * num_xsects)
+    ]
+  )
   n_waypoints <- nrow(waypoints)
 
   path_psp <- psp(
@@ -169,9 +179,9 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
 }
 
 
-#}}}##############################
-#{{{ Inhibitory plus close pairs #
-##################################
+#}}}###############################
+#{{{ Inhibitory plus close pairs. #
+###################################
 
 inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
                   num_paired = NUM_PAIRS, pair_radius = PAIR_RADIUS,
@@ -182,6 +192,7 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
   max_x <- max(full_frame$x) - xsect_radius
   min_y <- min(full_frame$y) - xsect_radius
   max_y <- max(full_frame$y) + xsect_radius
+  num_xsects <- num_primary + num_paired
 
   initial_x <- runif(num_primary, min_x, max_x)
 
@@ -211,7 +222,7 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
         sum(abs(prop_x[i] - prop_x[-(1:i)]) < pair_radius)
     }
 
-    # Accept of reject the proposal.
+    # Accept or reject the proposal.
     if(runif(1) < antirepulsion^(prop_pairs - current_pairs)){
       initial_x <- prop_x
     }
@@ -222,7 +233,12 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
                    pmax(paired_x - pair_radius, min_x),
                    pmin(paired_x + pair_radius, max_x))
   inhib_x <- sort(c(initial_x, pairs_x))
-  waypoints <- cbind(x = rep(inhib_x, each = 2), y = c(min_y, max_y, max_y, min_y))
+  waypoints <- cbind(
+    x = rep(inhib_x, each = 2),
+    y = rep(c(min_y, max_y, max_y, min_y), ceiling(num_xsects / 2))[
+      1:(2 * num_xsects)
+    ]
+  )
   n_waypoints <- nrow(waypoints)
 
   path_psp <- psp(
@@ -236,9 +252,9 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
 }
 
 
-#}}}########################
-#{{{ Latin Traveling Sales #
-############################
+#}}}#########################
+#{{{ Latin traveling sales. #
+#############################
 
 lhstsp <- function(full_win, num_bins = round(sqrt(WP_NUM_INITIAL)), margin = WP_MARGIN, ...){
   full_frame <- Frame(full_win)
@@ -268,9 +284,9 @@ lhstsp <- function(full_win, num_bins = round(sqrt(WP_NUM_INITIAL)), margin = WP
 }
 
 
-#}}}################
-#{{{ Hilbert Curve #
-####################
+#}}}#################
+#{{{ Hilbert curve. #
+#####################
 
 hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGIN, ...){
   full_frame <- Frame(full_win)
@@ -298,17 +314,15 @@ hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGI
 }
 
 
-#}}}###########################
-#{{{ Random Particle Movement #
-###############################
+#}}}############################
+#{{{ Random particle movement. #
+################################
 
-bim <- function(n, m = pi/3, s = pi/6){
-  return(sample(c(-1, 1), n, TRUE) * rnorm(n, m, s))
-}
-
-rpm <- function(full_win, max_dist = DIST_MAX, corr = XSECT_LENGTH_CORR,
+rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
                 seg_min = XSECT_LENGTH_MIN, seg_max = XSECT_LENGTH_MAX,
-                angle_dist = bim, a = 1, b = 1, margin = WP_MARGIN){
+                angle_m = pi/3, angle_s = pi/6, angle_prob = c(0.5, 0.5),
+                a = 1, b = 1, pair_radius = PAIR_RADIUS, antirepulsion = 0.8,
+                margin = WP_MARGIN, animate = FALSE, ...){
   full_frame <- Frame(full_win)
   min_x <- min(full_frame$x) + margin
   max_x <- max(full_frame$x) - margin
@@ -316,40 +330,84 @@ rpm <- function(full_win, max_dist = DIST_MAX, corr = XSECT_LENGTH_CORR,
   max_y <- max(full_frame$y) - margin
   sampleable <- erosion(full_win, margin)
 
-  if(corr > 0){
-    pos_corr <- TRUE
+  dist_range <- seg_max - seg_min
+
+  pos_corr <- corr > 0
+  if(!pos_corr){
     corr <- -corr
-  } else {
-    pos_corr <- FALSE
   }
   p <- corr * (a + b) / (corr + b)
 
-  cum_dist <- 0
+  # Starting segment.
+  wp <- as.data.frame(runifpoint(1, sampleable))
 
-  # The BAR is
-  ##  X[i] <- U * (1 - W * X[i - 1])
-  # with U ~ Beta(b, a - p) and W ~ Beta(p, a - p).
-  # Check if pos_corr, and if so do
-  ##  X[i] <- 1 - X[i]
+  reject <- TRUE
+  while(reject){
+    angle <- runif(1, 0, 2*pi)
+    dist_unscaled <- rbeta(1, a, b)
+    new_dist <- dist_unscaled * dist_range + seg_min
 
-  # To get distance of point to psp, make a psp with one segment starting and
-  # ending at the point then use
-  ##  min(crossdist(test_point, the_psp, type = 'separation'))
+    new_x <- tail(wp$x, 1) + cos(angle) * new_dist
+    new_y <- tail(wp$y, 1) + sin(angle) * new_dist
 
-  wp_unscaled <- hilbertCurve(h_order)
-  wp_x <- (wp_unscaled[,1] + runif(1)) / (2^h_order) * (max_x - min_x) + min_x
-  wp_y <- (wp_unscaled[,2] + runif(1)) / (2^h_order) * (max_y - min_y) + min_y
-  wp_ppp <- ppp(wp_x, wp_y, window = full_frame)#[sampleable]
-  waypoints <- as.data.frame(wp_ppp)
-  n_waypoints <- nrow(waypoints)
+    if(inside.owin(new_x, new_y, sampleable)){
+        reject <- FALSE
+    }
+  }
+  path_psp <- psp(wp$x, wp$y, new_x, new_y, sim_R)
+  cum_dist <- new_dist
+  current_x <- tail(wp$x, 1)
+  current_y <- tail(wp$y, 1)
 
-  path_psp <- psp(
-    x0 = waypoints[-n_waypoints, 'x'],
-    y0 = waypoints[-n_waypoints, 'y'],
-    x1 = waypoints[-1, 'x'],
-    y1 = waypoints[-1, 'y'],
-    window = full_frame
-  )[full_win]
+  if(animate){
+    plot(path_psp, ...)
+  }
+
+  # Loop until exceeding the distance cutoff.
+  while(cum_dist < dist_cutoff){
+    reject <- TRUE
+
+    while(reject){
+      new_angle <- (angle + sample(c(-1, 1), 1, prob = angle_prob) *
+        rnorm(1, angle_m, angle_s)) %% (2*pi)
+      new_dist_unscaled <- rbeta(1, b, a - p) *
+        (1 - rbeta(1, p, a - p) * dist_unscaled)
+      if(pos_corr){
+        new_dist_unscaled <- 1 - new_dist_unscaled
+      }
+
+      dist_unscaled <- new_dist_unscaled
+      new_dist <- dist_unscaled * dist_range + seg_min
+
+      new_x <- current_x + cos(new_angle) * new_dist
+      new_y <- current_y + sin(new_angle) * new_dist
+
+      if(inside.owin(new_x, new_y, sampleable)){
+        if(runif(1) < antirepulsion^(sum(crossdist(
+            psp(current_x, current_y, new_x, new_y, sim_R),
+            path_psp, type = 'separation') < pair_radius) - 1)){
+          reject <- FALSE
+        }
+      }
+    }
+    angle <- new_angle
+    cum_dist <- cum_dist + new_dist
+    wp <- rbind(wp, data.frame(x = new_x, y = new_y))
+    path_psp$ends <- rbind(path_psp$ends, data.frame(
+      x0 = current_x,
+      y0 = current_y,
+      x1 = new_x,
+      y1 = new_y
+    ))
+    path_psp$n <- path_psp$n + 1
+    current_x <- new_x
+    current_y <- new_y
+
+    if(animate){
+      plot(path_psp, add = TRUE)
+    }
+  }
+
   return(path_psp)
 }
 
@@ -365,8 +423,8 @@ par(mar = c(0, 1, 2, 1))
 plot(sim_dataset, pch = 20, main = 'Full Data')
 @
 
-The dataset in a \(1500 \times 700\) rectangular region. It will be surveyed
-such that only events within 2 units of a path are observed.
+The dataset is in a \(1500 \times 700\) rectangular region. It will be
+surveyed such that only events within 2 units of a path are observed.
 
 \begin{itemize}
 \item Parallel transect designs
@@ -377,9 +435,10 @@ such that only events within 2 units of a path are observed.
 \end{itemize}
 \item Hilbert curve, a deterministic space-filling curve, with random starting
 point
-\item Shortest path (traveliing salesperson) through a Latin hypercube
+\item Shortest path (traveling salesperson) through a Latin hypercube
 sampling design
-\item Random particle movement
+\item Random particle movement, random angle and direction for each segment,
+with a preference for new locations
 \end{itemize}
 
 \pagebreak
@@ -387,7 +446,7 @@ sampling design
 
 \section*{Simple Random Sample of Parallel Transects}
 
-<<srs, warnimg = FALSE>>=
+<<srs>>=
 par(mfrow = c(2, 2), mar = c(0, 0, 1, 0), cex = 1)
 
 srs_s1 <- srs(sim_R, 25)
@@ -424,7 +483,7 @@ plot(sample_ppp(sim_dataset, srs_l2), pch = 20, add = TRUE)
 
 \section*{Systematic Sample of Parallel Transects}
 
-<<sys, warnimg = FALSE>>=
+<<sys>>=
 par(mfrow = c(2, 2), mar = c(1, 1, 2, 1), cex = 1)
 
 sys_s1 <- sys(sim_R, 25)
@@ -461,7 +520,7 @@ plot(sample_ppp(sim_dataset, sys_l2), pch = 20, add = TRUE)
 
 \section*{Inhibitory Plus Close Pairs of Parallel Transects}
 
-<<inhib, warnimg = FALSE>>=
+<<inhib>>=
 par(mfrow = c(2, 2), mar = c(1, 1, 2, 1), cex = 1)
 
 inh_s1 <- inhib(sim_R, 22, 3, 60)
@@ -567,10 +626,42 @@ plot(hilbert_l2, col = 'grey', add = TRUE)
 plot(sample_ppp(sim_dataset, hilbert_l2), pch = 20, add = TRUE)
 @
 
-%\vfill
+\vfill
 
 
 \section*{Particle Movement}
+
+<<rpm>>=
+par(mfrow = c(2, 2), mar = c(1, 1, 2, 1), cex = 1)
+
+rpm_s1 <- rpm(sim_R, 17000)
+plot(sim_R,
+     main = paste('Random Particle Movement, length =',
+                  round(sum(lengths.psp(rpm_s1)))))
+plot(rpm_s1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, rpm_s1), pch = 20, add = TRUE)
+
+rpm_l1 <- rpm(sim_R, 34500)
+plot(sim_R,
+     main = paste('Random Particle Movement, length =',
+                  round(sum(lengths.psp(rpm_l1)))))
+plot(rpm_l1, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, rpm_l1), pch = 20, add = TRUE)
+
+rpm_s2 <- rpm(sim_R, 17000)
+plot(sim_R,
+     main = paste('Random Particle Movement, length =',
+                  round(sum(lengths.psp(rpm_s2)))))
+plot(rpm_s2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, rpm_s2), pch = 20, add = TRUE)
+
+rpm_l2 <- rpm(sim_R, 34500)
+plot(sim_R,
+     main = paste('Random Particle Movement, length =',
+                  round(sum(lengths.psp(rpm_l2)))))
+plot(rpm_l2, col = 'grey', add = TRUE)
+plot(sample_ppp(sim_dataset, rpm_l2), pch = 20, add = TRUE)
+@
 
 
 \end{document}
