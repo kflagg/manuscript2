@@ -1,37 +1,77 @@
-\documentclass[12pt]{article}
-\usepackage{amsmath,amsfonts,graphicx,natbib}
-\usepackage{subcaption}
-\usepackage{lineno}
-\usepackage{enumerate}
-\usepackage[margin=1in]{geometry}
+\documentclass[review]{elsarticle}
 
-\usepackage{xcolor}
-\usepackage{url}
-\def\spacingset#1{\renewcommand{\baselinestretch}
-{#1}\small\normalsize} \spacingset{2}
+\usepackage{lineno,hyperref,amsmath,amsfonts}
+\modulolinenumbers[5]
+
+\journal{Journal of \LaTeX\ Templates}
+
+%%%%%%%%%%%%%%%%%%%%%%%
+%% Elsevier bibliography styles
+%%%%%%%%%%%%%%%%%%%%%%%
+%% To change the style, put a % in front of the second line of the current style and
+%% remove the % from the second line of the style you would like to use.
+%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Numbered
+%\bibliographystyle{model1-num-names}
+
+%% Numbered without titles
+%\bibliographystyle{model1a-num-names}
+
+%% Harvard
+\bibliographystyle{model2-names.bst}\biboptions{authoryear}
+
+%% Vancouver numbered
+%\usepackage{numcompress}\bibliographystyle{model3-num-names}
+
+%% Vancouver name/year
+%\usepackage{numcompress}\bibliographystyle{model4-names}\biboptions{authoryear}
+
+%% APA style
+%\bibliographystyle{model5-names}\biboptions{authoryear}
+
+%% AMA style
+%\usepackage{numcompress}\bibliographystyle{model6-num-names}
+
+%% `Elsevier LaTeX' style
+%\bibliographystyle{elsarticle-num}
+%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
 
+\begin{frontmatter}
 
-\title{\bf Log-Gaussian Cox processes and line transect sampling: optimal design critera}
+\title{Log-Gaussian Cox processes and line transect sampling: optimal design critera}
 
-\author{}
-\date{}        
-\maketitle
+%% Group authors per affiliation:
+\author[msuaddr]{Kenneth Flagg\corref{mycorrespondingauthor}}
+\cortext[mycorrespondingauthor]{Corresponding author}
+\ead{kenneth.flagg@montana.edu}
 
-\bigskip
+\author[msuaddr]{John Borkowski}
+\author[msuaddr]{Andrew Hoegh}
+
+\address[msuaddr]{Department of Mathematical Sciences, Montana State University, Bozeman, MT 59717}
+
 \begin{abstract}
 
 \noindent insert abstract here
 
 \end{abstract}
 
-{\it Keywords:} log-Gaussian Cox process, optimal sampling, model-based design, spatial sampling design
+\begin{keyword}
+log-Gaussian Cox process\sep optimal sampling\sep model-based design\sep spatial sampling design
+%\MSC[2010] 00-01\sep  99-00
+\end{keyword}
+
+\end{frontmatter}
 
 \linenumbers
 
-
 \section{Introduction}
+% State the objectives of the work and provide an adequate background, avoiding a detailed literature survey or a summary of the results.
+
+% Can name paragraphs with \paragraph{Title}
 
 Spatial point processes models have long been considered generally infeasible
 because of their computational demands, but recent advances in Bayesian
@@ -64,8 +104,8 @@ However, to our knowledge, there has been very little work done in deciding
 \emph{where} to collect data when the goal is to map the intensity using a
 spatial point process model.
 
-
 \subsection{Notation and Terminology}
+
 
 \begin{itemize}
 
@@ -118,7 +158,10 @@ pattern, e.g. marks, pseudodata
 \end{itemize}
 
 
-\section{Model-Based Criteria}
+\section{Material and methods}
+% Provide sufficient details to allow the work to be reproduced by an independent researcher. Methods that are already published should be summarized, and indicated by a reference. If quoting directly from a previously published method, use quotation marks and also cite the source. Any modifications to existing methods should also be described.
+
+\subsection{Model-Based Criteria}
 
 UXO: mapping a site for delineating high-intensity regions
 \begin{itemize}
@@ -189,7 +232,7 @@ genomic data (packs lots of 1-d info into a 2-d plot), HIlbert curve preserved
 distance in some sense, Peano curve can flexibly fill irregular regions
 
 
-\section{Sampling Situations}
+\subsection{Sampling Situations}
 
 \begin{itemize}
 
@@ -220,14 +263,32 @@ support
 set up to think about adaptive sampling (adding a transect at a time or
 stopping early but don't actually do it here)
 
+%\section{Theory/calculation}
+% A Theory section should extend, not repeat, the background to the article already dealt with in the Introduction and lay the foundation for further work. In contrast, a Calculation section represents a practical development from a theoretical basis.
+
+
 
 \section{Results}
+% Results should be clear and concise.
 
 look at examples of designs that minimize each criterion
 
 look at examples of designs along the Pareto front
 
 
+\section{Discussion}
+% This should explore the significance of the results of the work, not repeat them. A combined Results and Discussion section is often appropriate. Avoid extensive citations and discussion of published literature.
+
+
+
+
+\section{Conclusions}
+% The main conclusions of the study may be presented in a short Conclusions section, which may stand alone or form a subsection of a Discussion or Results and Discussion section.
+
+
+
+\section*{References}
+
 \bibliography{lgcp_sampling.bib}
-\bibliographystyle{agsm}
+
 \end{document}
