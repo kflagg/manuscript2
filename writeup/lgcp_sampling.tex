@@ -55,7 +55,15 @@
 
 \begin{abstract}
 
-\noindent insert abstract here
+\paragraph{Goal of this paper} Evaluate line-transect designs in terms of many
+design-based and model-based criteria for spatial prediction using Bayesian
+LGCP models. Identify promising criteria and initial designs for later
+optimization and sequential design (not actually optimizing yet). Illuminate
+any relationships among criteria that will be helpful for constrained
+optimization. Other innovations are to compute design-based criteria with
+respect to the path (i.e. as path integrals) and to introduce a model-based APV
+criterion with a variable weight that more strongly penalizes errors near a
+decision threshold.
 
 \end{abstract}
 
@@ -68,10 +76,11 @@ log-Gaussian Cox process\sep optimal sampling\sep model-based design\sep spatial
 
 \linenumbers
 
+% Can name paragraphs with \paragraph{Title}
+
+
 \section{Introduction}
 % State the objectives of the work and provide an adequate background, avoiding a detailed literature survey or a summary of the results.
-
-% Can name paragraphs with \paragraph{Title}
 
 Spatial point processes models have long been considered generally infeasible
 because of their computational demands, but recent advances in Bayesian
@@ -94,7 +103,7 @@ data to grid cell counts or computing moving averages. These have the downside
 of introducing arbitrary structure into the data by the choice of gridding
 scheme or averaging window, and require uneccessary computation effort
 \citep{simpsonetal}. Software is now available to fit spatial point process
-models to data acquired via diastance sampling and simultaneously estimate the
+models to data acquired via distance sampling and simultaneously estimate the
 detection function \citep{dspat}.
 
 In ecological settings, sampling plans are often designed around the goal of
@@ -104,8 +113,54 @@ However, to our knowledge, there has been very little work done in deciding
 \emph{where} to collect data when the goal is to map the intensity using a
 spatial point process model.
 
-\subsection{Notation and Terminology}
+\subsection{Paths as sampling designs}
 
+\citet{liuvanhatalo} used narrow quadrats (swaths along line-transects) as
+their sampling units. The transects were short relative to the size of the
+study region and not connected into a path.
+
+\citet{pollard} adaptively zigzagged their line transects in a species
+abundance survey.
+
+{\it Add relevant VSP references. VSP can create parallel line-transect plans
+and add infill based on the actual course-over-ground, but I do not recall what
+criteria this may optimize.}
+
+While some ideas about the characteristics of a good point design apply to
+paths, creating an optimal path design is not as simple as connecting the
+points of a point design with line segments. There are many ways to connect
+points into a path, so optimal design criteria must apply to the whole path and
+not only to the waypoints.
+
+
+\subsection{Design-based sampling}
+
+Most work done for points. (Or quadrats approximated as points?) Space-filling
+criteria may be good starting points (e.g nearest-neighbor distance).
+
+{\it Not using space-filling point desings? (i.e. designs that have nonzero
+area as sample size goes to infinity)}
+
+
+\subsection{Space-filling curves}
+
+Used in circuit design \citep{fanetal} ({\it find more citations}) and
+high-dimensional data visualization in bioinformatics \citep{hilbertvis}.
+Peano curve is very flexible for filling irregular shapes\citep{fanetal}.
+Hilbert curve is easy to construct.
+
+Space-filling curves are one-dimensional paths constructed iteratively; as the
+number of iterations goes to infinity, the limiting path actually has nonzero
+area \citep{sagan}. For applications we stop after a finite number of
+iterations.
+
+
+\subsection{Model-based spatial design}
+
+{\it Review recent geostatistical design, especially Diggle's work.}
+
+
+\subsection{Notation and Terminology}
 
 \begin{itemize}
 
@@ -193,6 +248,7 @@ Also remember the weighted criterion from my proposal:
 \int_{\mathcal{R}} \frac{\mathrm{Var}\left[\lambda(u)\right]}
 {p^{\left|\lambda(u)-A\right|}} \mathrm{d}u
 \end{equation*}
+I hereby name it the threshold-penalized average predictive variance (TPAPV).
 
 Heuristics of a good transect sampling plan
 \begin{itemize}
