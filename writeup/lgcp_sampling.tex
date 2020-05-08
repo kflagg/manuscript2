@@ -3,7 +3,7 @@
 \usepackage{lineno,hyperref,amsmath,amsfonts}
 \modulolinenumbers[5]
 
-\journal{Journal of \LaTeX\ Templates}
+\journal{Spatial Statistics}
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %% Elsevier bibliography styles
@@ -108,10 +108,11 @@ detection function \citep{dspat}.
 
 In ecological settings, sampling plans are often designed around the goal of
 estimating total abundance. Ordnance response surveys are typically designed
-with the objective of detecting (but not necessarily mapping) hotspots.
-However, to our knowledge, there has been very little work done in deciding
-\emph{where} to collect data when the goal is to map the intensity using a
-spatial point process model.
+with the objective of detecting (but not necessarily mapping) intensity
+hotspots. However, to our knowledge, there has been very little work done in
+deciding \emph{where} to collect data when the goal is to map the intensity
+using a spatial point process model.
+
 
 \subsection{Paths as sampling designs}
 
@@ -144,25 +145,36 @@ area as sample size goes to infinity)}
 
 \subsection{Space-filling curves}
 
-Used in circuit design \citep{fanetal} ({\it find more citations}) and
-high-dimensional data visualization in bioinformatics \citep{hilbertvis}.
-Peano curve is very flexible for filling irregular shapes\citep{fanetal}.
+Used in circuit design~\citep{fanetal} ({\it find more citations}) and
+high-dimensional data visualization in bioinformatics~\citep{hilbertvis}.
+Peano curve is very flexible for filling irregular shapes~\citep{fanetal}.
 Hilbert curve is easy to construct.
 
 Space-filling curves are one-dimensional paths constructed iteratively; as the
-number of iterations goes to infinity, the limiting path actually has nonzero
-area \citep{sagan}. For applications we stop after a finite number of
-iterations.
+number of iterations goes to infinity, the limiting path has nonzero area and
+actually fills the space~\citep{sagan}. For applications we stop after a finite
+number of iterations.
 
 
 \subsection{Model-based spatial design}
 
-{\it Review recent geostatistical design, especially Diggle's work.}
+Regularity is optimal for spatial prediction but randomness and a variety of
+interpoint distances are best for parameter estimation~\citep{diggle}.
+Inhibitory plus close pairs is a good compromise~\citep{chipetaetal2017}.
+
+
+\subsection{Multi-objective optimization}
+
+summarize \citet{lark} and related
+
+we use a large suite of criteria to explore the relationships among them
 
 
 \subsection{Notation and Terminology}
 
 \begin{itemize}
+
+\item need to add notation for paths!
 
 \item process defined on \(\mathcal{D} \subset \mathbb{R}^{2}\), domain of the
 intensity function, define \(d = \mathrm{dim}(\mathcal{D})\)
@@ -216,56 +228,9 @@ pattern, e.g. marks, pseudodata
 \section{Material and methods}
 % Provide sufficient details to allow the work to be reproduced by an independent researcher. Methods that are already published should be summarized, and indicated by a reference. If quoting directly from a previously published method, use quotation marks and also cite the source. Any modifications to existing methods should also be described.
 
-\subsection{Model-Based Criteria}
 
-UXO: mapping a site for delineating high-intensity regions
+Heuristics of a good transect design:
 \begin{itemize}
-\item minimize time/distance
-\item minimize one of these:
-\begin{itemize}
-\item maximum variance in intensity surface
-\item maximum variance in intensity surface \emph{at contours near action level}
-\item integrated variance of intensity surface
-\item error rates in thresholding at AL (sensitivity/specificity/AUC)
-\end{itemize}
-\item minimize variance of coefficients for covariates
-\end{itemize}
-
-Ecology: mapping plants or animal nests using distance sampling
-\begin{itemize}
-\item minimize distance
-\item minimize variance in parameters of detection function and/or point process
-\item minimize one of these:
-\begin{itemize}
-\item maximum variance in intensity surface
-\item integrated variance of intensity surface
-\end{itemize}
-\item minimize variance of coefficients for covariates
-\end{itemize}
-
-Also remember the weighted criterion from my proposal:
-\begin{equation*}
-\int_{\mathcal{R}} \frac{\mathrm{Var}\left[\lambda(u)\right]}
-{p^{\left|\lambda(u)-A\right|}} \mathrm{d}u
-\end{equation*}
-I hereby name it the threshold-penalized average predictive variance (TPAPV).
-
-Heuristics of a good transect sampling plan
-\begin{itemize}
-\item Space-filling, criteria might be maximizing the path integral of nearest
-neighbor distance along the transects
-\begin{itemize}
-\item nearest neighbor distance \(\mathrm{nnd}_{k}(u) = \min|u - v|\) where
-\(v\) is any point in the set of path segments at least \(k\) steps away from
-the segment containing \(u\)
-\item \(k = 0\) would include \(v\) in the same segment as \(u\) so trivially
-\(\mathrm{nnd}_{k}(u) = 0\) for all \(u\) in the path
-\item \(\mathrm{nnd}_{1}(u)\) includes all segments except the one containing \(u\)
-\item \(\mathrm{nnd}_{2}(u)\) excludes the segment containing \(u\) and segments
-connected to it
-\item segments not accessible by a connected path starting at \(u\) are always
-included
-\end{itemize}
 \item Should start with a sparse design with regular spacing, then refine with
 infill
 \begin{itemize}
@@ -280,12 +245,45 @@ segment for the transect
 segment length
 \end{itemize}
 
-add some citations: \citet{lark}, classical space-filling designs,
-space-filling curves \cite{sagan}
 
-comments of space-filling curves: used in circuit design and for visualizing
-genomic data (packs lots of 1-d info into a 2-d plot), HIlbert curve preserved
-distance in some sense, Peano curve can flexibly fill irregular regions
+\subsection{Design-Based Criteria}
+
+\paragraph{Path length}
+The total distance that traveled is often a constraint. Minimize it.
+
+\paragraph{Nearest neighbor distance}
+A common criterion for space-filling designs, we adapt it to be meaningfully
+calculated for any point on a path. Define
+\(\mathrm{nnd}_{k}(u) = \min|u - v|\) where \(v\) is any point in the set of
+path segments at least \(k\) steps away from the segment containing \(u\). If
+\(k = 0\), this includes \(v\) in the same segment as \(u\) so trivially
+\(\mathrm{nnd}_{0}(u) = 0\) for all \(u\) in the path. \(\mathrm{nnd}_{1}(u)\)
+includes all segments except the one containing \(u\). \(\mathrm{nnd}_{2}(u)\)
+excludes the segment containing \(u\) and segments with which it shares
+vertices. Segments not accessible by a connected path starting at \(u\) are
+always included. Maximize \(\min[\mathrm{nnd}_{2}(u)]\),
+\(\mathrm{avg}[\mathrm{nnd}_{2}(u)]\), and
+\(\mathrm{avg}[\mathrm{nnd}_{1}(u)]\).
+
+
+\subsection{Model-Based Criteria}
+
+\paragraph{Posterior prediction variance}
+Minimize maximum prediction variance and average prediction variance for GP.
+
+\paragraph{Posterior parameter variance}
+Minimize posterior variance for each model parameter (intercept, variance,
+spatial scale).
+
+\paragraph{Decision-based criteria}
+Maximize error rates and AUC of thresholding the intensity at an action level.
+Minimize the threshold-penalized average predictive variance (TPAPV),
+\begin{equation*}
+\mathrm{TPAPV} = \int_{\mathcal{R}} \mathrm{Var}\left[\lambda(u)\right]
+p^{\left|\lambda(u)-A\right|} \mathrm{d}u,
+\end{equation*}
+where \(A\) is the action level/decision threshold and \(0 < p < 1\) penalizes
+uncertainty about the boundary in used for thresholding.
 
 
 \subsection{Sampling Situations}
@@ -335,7 +333,7 @@ look at examples of designs along the Pareto front
 \section{Discussion}
 % This should explore the significance of the results of the work, not repeat them. A combined Results and Discussion section is often appropriate. Avoid extensive citations and discussion of published literature.
 
-
+discuss starting points for optimization and sequential design
 
 
 \section{Conclusions}
