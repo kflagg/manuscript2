@@ -55,15 +55,15 @@
 
 \begin{abstract}
 
-\paragraph{Goal of this paper} Evaluate line-transect designs in terms of many
-design-based and model-based criteria for spatial prediction using Bayesian
-LGCP models. Identify promising criteria and initial designs for later
-optimization and sequential design (not actually optimizing yet). Illuminate
-any relationships among criteria that will be helpful for constrained
-optimization. Other innovations are to compute design-based criteria with
-respect to the path (i.e. as path integrals) and to introduce a model-based APV
-criterion with a variable weight that more strongly penalizes errors near a
-decision threshold.
+\paragraph{Goal of this paper (placeholder abstract)} Evaluate line-transect
+designs in terms of many design-based and model-based criteria for spatial
+prediction using Bayesian LGCP models. Identify promising criteria and initial
+designs for later optimization and sequential design (not actually optimizing
+yet). Illuminate any relationships among criteria that will be helpful for
+constrained optimization. Other innovations are to compute design-based
+criteria with respect to the path (i.e. as path integrals) and to introduce a
+model-based APV criterion with a variable weight that more strongly penalizes
+errors near a decision threshold.
 
 \end{abstract}
 
@@ -82,29 +82,27 @@ log-Gaussian Cox process\sep optimal sampling\sep model-based design\sep spatial
 \section{Introduction}
 % State the objectives of the work and provide an adequate background, avoiding a detailed literature survey or a summary of the results.
 
-Spatial point processes models have long been considered generally infeasible
+Spatial point process models have long been considered generally infeasible
 because of their computational demands, but recent advances in Bayesian
 computing have made the Log-Gaussian Cox process an attainable model in
-practice \citep{rueetal, lindgrenetal, illianetal, simpsonetal}. Variable
-sampling effort leads to a degraded point pattern \cite{chakrabortyetal} and
+practice~\citep{rueetal, lindgrenetal, illianetal, simpsonetal}. Variable
+sampling effort leads to a degraded point pattern~\cite{chakrabortyetal} and
 it is relatively simple to accomodate variable sampling effort in these models
-using modern computing tools \citep{yuanetal}. However, the literature on
-optimal sampling for spatial point process models is in its infancy
-\citep{liuvanhatalo}.
-% Note: Liu and Vanhatalo binned the events and used a Laplace approximation,
-% not INLA.
+using modern computing tools~\citep{yuanetal}. However, the literature on
+optimal sampling for spatial point process models is in its
+infancy~\citep{liuvanhatalo}.
 
 Point pattern data are routinely collected in species distribution studies and
 ordnance response projects. These applications may use quadrat sampling or
 line-transect sampling, with transect sampling being more common. When the
 objective is mapping where events occur in space, various spatial mapping
 procedures have been used. Traditionally these have involved aggregating the
-data to grid cell counts or computing moving averages. These have the downside
-of introducing arbitrary structure into the data by the choice of gridding
-scheme or averaging window, and require uneccessary computation effort
-\citep{simpsonetal}. Software is now available to fit spatial point process
-models to data acquired via distance sampling and simultaneously estimate the
-detection function \citep{dspat}.
+data to grid cell counts or computing moving averages. Aggregation has the
+downside of introducing arbitrary structure into the data by the choice of
+gridding scheme or averaging window, and requires uneccessary computation
+effort~\citep{simpsonetal}. Software is now available to fit spatial point
+process models to data acquired via distance sampling and simultaneously
+estimate the detection function~\citep{dspat,baser}.
 
 In ecological settings, sampling plans are often designed around the goal of
 estimating total abundance. Ordnance response surveys are typically designed
@@ -114,37 +112,14 @@ deciding \emph{where} to collect data when the goal is to map the intensity
 using a spatial point process model.
 
 
-\subsection{Paths as sampling designs}
+\subsection{Spatial design}
 
-\citet{liuvanhatalo} used narrow quadrats (swaths along line-transects) as
-their sampling units. The transects were short relative to the size of the
-study region and not connected into a path.
-
-\citet{pollard} adaptively zigzagged their line transects in a species
-abundance survey.
-
-{\it Add relevant VSP references. VSP can create parallel line-transect plans
-and add infill based on the actual course-over-ground, but I do not recall what
-criteria this may optimize.}
-
-While some ideas about the characteristics of a good point design apply to
-paths, creating an optimal path design is not as simple as connecting the
-points of a point design with line segments. There are many ways to connect
-points into a path, so optimal design criteria must apply to the whole path and
-not only to the waypoints.
-
-
-\subsection{Design-based sampling}
-
+\paragraph{Design-based sampling}
 Most work done for points. (Or quadrats approximated as points?) Space-filling
 criteria may be good starting points (e.g nearest-neighbor distance).
+{\it add references about Latin hypercube sampling}
 
-{\it Not using space-filling point desings? (i.e. designs that have nonzero
-area as sample size goes to infinity)}
-
-
-\subsection{Space-filling curves}
-
+\paragraph{Space-filling curves}
 Used in circuit design~\citep{fanetal} ({\it find more citations}) and
 high-dimensional data visualization in bioinformatics~\citep{hilbertvis}.
 Peano curve is very flexible for filling irregular shapes~\citep{fanetal}.
@@ -156,11 +131,32 @@ actually fills the space~\citep{sagan}. For applications we stop after a finite
 number of iterations.
 
 
-\subsection{Model-based spatial design}
-
+\paragraph{Model-based spatial design}
 Regularity is optimal for spatial prediction but randomness and a variety of
 interpoint distances are best for parameter estimation~\citep{diggle}.
 Inhibitory plus close pairs is a good compromise~\citep{chipetaetal2017}.
+
+
+\subsection{Paths as sampling designs}
+
+While some ideas about the characteristics of a good point design apply to
+paths, creating an optimal path design is not as simple as connecting the
+points of a point design with line segments. There are many ways to connect
+points into a path, so optimal design criteria must apply to the whole path and
+not only to the waypoints.
+
+\citet{pollard} adaptively zigzagged their line transects in a species
+abundance survey.
+
+The Visual Sample Plan software includes features to create systamatic transect
+plans and augment plans with additional transects in regions lacking spatial
+coverage~\citep{vspguide}. It helps the user choose the transect spacing to
+maximize the probability of detecting an intensity hotspot. However, it does
+not employ criteria to optimize spatial prediction.
+
+\citet{liuvanhatalo} used narrow quadrats (swaths along line-transects) as
+their sampling units. The transects were short relative to the size of the
+study region and not connected into a path.
 
 
 \subsection{Multi-objective optimization}
@@ -170,64 +166,8 @@ summarize \citet{lark} and related
 we use a large suite of criteria to explore the relationships among them
 
 
-\subsection{Notation and Terminology}
-
-\begin{itemize}
-
-\item need to add notation for paths!
-
-\item process defined on \(\mathcal{D} \subset \mathbb{R}^{2}\), domain of the
-intensity function, define \(d = \mathrm{dim}(\mathcal{D})\)
-
-\item observation window \(\mathcal{S} \subset \mathcal{D}\)
-
-\item define three regions:
-\begin{itemize}
-\item the domain \(\mathcal{D}\) over which the process mathematically operates
-\item the study region \(\mathcal{R}\) over which inferences are desired
-\item the observed/sampled observation window \(\mathcal{S}\)
-\end{itemize}
-
-\item general relationship is \(\mathcal{S} \subset \mathcal{R}
-\subset \mathcal{D} \subset \mathbb{R}^{d}\) where all of the subset symbols
-taken to mean ``subset or equal''
-
-\item \(\mathcal{D}\) can be unbounded or bounded (often \(\mathbb{R}^{d}\)),
-$\mathcal{S}$ practically always bounded, \(\mathcal{R}\) bounded or unbounded
-depending on application and inferential goals
-
-\item the ``fully surveyed'' situation is \(\mathcal{S} = \mathcal{R}\)
-
-\item \(\mathbf{X}\) point process on \(\mathcal{R}\), \(\mathbf{x} = \{x_{1},
-\dots, x_{n}\}\) realized point pattern
-
-\item point \(x \in \mathbf{x}\) called an event
-
-\item intensity function \(\lambda(u)\)
-
-\item types of ``points'' in space:
-\begin{itemize}
-\item \(x\) event in the point pattern
-\item \(s\) numerical integration node
-\item \(u\) arbitrary location in \(\mathcal{D}\) used to index intensity
-function and predictors
-\end{itemize}
-
-\item \(z(u)\) a column vector of covariates/predictors at \(u\)
-
-\item ``point'' refers to a \(u\) unless clearly stated otherwise
-
-\item bold for sets and spatial processes, normal italics for spatial vectors
-
-\item \(y\) and variations will be used for objects derived from the point
-pattern, e.g. marks, pseudodata
-
-\end{itemize}
-
-
-\section{Material and methods}
+\section{Materials and methods}
 % Provide sufficient details to allow the work to be reproduced by an independent researcher. Methods that are already published should be summarized, and indicated by a reference. If quoting directly from a previously published method, use quotation marks and also cite the source. Any modifications to existing methods should also be described.
-
 
 Heuristics of a good transect design:
 \begin{itemize}
@@ -253,15 +193,15 @@ The total distance that traveled is often a constraint. Minimize it.
 
 \paragraph{Nearest neighbor distance}
 A common criterion for space-filling designs, we adapt it to be meaningfully
-calculated for any point on a path. Define
-\(\mathrm{nnd}_{k}(u) = \min|u - v|\) where \(v\) is any point in the set of
-path segments at least \(k\) steps away from the segment containing \(u\). If
-\(k = 0\), this includes \(v\) in the same segment as \(u\) so trivially
-\(\mathrm{nnd}_{0}(u) = 0\) for all \(u\) in the path. \(\mathrm{nnd}_{1}(u)\)
-includes all segments except the one containing \(u\). \(\mathrm{nnd}_{2}(u)\)
-excludes the segment containing \(u\) and segments with which it shares
-vertices. Segments not accessible by a connected path starting at \(u\) are
-always included. Maximize \(\min[\mathrm{nnd}_{2}(u)]\),
+calculated for any point on a path. Define the \(k\)th-order nearest neighbor
+distance as \(\mathrm{nnd}_{k}(u) = \min|u - v|\) where \(v\) is any point
+in the set of path segments at least \(k\) steps away from the segment
+containing \(u\). If \(k = 0\), this includes \(v\) in the same segment as
+\(u\) so trivially \(\mathrm{nnd}_{0}(u) = 0\) for all \(u\) in the path.
+\(\mathrm{nnd}_{1}(u)\) includes all segments except the one containing \(u\).
+\(\mathrm{nnd}_{2}(u)\) excludes the segment containing \(u\) and segments with
+which it shares vertices. Segments not accessible by a connected path starting
+at \(u\) are always included. Maximize \(\min[\mathrm{nnd}_{2}(u)]\),
 \(\mathrm{avg}[\mathrm{nnd}_{2}(u)]\), and
 \(\mathrm{avg}[\mathrm{nnd}_{1}(u)]\).
 
@@ -288,38 +228,47 @@ uncertainty about the boundary in used for thresholding.
 
 \subsection{Sampling Situations}
 
-\begin{itemize}
+\paragraph{Parallel transects} Parallel transects running the length of the
+site in the vertical axis. Three ways of choosing the horizontal coordinate:
+simple random sample (SRS), systematic with a random starting point and even
+spacing, inhibitory plu close pairs.
 
-\item SRS of parallel transects
+\paragraph{Latin hypercube sampling}
+Random Latin hypercube design connected by shortest path. Waypoints generated
+by the \texttt{lhs} R package~\cite{lhs}. Connected into a the shortest path
+by the \texttt{TSP} package~\citep{tsp}.
 
-\item systematic sample of parallel transects
+\paragraph{Space-filling curves}
+Hilbert curve generated by HilbertVis package~\citep{hilbertvis}. This is a
+deterministic design, so a random offset is added.
 
-\item inhibitory plus close pairs of parallel transects
+\paragraph{Particle movement model}
+Models the way data are actually collected. Waypoints generated sequentially by
+generating a jump distance and a direction. The jump distance is generated from
+a scaled beta distribution, and negatively correlated with previous jump
+distance. This behavior should approximately alternate between a short
+``transition'' and a long transect. The negative correlation was achieved by
+applying a \(1 - x\) transformation to a beta autoregressive
+process~\citep{mckenzie}. The direction angle is drawn from a bimodal
+distribution that is symmetric around 0 (a normal distribution reflectd about
+0). {\it explain the Straus part}
 
-\item random Latin hypercube design connected by shortest path (look at
-\texttt{lhs} package)
+{\it set up to think about adaptive sampling (adding a transect at a time or
+stopping early but don't actually do it here)}
 
-\item fractal curves with random starting points
 
-\item movement model
-\begin{itemize}
-\item generate sequentially, two waypoints at a time
-\item generate a jump distance and a direction
-\item distance negatively correlated with previous distance (should
-approximately alternate between a short ``transition'' and a long ``transect'')
-\item direction bimodal with modes near \(\pm \pi / 2\)
-\item if using location/scale beta for direction, allow any direction when the
-support 
-\end{itemize}
+\subsection{Model fitting}
 
-\end{itemize}
+INLA~\citep{rueetal}, SPDE~\citep{lindgrenetal}, off-grid~\citep{simpsonetal}
 
-set up to think about adaptive sampling (adding a transect at a time or
-stopping early but don't actually do it here)
+
+\subsection{Simulation procedure}
+
+describe the simulation and site
+
 
 %\section{Theory/calculation}
 % A Theory section should extend, not repeat, the background to the article already dealt with in the Introduction and lay the foundation for further work. In contrast, a Calculation section represents a practical development from a theoretical basis.
-
 
 
 \section{Results}
@@ -339,6 +288,68 @@ discuss starting points for optimization and sequential design
 \section{Conclusions}
 % The main conclusions of the study may be presented in a short Conclusions section, which may stand alone or form a subsection of a Discussion or Results and Discussion section.
 
+
+\appendix
+\section{Notation and Terminology}
+
+\begin{itemize}
+
+\item process defined on \(\mathcal{D} \subset \mathbb{R}^{d}\), domain of the
+intensity function, in this manuscript \(d = 2\)
+
+\item observation window \(\mathcal{S} \subset \mathcal{D}\)
+
+\item define three regions:
+\begin{itemize}
+\item the domain \(\mathcal{D}\) over which the process mathematically operates
+\item the study region \(\mathcal{R}\) over which inferences are desired
+\item the observed/sampled observation window \(\mathcal{S}\)
+\end{itemize}
+
+\item general relationship is \(\mathcal{S} \subset \mathcal{R}
+\subset \mathcal{D} \subset \mathbb{R}^{d}\) where all of the subset symbols
+taken to mean ``subset or equal''
+
+\item \(\mathcal{D}\) can be bounded or unbounded (often equal to
+\(\mathbb{R}^{d}\)), $\mathcal{S}$ practically always bounded, \(\mathcal{R}\)
+bounded or unbounded depending on application and inferential goals
+
+\item the ``fully surveyed'' (censused) situation is
+\(\mathcal{S} = \mathcal{R}\)
+
+\item survey path \(\mathcal{P}\) is a one-dimensional subset of
+\(\mathcal{R}\)
+\begin{itemize}
+\item set of one or more sequences of waypoints connected by line segments
+\item \(\mathcal{S}\) is the set of all points within a (assumed known) radius
+of \(\mathcal{P}\)
+\end{itemize}
+
+\item \(\mathbf{X}\) point process on \(\mathcal{R}\), \(\mathbf{x} = \{x_{1},
+\dots, x_{n}\}\) realized point pattern
+
+\item point \(x \in \mathbf{x}\) called an event
+
+\item intensity function \(\lambda(u)\)
+
+\item types of ``points'' in space:
+\begin{itemize}
+\item \(x\) event in the point pattern
+\item \(s\) numerical integration node
+\item \(u\) arbitrary location in \(\mathcal{D}\) used to index intensity
+function and predictors
+\end{itemize}
+
+\item \(z(u)\) a column vector of covariates/predictors at \(u\)
+
+\item ``point'' refers to a \(u\) unless clearly stated otherwise
+
+\item bold for sets and spatial processes, normal italics for spatial vectors
+
+\item \(y\) and variations will be used for objects derived from the point
+pattern, e.g. marks, pseudodata
+
+\end{itemize}
 
 
 \section*{References}

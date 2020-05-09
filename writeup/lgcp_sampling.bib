@@ -76,7 +76,7 @@
 },
 
 @article{hilbertvis,
-  title={Visualisation of genomic data with the Hilbert curve},
+  title={Visualisation of genomic data with the {H}ilbert curve},
   author={Simon Anders},
   year={2009},
   journal={Bioinformatics},
@@ -90,17 +90,28 @@
   publisher={Springer}
 },
 
+@manual{vspguide,
+  author={Matzke, Brett and Wilson, John and Newburn, Lisa and Dowson, ST and Hathaway, John and Sego, LH and Bramer, LM and Pulsipher, Brent},
+  year={2014},
+  title={Visual Sample Plan Version 7.0 User's Guide},
+  organization={Pacific Northwest National Laboratory},
+  address={Richland, Washington},
+  url={http://vsp.pnnl.gov/docs/PNNL-23211.pdf},
+  number={PNNL-23211}, 
+},
+
+
 % INLA refernces.
 
 @book{rinla,
-  title={Spatial and Spatio-temporal Bayesian Models with {R-INLA}},
+  title={Spatial and Spatio-temporal {B}ayesian Models with {R-INLA}},
   author={Blangiardo, Marta and Cameletti, Michela},
   year={2015},
   publisher={Wiley},
 },
 
 @article{rueetal,
-  title={Approximate Bayesian inference for latent Gaussian models by using integrated nested Laplace approximations},
+  title={Approximate {B}ayesian inference for latent {G}aussian models by using integrated nested {L}aplace approximations},
   author={Rue, H{\aa}vard and Martino, Sara and Chopin, Nicolas},
   journal={Journal of the royal statistical society: Series b (statistical methodology)},
   volume={71},
@@ -118,7 +129,7 @@
 },
 
 @article{simpsonetal,
-  title={Going off grid: Computationally efficient inference for log-Gaussian Cox processes},
+  title={Going off grid: Computationally efficient inference for log-{G}aussian {C}ox processes},
   author={Simpson, Daniel and Illian, Janine B and Lindgren, Finn and S{\o}rbye, Sigrunn H and Rue, Havard},
   journal={Biometrika},
   volume={103},
@@ -128,7 +139,7 @@
 },
 
 @article{lindgrenetal,
-  title={An explicit link between Gaussian fields and Gaussian Markov random fields: the stochastic partial differential equation approach},
+  title={An explicit link between {G}aussian fields and {G}aussian {M}arkov random fields: the stochastic partial differential equation approach},
   author={Lindgren, Finn and Rue, H{\aa}vard and Lindstr{\"o}m, Johan},
   journal={Journal of the Royal Statistical Society: Series B (Statistical Methodology)},
   volume={73},
@@ -160,7 +171,7 @@
 % Assorted point process books and papers.
 
 @article{brixmoeller,
-  title = {Space-time Multi Type Log Gaussian Cox Processes with a View to Modelling Weeds},
+  title = {Space-time Multi Type Log {G}aussian {C}ox Processes with a View to Modelling Weeds},
   author = {Brix, Anders and M{\o}ller, Jesper},
   journal = {Scandinavian Journal of Statistics},
   volume = {28},
@@ -202,6 +213,15 @@
 
 
 % Software and data sources
+@manual{baser,
+  title={R: A Language and Environment for Statistical Computing},
+  author={{R Core Team}},
+  organization={R Foundation for Statistical Computing},
+  address={Vienna, Austria},
+  year={2019},
+  url={https://www.R-project.org/},
+},
+
 @article{spatstat,
   title={{Spatstat}: An {R} package for analyzing spatial point patterns},
   author={Adrian Baddeley and Rolf Turner},
@@ -212,11 +232,40 @@
   pages={1--42},
 },
 
+@manual{lhs,
+  title={lhs: Latin Hypercube Samples},
+  author={Rob Carnell},
+  year={2020},
+  note={{R} package version 1.0.2},
+  url={https://CRAN.R-project.org/package=lhs},
+},
+
 @manual{dspat,
   title={DSpat: Spatial Modelling for Distance Sampling Data},
   author={Devin Johnson and Jeff Laake and Jay VerHoef},
   year={2014},
-  note={R package version 0.1.6},
+  note={{R} package version 0.1.6},
   url={https://CRAN.R-project.org/package=DSpat},
 },
 
+@manual{tsp,
+  title={{TSP}: Traveling Salesperson Problem ({TSP})},
+  author={Michael Hahsler and Kurt Hornik},
+  year={2020},
+  note={{R} package version 1.1-10},
+  url={https://CRAN.R-project.org/package=TSP},
+},
+
+@article{hashlerhornik,
+  title={TSP -- {I}nfrastructure for the traveling salesperson problem},
+  author={Michael Hahsler and Kurt Hornik},
+  year={2007},
+  journal={Journal of Statistical Software},
+  volume={23},
+  number={2},
+  pages={1--21},
+  url={http://www.jstatsoft.org/v23/i02/},
+  doi={10.18637/jss.v023.i02},
+  month={December},
+  issn={1548-7660},
+},
