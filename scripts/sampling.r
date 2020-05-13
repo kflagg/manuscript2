@@ -19,9 +19,10 @@ invisible(clusterEvalQ(cl, {
 }))
 
 # Define user-specified parameters.
-XSECT_WIDTH <- 2 # Width of transects.
+XSECT_WIDTH <- 4 # Width of transects.
 XSECT_LENGTH_MIN <- 50
 XSECT_LENGTH_MAX <- 500
+XSECT_LENGTH_CORR <- -0.8
 XSECT_SEP_MIN <- 10
 XSECT_SEP_MAX <- 250
 DIST_INITIAL <- 10000
@@ -39,7 +40,7 @@ MARGIN <- 200
 
 # Graphics parameters.
 NPIX_X <- 500
-NPIX_Y <- 500
+NPIX_Y <- 250
 
 
 # Define derived parameters
@@ -53,10 +54,11 @@ XSECT_NUM_INITIAL <- floor(DIST_INITIAL / XSECT_LENGTH_MAX)
 
 # Site window.
 
-sim_R <- owin(poly = cbind(
-    x = c(   0, 1600, 1600, 2000, 2000,  500,    0),
-    y = c(   0,    0,  250,  250, 2000, 2000, 1500)
-  ), unitnames = c('meter', 'meters'))
+#sim_R <- owin(poly = cbind(
+#    x = c(   0, 1600, 1600, 2000, 2000,  500,    0),
+#    y = c(   0,    0,  250,  250, 2000, 2000, 1500)
+#  ), unitnames = c('meter', 'meters'))
+sim_R <- owin(c(0, 1500), c(0, 700))
 
 # Mesh covering the site.
 R_boundary <- inla.mesh.segment(loc = do.call(cbind, vertices.owin(sim_R)))
@@ -124,13 +126,8 @@ dual_tess <- as.tess(parLapply(cl, seq_len(R_mesh$n), function(i){return(
   )}))
 )}))
 
-# Get the area represented by each node.
-#R_nodes_margin_area <- diag(inla.mesh.fem(R_margin_mesh)$c0)
-
 # Calculate the interior area represented by each node.
 R_nodes_area <- parSapply(cl, parLapply(cl, tiles(dual_tess), `[`, sim_R), area)
-
-# Will repeat for each sampling plan later, subseting using D.
 
 # Neat plot.
 plot(dual_tess, border = '#80808020', do.col = TRUE, values = R_nodes_area,
@@ -138,13 +135,6 @@ plot(dual_tess, border = '#80808020', do.col = TRUE, values = R_nodes_area,
 plot(R_mesh_net, add = TRUE, col = '#00000080')
 #plot(sim_R, border = 'white', add = TRUE)
 points(R_mesh_loc[,], pch = 20)
-
-# Set up the spatial numerical integration.
-R_mesh_size <- R_mesh$n
-R_node_bary <- inla.mesh.project(R_mesh, R_mesh_loc)$A
-
-# Projector to interpolate over site.
-R_proj <- inla.mesh.projector(R_mesh, dims = c(NPIX_X, NPIX_Y))
 
 
 #}}}##################################
@@ -203,85 +193,9 @@ R_spde <- inla.spde2.matern(R_mesh)
 R_formula <- y ~ -1 + intercept + f(idx, model = R_spde)
 
 
-#}}}##################
-#{{{ Fully surveyed. #
-######################
-
-# Observed event locations.
-full_pts <- cbind(sim_datasets[[idx]]$x, sim_datasets[[idx]]$y)
-full_n_events <- nrow(full_pts)
-
-# Create the psuedodata. This is a vector giving the count of events at each
-# pseudopoint location, that is 0 at each mesh node and 1 at each event.
-full_pseudodata <- c(rep(0, R_mesh_size), rep(1, full_n_events))
-
-# Concatenate the weight vector with a vector of zeros for the observed events.
-# This is the vector of Poisson exposure parameters for the pseudodata.
-full_pseudodata_exp <- c(R_nodes_area, rep(0, full_n_events))
-
-# Compute the barycentric coordinates of the observed events
-# (i.e. project into the space spanned by the basis of mesh nodes).
-full_bary <- inla.mesh.project(R_mesh, full_pts)$A
-
-# Bind the node and event coordinates into a single matrix of pseudodata
-# locations in barycentric coordinates.
-full_pseudopoints <- rbind(R_node_bary, full_bary)
-
-# Create the data list to pass to inla().
-# Indices and intercepts are only needed for the nodes.
-full_inla_data <- list(
-  y = full_pseudodata, # The whole pseudodata vector.
-  idx = seq_len(R_mesh_size), # Indices of the nodes.
-  intercept = rep(1, R_mesh_size) # Intercept column.
-)
-
-# Fit the model as a Poisson GLM with exposures specified.
-full_result <- inla(
-  formula = R_formula,
-  data = full_inla_data,
-  family = 'poisson',
-  control.fixed = list(
-    # Prior means and precisions for coefficients.
-    mean.intercept = 0,
-    prec.intercept = 0,
-    mean = 0,
-    prec = 0
-  ),
-  control.predictor = list(A = full_pseudopoints),
-  E = full_pseudodata_exp
-)
-
-# Summarize the posterior marginals of the parameters.
-print(full_result$summary.fixed)
-print(full_result$summary.hyperpar)
-
-# Plot surface.
-plot(im(t(inla.mesh.project(R_proj, full_result$summary.fixed$mean + full_result$summary.random$idx$mean)),
-        xrange = Frame(sim_R)$x,
-        yrange = Frame(sim_R)$y),
-        main = 'Posterior Mean of Log-Intensity')
-plot(sim_R, border = '#808080ff', add = TRUE)
-points(sim_dataset[[idx]], pch = '.', col = 'white')
-
-# Spatially-averaged random effect variance.
-#full_avgvar <- (result_full$summary.random$idx$sd^2) %*% mesh_area / sum(mesh_area)
-#print(full_avgvar)
-
-# Max random effect variance at any node. (Interpolated variance cannot exceed this.)
-#full_maxvar <- max(result_full$summary.random$idx$sd[mesh_area > 0]^2)
-#print(full_maxvar)
-
-
 #}}}######################################################
 #{{{ Sampling parameters applicable to all survey plans. #
 ##########################################################
-
-# Define the region where waypoints are allowed
-#sampleable <- erosion(sim_R, WP_MARGIN)
-#min_x <- min(vertices(sampleable)$x)
-#max_x <- max(vertices(sampleable)$x)
-#min_y <- min(vertices(sampleable)$y)
-#max_y <- max(vertices(sampleable)$y)
 
 # Function to subset a ppp to a region along a psp.
 sample_ppp <- function(full_ppp, path, xsect_radius = XSECT_RADIUS){
@@ -303,7 +217,12 @@ srs <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
   max_y <- max(full_frame$y) + xsect_radius
 
   srs_x <- sort(runif(num_xsects, min_x, max_x))
-  waypoints <- cbind(x = rep(srs_x, each = 2), y = c(min_y, max_y, max_y, min_y))
+  waypoints <- cbind(
+    x = rep(srs_x, each = 2),
+    y = rep(c(min_y, max_y, max_y, min_y), ceiling(num_xsects / 2))[
+      1:(2 * num_xsects)
+    ]
+  )
   n_waypoints <- nrow(waypoints)
 
   path_psp <- psp(
@@ -331,7 +250,12 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
   spacing <- (max_x - min_x) / num_xsects
   edge2edge <- spacing - xsect_radius * 2
   sys_x <- runif(1, min_x, min_x + edge2edge) + (0:(num_xsects - 1)) * spacing
-  waypoints <- cbind(x = rep(sys_x, each = 2), y = c(min_y, max_y, max_y, min_y))
+  waypoints <- cbind(
+    x = rep(sys_x, each = 2),
+    y = rep(c(min_y, max_y, max_y, min_y), ceiling(num_xsects / 2))[
+      1:(2 * num_xsects)
+    ]
+  )
   n_waypoints <- nrow(waypoints)
 
   path_psp <- psp(
@@ -345,9 +269,9 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
 }
 
 
-#}}}##############################
-#{{{ Inhibitory plus close pairs #
-##################################
+#}}}###############################
+#{{{ Inhibitory plus close pairs. #
+###################################
 
 inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
                   num_paired = NUM_PAIRS, pair_radius = PAIR_RADIUS,
@@ -358,6 +282,7 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
   max_x <- max(full_frame$x) - xsect_radius
   min_y <- min(full_frame$y) - xsect_radius
   max_y <- max(full_frame$y) + xsect_radius
+  num_xsects <- num_primary + num_paired
 
   initial_x <- runif(num_primary, min_x, max_x)
 
@@ -387,7 +312,7 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
         sum(abs(prop_x[i] - prop_x[-(1:i)]) < pair_radius)
     }
 
-    # Accept of reject the proposal.
+    # Accept or reject the proposal.
     if(runif(1) < antirepulsion^(prop_pairs - current_pairs)){
       initial_x <- prop_x
     }
@@ -398,7 +323,12 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
                    pmax(paired_x - pair_radius, min_x),
                    pmin(paired_x + pair_radius, max_x))
   inhib_x <- sort(c(initial_x, pairs_x))
-  waypoints <- cbind(x = rep(inhib_x, each = 2), y = c(min_y, max_y, max_y, min_y))
+  waypoints <- cbind(
+    x = rep(inhib_x, each = 2),
+    y = rep(c(min_y, max_y, max_y, min_y), ceiling(num_xsects / 2))[
+      1:(2 * num_xsects)
+    ]
+  )
   n_waypoints <- nrow(waypoints)
 
   path_psp <- psp(
@@ -412,11 +342,11 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
 }
 
 
-#}}}########################
-#{{{ Latin Traveling Sales #
-############################
+#}}}#########################
+#{{{ Latin traveling sales. #
+#############################
 
-lhstsp <- function(full_win, num_waypoints = WP_NUM_INITIAL, margin = WP_MARGIN, ...){
+lhstsp <- function(full_win, num_bins = round(sqrt(WP_NUM_INITIAL)), margin = WP_MARGIN, ...){
   full_frame <- Frame(full_win)
   min_x <- min(full_frame$x) + margin
   max_x <- max(full_frame$x) - margin
@@ -424,7 +354,7 @@ lhstsp <- function(full_win, num_waypoints = WP_NUM_INITIAL, margin = WP_MARGIN,
   max_y <- max(full_frame$y) - margin
   sampleable <- erosion(full_win, margin)
 
-  wp_unscaled <- maximinLHS(n = floor(sqrt(num_waypoints)), k = 2, ...)
+  wp_unscaled <- maximinLHS(n = num_bins, k = 2, ...)
   wp_x <- wp_unscaled[,1] * (max_x - min_x) + min_x
   wp_y <- wp_unscaled[,2] * (max_y - min_y) + min_y
   wp_ppp <- ppp(wp_x, wp_y, window = full_frame)[sampleable]
@@ -444,9 +374,9 @@ lhstsp <- function(full_win, num_waypoints = WP_NUM_INITIAL, margin = WP_MARGIN,
 }
 
 
-#}}}################
-#{{{ Hilbert Curve #
-####################
+#}}}#################
+#{{{ Hilbert curve. #
+#####################
 
 hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGIN, ...){
   full_frame <- Frame(full_win)
@@ -474,11 +404,192 @@ hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGI
 }
 
 
-#}}}########################
+#}}}############################
+#{{{ Random particle movement. #
+################################
+
+rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
+                seg_min = XSECT_LENGTH_MIN, seg_max = XSECT_LENGTH_MAX,
+                angle_m = pi/3, angle_s = pi/6, angle_prob = c(0.5, 0.5),
+                a = 1, b = 1, pair_radius = PAIR_RADIUS, antirepulsion = 0.8,
+                margin = WP_MARGIN, animate = FALSE, ...){
+  full_frame <- Frame(full_win)
+  min_x <- min(full_frame$x) + margin
+  max_x <- max(full_frame$x) - margin
+  min_y <- min(full_frame$y) + margin
+  max_y <- max(full_frame$y) - margin
+  sampleable <- erosion(full_win, margin)
+
+  dist_range <- seg_max - seg_min
+
+  pos_corr <- corr > 0
+  if(!pos_corr){
+    corr <- -corr
+  }
+  p <- corr * (a + b) / (corr + b)
+
+  # Starting segment.
+  wp <- as.data.frame(runifpoint(1, sampleable))
+
+  reject <- TRUE
+  while(reject){
+    angle <- runif(1, 0, 2*pi)
+    dist_unscaled <- rbeta(1, a, b)
+    new_dist <- dist_unscaled * dist_range + seg_min
+
+    new_x <- tail(wp$x, 1) + cos(angle) * new_dist
+    new_y <- tail(wp$y, 1) + sin(angle) * new_dist
+
+    if(inside.owin(new_x, new_y, sampleable)){
+        reject <- FALSE
+    }
+  }
+  path_psp <- psp(wp$x, wp$y, new_x, new_y, sim_R)
+  cum_dist <- new_dist
+  current_x <- tail(wp$x, 1)
+  current_y <- tail(wp$y, 1)
+
+  if(animate){
+    plot(path_psp, ...)
+  }
+
+  # Loop until exceeding the distance cutoff.
+  while(cum_dist < dist_cutoff){
+    reject <- TRUE
+
+    while(reject){
+      new_angle <- (angle + sample(c(-1, 1), 1, prob = angle_prob) *
+        rnorm(1, angle_m, angle_s)) %% (2*pi)
+      new_dist_unscaled <- rbeta(1, b, a - p) *
+        (1 - rbeta(1, p, a - p) * dist_unscaled)
+      if(pos_corr){
+        new_dist_unscaled <- 1 - new_dist_unscaled
+      }
+
+      dist_unscaled <- new_dist_unscaled
+      new_dist <- dist_unscaled * dist_range + seg_min
+
+      new_x <- current_x + cos(new_angle) * new_dist
+      new_y <- current_y + sin(new_angle) * new_dist
+
+      if(inside.owin(new_x, new_y, sampleable)){
+        if(runif(1) < antirepulsion^(sum(crossdist(
+            psp(current_x, current_y, new_x, new_y, sim_R),
+            path_psp, type = 'separation') < pair_radius) - 1)){
+          reject <- FALSE
+        }
+      }
+    }
+    angle <- new_angle
+    cum_dist <- cum_dist + new_dist
+    wp <- rbind(wp, data.frame(x = new_x, y = new_y))
+    path_psp$ends <- rbind(path_psp$ends, data.frame(
+      x0 = current_x,
+      y0 = current_y,
+      x1 = new_x,
+      y1 = new_y
+    ))
+    path_psp$n <- path_psp$n + 1
+    current_x <- new_x
+    current_y <- new_y
+
+    if(animate){
+      plot(path_psp, add = TRUE)
+    }
+  }
+
+  return(path_psp)
+}
+
+
+#}}}##############################
+#{{{ Fit model to observed data. #
+##################################
+
+model_fit <- function(model_formula, obs_ppp, R_mesh, dual_tess,
+  control.fixed = list(
+    # Prior means and precisions for coefficients.
+    mean.intercept = 0,
+    prec.intercept = 0,
+    mean = 0,
+    prec = 0
+  ),
+  ...){
+
+  # Observation window.
+  S_win <- Window(obs_ppp)
+
+  # Observed event locations.
+  obs_pts <- cbind(obs_ppp$x, obs_ppp$y)
+
+  # Get the numbers of mesh nodes and real events.
+  # The sum of these will be the number of pseudodata points.
+  mesh_size <- R_mesh$n
+  n_events <- nrow(obs_pts)
+
+  # Create the psuedodata. This is a vector giving the count of events at each
+  # pseudopoint location, that is 0 at each mesh node and 1 at each event.
+  pseudodata <- c(rep(0, mesh_size), rep(1, n_events))
+
+  # Calculate the interior area represented by each node.
+  mesh_weights <- sapply(lapply(tiles(dual_tess), `[`, S_win), area)
+
+  # Concatenate the weight vector with a vector of zeros for the observed events.
+  # This is the vector of Poisson exposure parameters for the pseudodata.
+  pseudodata_exp <- c(mesh_weights, rep(0, n_events))
+
+  # Compute the barycentric coordinates of the observed events
+  # (i.e. project into the space spanned by the basis of mesh nodes).
+  bary <- inla.mesh.project(R_mesh, obs_pts)$A
+
+  # Compute the barycentric coordinates of the nodes. Because the
+  # node coordinatess are the basis vectors, this is an identity matrix.
+  int_matrix <- sparseMatrix(
+    i = seq_len(mesh_size),
+    j = seq_len(mesh_size),
+    x = rep(1, mesh_size)
+  )
+
+  # Bind the node and event coordinates into a single matrix of pseudodata
+  # locations in barycentric coordinates.
+  pseudopoints <- rbind(int_matrix, bary)
+
+  # Create the data list to pass to inla().
+  # Indices and intercepts are only needed for the nodes.
+  inla_data <- list(
+    y = pseudodata, # The whole pseudodata vector.
+    idx = seq_len(mesh_size), # Indices of the nodes.
+    intercept = rep(1, mesh_size) # Intercept column.
+  )
+
+  # Fit the model as a Poisson GLM with exposures specified.
+  result <- inla(
+    formula = model_formula,
+    data = inla_data,
+    family = 'poisson',
+    control.fixed = control.fixed,
+    control.predictor = list(A = pseudopoints),
+    E = pseudodata_exp,
+    ...
+  )
+
+  return(result)
+}
+
+
+#}}}##############################
+
+
+result1 <- model_fit(R_formula, sample_ppp(sim_datasets[[idx]], rpm(sim_R, animate = TRUE)), R_mesh, dual_tess)
+
+R_proj <- inla.mesh.projector(R_mesh, dims = c(NPIX_X, NPIX_Y))
+plot(im(t(inla.mesh.project(R_proj, result1$summary.random$idx$mean)),
+        xrange = sim_R$x,
+        yrange = sim_R$y),
+     riblab = expression(E(bold(e)(u)*'|'*bold(x))), ribsep = 0.05,
+     main = 'Posterior Predicted Mean of Latent GP')
 
 
 stopCluster(cl)
-
-rect_R <- owin(c(0, 1500), c(0, 700))
 
 # vim: foldmethod=marker:
