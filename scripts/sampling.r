@@ -9,6 +9,9 @@ library(lhs)
 library(TSP)
 library(HilbertVis)
 library(INLA)
+library(tibble)
+library(dplyr)
+library(tidyr)
 
 # Create a cluster for applying in parallel.
 cl <- makeCluster(ceiling(0.75) * detectCores())
@@ -19,6 +22,7 @@ invisible(clusterEvalQ(cl, {
 }))
 
 # Define user-specified parameters.
+N_SIMS <- 3#1000
 XSECT_WIDTH <- 4 # Width of transects.
 XSECT_LENGTH_MIN <- 50
 XSECT_LENGTH_MAX <- 500
@@ -36,7 +40,6 @@ WP_MARGIN <- XSECT_WIDTH / 2 # Minimum distance between waypoints and site bound
 # Mesh parameters to experiment with.
 MAX_EDGE_LENGTH <- 100
 MAX_EDGE_EXT <- 200
-MARGIN <- 200
 
 # Graphics parameters.
 NPIX_X <- 500
@@ -67,13 +70,6 @@ R_mesh <- inla.mesh.create(
   refine = list(max.edge = MAX_EDGE_LENGTH)
 )
 
-# Mesh including a margin outside the site.
-#R_margin_mesh <- inla.mesh.2d(
-#  loc = R_mesh$loc[,1:2], # Include nodes from site.
-#  offset = MARGIN,
-#  max.edge = MAX_EDGE_EXT # Fill in the rest with a coarser triangulation.
-#)
-
 # Get the mesh nodes.
 R_mesh_loc <- R_mesh$loc[,1:2]
 
@@ -85,9 +81,6 @@ R_mesh_tess <- as.tess(parApply(cl, R_mesh$graph$tv, 1, function(x){
 
 # Convert mesh to linear network for plotting.
 R_mesh_net <- linnet(as.ppp(R_mesh_loc, sim_R), as.matrix(R_mesh$graph$vv == 1))
-
-# Get the area of each triangle.
-#R_tri_margin_areas <- tile.areas(R_margin_mesh_tess)
 
 # Get the interior area of each triangle.
 R_tri_areas <- parSapply(cl, parLapply(cl, tiles(R_mesh_tess), '[', sim_R), area)
@@ -204,6 +197,11 @@ sample_ppp <- function(full_ppp, path, xsect_radius = XSECT_RADIUS){
   return(structure(obs_ppp, path = path))
 }
 
+# Function to compute the total length of a psp.
+totallength <- function(x){
+  return(sum(lengths.psp(x)))
+}
+
 
 #}}}#######
 #{{{ SRS. #
@@ -235,6 +233,22 @@ srs <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
   return(path_psp)
 }
 
+srs_design <- tibble(
+  num_xsects = rep(c(10, 25, 50, 70), each = N_SIMS),
+  xsect_radius = XSECT_RADIUS
+)
+invisible(clusterEvalQ(cl, library(tibble)))
+clusterExport(cl, c('totallength', 'srs', 'srs_design'))
+srs_plans <- bind_rows(
+  parLapply(cl, seq_len(nrow(srs_design)), function(r){
+    plan <- srs(sim_R, srs_design$num_xsects[r], srs_design$xsect_radius[r])
+    return(tibble_row(
+      Plan = list(plan),
+      xsect_radius = srs_design$xsect_radius[r],
+      Distance = totallength(plan))
+   )})
+)
+
 
 #}}}############################
 #{{{ Systematic random sample. #
@@ -248,7 +262,7 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
   max_y <- max(full_frame$y) + xsect_radius
 
   spacing <- (max_x - min_x) / num_xsects
-  edge2edge <- spacing - xsect_radius * 2
+  edge2edge <- max(spacing - xsect_radius * 2, 0)
   sys_x <- runif(1, min_x, min_x + edge2edge) + (0:(num_xsects - 1)) * spacing
   waypoints <- cbind(
     x = rep(sys_x, each = 2),
@@ -267,6 +281,21 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
   )[full_win]
   return(path_psp)
 }
+
+sys_design <- tibble(
+  num_xsects = rep(c(10, 25, 50, 70), each = N_SIMS),
+  xsect_radius = XSECT_RADIUS
+)
+clusterExport(cl, c('sys', 'sys_design'))
+sys_plans <- bind_rows(
+  parLapply(cl, seq_len(nrow(sys_design)), function(r){
+    plan <- sys(sim_R, sys_design$num_xsects[r], sys_design$xsect_radius[r])
+    return(tibble_row(
+      Plan = list(plan),
+      xsect_radius = sys_design$xsect_radius[r],
+      Distance = totallength(plan))
+   )})
+)
 
 
 #}}}###############################
@@ -341,6 +370,31 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
   return(path_psp)
 }
 
+inhib_design <- tibble(
+    reps = N_SIMS,
+    expand.grid(
+      num_xsects = c(10, 25, 50, 70),
+      prop_pairs = c(0.1, 0.2)
+    ),
+    xsect_radius = XSECT_RADIUS
+  ) %>%
+  mutate(
+    num_pair = round(num_xsects * prop_pairs),
+    num_prim = num_xsects - num_pair,
+    pair_radius = 1500 / num_xsects
+  ) %>%
+  uncount(reps)
+clusterExport(cl, c('inhib', 'inhib_design'))
+inhib_plans <- bind_rows(
+  parLapply(cl, seq_len(nrow(inhib_design)), function(r){
+    plan <- inhib(sim_R, inhib_design$num_prim[r], inhib_design$num_pair[r], inhib_design$pair_radius[r], xsect_radius = inhib_design$xsect_radius[r])
+    return(tibble_row(
+      Plan = list(plan),
+      xsect_radius = inhib_design$xsect_radius[r],
+      Distance = totallength(plan))
+   )})
+)
+
 
 #}}}#########################
 #{{{ Latin traveling sales. #
@@ -373,6 +427,22 @@ lhstsp <- function(full_win, num_bins = round(sqrt(WP_NUM_INITIAL)), margin = WP
   return(path_psp)
 }
 
+lhs_design <- tibble(
+  bins = rep(c(50, 300, 1200, 2400), each = N_SIMS),
+  xsect_radius = XSECT_RADIUS
+)
+invisible(clusterEvalQ(cl, {library(lhs);library(TSP)}))
+clusterExport(cl, c('lhstsp', 'lhs_design'))
+lhs_plans <- bind_rows(
+  parLapply(cl, seq_len(nrow(lhs_design)), function(r){
+    plan <- lhstsp(sim_R, lhs_design$bins[r], lhs_design$xsect_radius[r])
+    return(tibble_row(
+      Plan = list(plan),
+      xsect_radius = lhs_design$xsect_radius[r],
+      Distance = totallength(plan))
+   )})
+)
+
 
 #}}}#################
 #{{{ Hilbert curve. #
@@ -402,6 +472,22 @@ hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGI
   )[full_win]
   return(path_psp)
 }
+
+hilb_design <- tibble(
+  order = rep(c(3, 4, 5, 6), each = N_SIMS),
+  xsect_radius = XSECT_RADIUS
+)
+invisible(clusterEvalQ(cl, library(HilbertVis)))
+clusterExport(cl, c('hilbert', 'hilb_design'))
+hilb_plans <- bind_rows(
+  parLapply(cl, seq_len(nrow(hilb_design)), function(r){
+    plan <- hilbert(sim_R, hilb_design$order[r], hilb_design$xsect_radius[r])
+    return(tibble_row(
+      Plan = list(plan),
+      xsect_radius = hilb_design$xsect_radius[r],
+      Distance = totallength(plan))
+   )})
+)
 
 
 #}}}############################
@@ -501,6 +587,36 @@ rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
   return(path_psp)
 }
 
+rpm_design <- tibble(
+    reps = N_SIMS,
+    expand.grid(
+      max_dist = c(6700, 17200, 34700, 49700),
+      length_corr = c(0, -0.8),
+      seg_max = 500,
+      seg_min_prop = 0.1,
+      pair_radius = c(80, 300),
+      angle_m = c(pi/3, pi/2),
+      angle_s = c(pi/6, pi/12)
+    ),
+    xsect_radius = XSECT_RADIUS
+  ) %>%
+  filter(pair_radius == 80 | max_dist < 10000) %>%
+  mutate(
+    seg_min = seg_max * seg_min_prop,
+    angle_s = ifelse(angle_m > pi/3, pi/12, pi/6)
+  ) %>%
+  uncount(reps)
+clusterExport(cl, c('rpm', 'rpm_design'))
+rpm_plans <- bind_rows(
+  parLapply(cl, seq_len(nrow(rpm_design)), function(r){
+    plan <- rpm(sim_R, rpm_design$max_dist[r], rpm_design$length_corr[r], rpm_design$seg_min[r], rpm_design$seg_max[r], rpm_design$angle_m[r], rpm_design$angle_s[r], pair_radius = rpm_design$pair_radius[r], margin = rpm_design$xsect_radius[r])
+    return(tibble_row(
+      Plan = list(plan),
+      xsect_radius = rpm_design$xsect_radius[r],
+      Distance = totallength(plan))
+   )})
+)
+
 
 #}}}##############################
 #{{{ Fit model to observed data. #
@@ -579,8 +695,39 @@ model_fit <- function(model_formula, obs_ppp, R_mesh, dual_tess,
 
 #}}}##############################
 
+allplans <- bind_rows(
+  tibble(
+    Scheme = 'SRS',
+    srs_plans
+  ),
+  tibble(
+    Scheme = 'Sys',
+    sys_plans
+  ),
+  tibble(
+    Scheme = 'Inhib',
+    inhib_plans
+  ),
+  tibble(
+    Scheme = 'LHS-TSP',
+    lhs_plans
+  ),
+  tibble(
+    Scheme = 'Hilbert',
+    hilb_plans
+  ),
+  tibble(
+    Scheme = 'RPM',
+    rpm_plans
+  )
+)
 
-result1 <- model_fit(R_formula, sample_ppp(sim_datasets[[idx]], rpm(sim_R, animate = TRUE)), R_mesh, dual_tess)
+clusterExport(cl, c('sample_ppp', 'model_fit', 'R_spde', 'R_formula', 'dual_tess', 'allplans', 'sim_datasets'))
+results <- bind_rows(parLapply(cl, seq_len(nrow(allplans)), function(p){
+  return(tibble_row(Fit = model_fit(R_formula, sample_ppp(sim_datasets[[1]], allplans$Plan[[p]], allplans$xsect_radius[p]), R_mesh, dual_tess)))
+}))
+
+results1 <- model_fit(R_formula, sample_ppp(sim_datasets[[idx]], rpm(sim_R, animate = TRUE)), R_mesh, dual_tess)
 
 R_proj <- inla.mesh.projector(R_mesh, dims = c(NPIX_X, NPIX_Y))
 plot(im(t(inla.mesh.project(R_proj, result1$summary.random$idx$mean)),

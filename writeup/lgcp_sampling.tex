@@ -169,7 +169,7 @@ we use a large suite of criteria to explore the relationships among them
 \section{Materials and methods}
 % Provide sufficient details to allow the work to be reproduced by an independent researcher. Methods that are already published should be summarized, and indicated by a reference. If quoting directly from a previously published method, use quotation marks and also cite the source. Any modifications to existing methods should also be described.
 
-Heuristics of a good transect design:
+Heuristics of a good path design:
 \begin{itemize}
 \item Should start with a sparse design with regular spacing, then refine with
 infill
@@ -186,7 +186,7 @@ segment length
 \end{itemize}
 
 
-\subsection{Design-Based Criteria}
+\subsection{Design-based Criteria}
 
 \paragraph{Path length}
 The total distance that traveled is often a constraint. Minimize it.
@@ -206,7 +206,7 @@ at \(u\) are always included. Maximize \(\min[\mathrm{nnd}_{2}(u)]\),
 \(\mathrm{avg}[\mathrm{nnd}_{1}(u)]\).
 
 
-\subsection{Model-Based Criteria}
+\subsection{Model-based Criteria}
 
 \paragraph{Posterior prediction variance}
 Minimize maximum prediction variance and average prediction variance for GP.
@@ -226,12 +226,12 @@ where \(A\) is the action level/decision threshold and \(0 < p < 1\) penalizes
 uncertainty about the boundary in used for thresholding.
 
 
-\subsection{Sampling Situations}
+\subsection{Sampling Schemes}
 
 \paragraph{Parallel transects} Parallel transects running the length of the
 site in the vertical axis. Three ways of choosing the horizontal coordinate:
 simple random sample (SRS), systematic with a random starting point and even
-spacing, inhibitory plu close pairs.
+spacing, inhibitory plus close pairs.
 
 \paragraph{Latin hypercube sampling}
 Random Latin hypercube design connected by shortest path. Waypoints generated
@@ -251,7 +251,7 @@ distance. This behavior should approximately alternate between a short
 applying a \(1 - x\) transformation to a beta autoregressive
 process~\citep{mckenzie}. The direction angle is drawn from a bimodal
 distribution that is symmetric around 0 (a normal distribution reflectd about
-0). {\it explain the Straus part}
+0). {\it explain the Strauss part}
 
 {\it set up to think about adaptive sampling (adding a transect at a time or
 stopping early but don't actually do it here)}
@@ -321,12 +321,17 @@ bounded or unbounded depending on application and inferential goals
 \(\mathcal{R}\)
 \begin{itemize}
 \item set of one or more sequences of waypoints connected by line segments
-\item \(\mathcal{S}\) is the set of all points within a (assumed known) radius
-of \(\mathcal{P}\)
+\item \(\mathcal{S}\) is the set of all points within a fixed (and assumed
+known) radius of \(\mathcal{P}\)
 \end{itemize}
 
 \item \(\mathbf{X}\) point process on \(\mathcal{R}\), \(\mathbf{x} = \{x_{1},
 \dots, x_{n}\}\) realized point pattern
+\begin{itemize}
+\item \(\mathbf{X}_{\mathcal{S}} = \mathbf{X} \cap \mathcal{S}\) the
+ restriction of \(\mathbf{X}\) to \(\mathcal{S}\), \(\mathbf{x} = \mathbf{X}
+\cap \mathcal{S}\) the realized observeable point pattern
+\end{itemize}
 
 \item point \(x \in \mathbf{x}\) called an event
 
@@ -340,7 +345,8 @@ of \(\mathcal{P}\)
 function and predictors
 \end{itemize}
 
-\item \(z(u)\) a column vector of covariates/predictors at \(u\)
+\item \(z(u)\) a column vector of covariates/predictors at \(u\) (not used in
+this manuscript)
 
 \item ``point'' refers to a \(u\) unless clearly stated otherwise
 
@@ -348,6 +354,10 @@ function and predictors
 
 \item \(y\) and variations will be used for objects derived from the point
 pattern, e.g. marks, pseudodata
+
+\item distance sampling fits into the framework with expansion of notation
+to include a (nontrivial) detection function and differentiate between the
+observed and observable point patterns
 
 \end{itemize}
 
