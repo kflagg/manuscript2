@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepackage{fullpage}
+\usepackage{fullpage,amsmath}
 
 \title{Example Spatial Sampling Paths}
 \author{Kenny Flagg}
@@ -662,6 +662,156 @@ plot(sim_R,
 plot(rpm_l2, col = 'grey', add = TRUE)
 plot(sample_ppp(sim_dataset, rpm_l2), pch = 20, add = TRUE)
 @
+
+\vfill
+
+
+\section*{Simulation Study Design}
+
+\subsection*{Generative Models}
+
+\begin{itemize}
+
+\item Log-Gaussian Cox process (LGCP)
+
+\item LGCP with cluster process overlaid (i.e. LGCP plus hotspots)
+
+\end{itemize}
+
+
+\subsection*{Model Fitting}
+
+\begin{itemize}
+
+\item Bayesian LGCP model with no predictors
+
+\item Fit in R with the \texttt{inla} package using integrated nested Laplace
+transformation (INLA) and Gaussian Markov random field (GMRF) approximation
+of GP
+
+\item Need to decide priors
+\begin{itemize}
+\item Uninformative/weakly-informative priors not easily implemented in
+\texttt{inla} for the GMRF approximation
+\item Want to emmphasize spatial prediction without ignoring parameter
+estimation
+\end{itemize}
+
+\end{itemize}
+
+
+\subsection*{Study Regions}
+
+\begin{itemize}
+
+\item Rectangle
+
+\item Square with two corners cut out
+
+\end{itemize}
+
+<<site, fig.height = 3, fig.width = 3, out.height = '1.5in', out.width = '1.5in'>>=
+par(mar = c(0, 0, 2, 0))
+plot(owin(poly = cbind(
+    x = c(   0, 1600, 1600, 2000, 2000,  500,    0),
+    y = c(   0,    0,  250,  250, 2000, 2000, 1500)
+  )), main = 'More Complex Site')
+@
+
+
+\subsection*{Criteria Suite}
+
+\begin{itemize}
+
+\item Nearest neighbor distance for poitns on the path
+\begin{itemize}
+\item Maximize the minimum and average
+\end{itemize}
+
+\item Path length
+\begin{itemize}
+\item Minimize the distance traveled
+\end{itemize}
+
+\item Prediction variance of the GP
+\begin{itemize}
+\item Minimize the maximum and average
+\end{itemize}
+
+\item Posterior variance of parameters
+\begin{itemize}
+\item Minimize variance of intercept, variance, and range
+\end{itemize}
+
+\end{itemize}
+
+For the LGCP with hotspots, include additional criteria based on thresholding
+the predicted intensity surface at a set level to delineate hotspots
+
+\begin{itemize}
+
+\item AUC, F1, sensitivity, specificity, precision, etc
+\begin{itemize}
+\item Maximize these
+\end{itemize}
+
+\item Threshold-penalized average predictive variance (don't know if it has a
+name already so this is what I call it)
+\begin{equation*}
+\mathrm{TPAPV} = \frac{1}{|\mathcal{R}|}
+\int_{\mathcal{R}} \mathrm{Var}\left[\lambda(u)\right]
+p^{\left|\lambda(u)-A\right|} \mathrm{d}u
+\end{equation*}
+
+\begin{itemize}
+\item \(A\) is the action level/decision threshold
+\item \(0 < p < 1\) penalizes uncertainty about the boundary used for
+thresholding
+\item Minimize this
+\end{itemize}
+
+\end{itemize}
+
+
+\subsection*{Sampling Schemes}
+
+\begin{itemize}
+
+\item SRS of parallel transects
+\begin{itemize}
+\item Vary number of transects
+\end{itemize}
+
+\item Systematic sample of parallel transects
+\begin{itemize}
+\item Vary number of transects
+\end{itemize}
+
+\item Inhibitory plus close pairs of parallel transects
+\begin{itemize}
+\item Vary number of transects
+\item Vary proportion of transects that are paired
+\end{itemize}
+
+\item Latin hybercube sampling
+\begin{itemize}
+\item Vary number of bins
+\end{itemize}
+
+\item Hilbert curve
+\begin{itemize}
+\item Vary number of iterations in curve construction
+\end{itemize}
+
+\item Random particle movement
+\begin{itemize}
+\item Vary maximum path length
+\item Vary correlation between adjacent segment length (uncorrelated or strong
+negative correlation)
+\item Vary mean/SD of turn angle
+\end{itemize}
+
+\end{itemize}
 
 
 \end{document}
