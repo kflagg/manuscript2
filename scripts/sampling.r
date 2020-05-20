@@ -192,14 +192,20 @@ R_formula <- y ~ -1 + intercept + f(idx, model = R_spde)
 
 # Function to subset a ppp to a region along a psp.
 sample_ppp <- function(full_ppp, path, xsect_radius = XSECT_RADIUS){
+  if(!is.psp(path)){
+    path <- as.psp(path)
+  }
   obs_D <- dilation(path, xsect_radius)
   obs_ppp <- full_ppp[obs_D]
   return(structure(obs_ppp, path = path))
 }
 
-# Function to compute the total length of a psp.
+# Function to compute the total length of a path.
 totallength <- function(x){
-  return(sum(lengths.psp(x)))
+  if(inherits(x, 'linnet')){
+    return(volume(x))
+  }
+  return(sum(lengths.psp(as.psp(x))))
 }
 
 
@@ -211,8 +217,8 @@ srs <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
   full_frame <- Frame(full_win)
   min_x <- min(full_frame$x) + xsect_radius
   max_x <- max(full_frame$x) - xsect_radius
-  min_y <- min(full_frame$y) - xsect_radius
-  max_y <- max(full_frame$y) + xsect_radius
+  min_y <- min(full_frame$y)
+  max_y <- max(full_frame$y)
 
   srs_x <- sort(runif(num_xsects, min_x, max_x))
   waypoints <- cbind(
@@ -222,15 +228,15 @@ srs <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
     ]
   )
   n_waypoints <- nrow(waypoints)
+  n_segs <- n_waypoints / 2
 
-  path_psp <- psp(
-    x0 = waypoints[-n_waypoints, 'x'],
-    y0 = waypoints[-n_waypoints, 'y'],
-    x1 = waypoints[-1, 'x'],
-    y1 = waypoints[-1, 'y'],
-    window = dilation(full_frame, 2 * xsect_radius)
-  )[full_win]
-  return(path_psp)
+  path_linnet <- linnet(
+    vertices = as.ppp(waypoints, W = full_frame),
+    edges = cbind(seq_len(n_segs) * 2 - 1, seq_len(n_segs) * 2),
+    sparse = TRUE,
+    warn = FALSE
+  )
+  return(path_linnet)[full_win]
 }
 
 srs_design <- tibble(
@@ -258,8 +264,8 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
   full_frame <- Frame(full_win)
   min_x <- min(full_frame$x) + xsect_radius
   max_x <- max(full_frame$x) - xsect_radius
-  min_y <- min(full_frame$y) - xsect_radius
-  max_y <- max(full_frame$y) + xsect_radius
+  min_y <- min(full_frame$y)
+  max_y <- max(full_frame$y)
 
   spacing <- (max_x - min_x) / num_xsects
   edge2edge <- max(spacing - xsect_radius * 2, 0)
@@ -271,15 +277,15 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
     ]
   )
   n_waypoints <- nrow(waypoints)
+  n_segs <- n_waypoints / 2
 
-  path_psp <- psp(
-    x0 = waypoints[-n_waypoints, 'x'],
-    y0 = waypoints[-n_waypoints, 'y'],
-    x1 = waypoints[-1, 'x'],
-    y1 = waypoints[-1, 'y'],
-    window = dilation(full_frame, 2 * xsect_radius)
-  )[full_win]
-  return(path_psp)
+  path_linnet <- linnet(
+    vertices = as.ppp(waypoints, W = full_frame),
+    edges = cbind(seq_len(n_segs) * 2 - 1, seq_len(n_segs) * 2),
+    sparse = TRUE,
+    warn = FALSE
+  )
+  return(path_linnet)[full_win]
 }
 
 sys_design <- tibble(
@@ -309,8 +315,8 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
   full_frame <- Frame(full_win)
   min_x <- min(full_frame$x) + xsect_radius
   max_x <- max(full_frame$x) - xsect_radius
-  min_y <- min(full_frame$y) - xsect_radius
-  max_y <- max(full_frame$y) + xsect_radius
+  min_y <- min(full_frame$y)
+  max_y <- max(full_frame$y)
   num_xsects <- num_primary + num_paired
 
   initial_x <- runif(num_primary, min_x, max_x)
@@ -359,15 +365,15 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
     ]
   )
   n_waypoints <- nrow(waypoints)
+  n_segs <- n_waypoints / 2
 
-  path_psp <- psp(
-    x0 = waypoints[-n_waypoints, 'x'],
-    y0 = waypoints[-n_waypoints, 'y'],
-    x1 = waypoints[-1, 'x'],
-    y1 = waypoints[-1, 'y'],
-    window = dilation(full_frame, 2 * xsect_radius)
-  )[full_frame]
-  return(path_psp)
+  path_linnet <- linnet(
+    vertices = as.ppp(waypoints, W = full_frame),
+    edges = cbind(seq_len(n_segs) * 2 - 1, seq_len(n_segs) * 2),
+    sparse = TRUE,
+    warn = FALSE
+  )
+  return(path_linnet)[full_win]
 }
 
 inhib_design <- tibble(
@@ -413,18 +419,19 @@ lhstsp <- function(full_win, num_bins = round(sqrt(WP_NUM_INITIAL)), margin = WP
   wp_y <- wp_unscaled[,2] * (max_y - min_y) + min_y
   wp_ppp <- ppp(wp_x, wp_y, window = full_frame)[sampleable]
   waypoints <- as.data.frame(wp_ppp)
+  n_waypoints <- nrow(waypoints)
+  n_segs <- n_waypoints - 1
 
   wp_tsp <- ETSP(waypoints)
   wp_tour <- waypoints[solve_TSP(wp_tsp, ...),]
 
-  path_psp <- psp(
-    x0 = wp_tour$x,
-    y0 = wp_tour$y,
-    x1 = c(wp_tour[-1, 'x'], wp_tour[1, 'x']),
-    y1 = c(wp_tour[-1, 'y'], wp_tour[1, 'y']),
-    window = full_frame
-  )[full_win]
-  return(path_psp)
+  path_linnet <- linnet(
+    vertices = as.ppp(wp_tour, W = full_frame),
+    edges = cbind(seq_len(n_waypoints), c(n_waypoints, seq_len(n_segs))),
+    sparse = TRUE,
+    warn = FALSE
+  )
+  return(path_linnet)[full_win]
 }
 
 lhs_design <- tibble(
@@ -462,15 +469,15 @@ hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGI
   wp_ppp <- ppp(wp_x, wp_y, window = full_frame)#[sampleable]
   waypoints <- as.data.frame(wp_ppp)
   n_waypoints <- nrow(waypoints)
+  n_segs <- n_waypoints - 1
 
-  path_psp <- psp(
-    x0 = waypoints[-n_waypoints, 'x'],
-    y0 = waypoints[-n_waypoints, 'y'],
-    x1 = waypoints[-1, 'x'],
-    y1 = waypoints[-1, 'y'],
-    window = full_frame
-  )[full_win]
-  return(path_psp)
+  path_linnet <- linnet(
+    vertices = as.ppp(waypoints, W = full_frame),
+    edges = cbind(seq_len(n_segs), 2:n_waypoints),
+    sparse = TRUE,
+    warn = FALSE
+  )
+  return(path_linnet)[full_win]
 }
 
 hilb_design <- tibble(
@@ -532,8 +539,8 @@ rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
   }
   path_psp <- psp(wp$x, wp$y, new_x, new_y, sim_R)
   cum_dist <- new_dist
-  current_x <- tail(wp$x, 1)
-  current_y <- tail(wp$y, 1)
+  current_x <- new_x
+  current_y <- new_y
 
   if(animate){
     plot(path_psp, ...)
@@ -584,7 +591,16 @@ rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
     }
   }
 
-  return(path_psp)
+  path_linnet <- linnet(
+    vertices = ppp(c(path_psp$ends$x0, current_x),
+                   c(path_psp$ends$y0, current_y),
+                   window = full_frame),
+    edges = cbind(seq_len(path_psp$n), 2:(path_psp$n + 1)),
+    sparse = TRUE,
+    warn = FALSE
+  )
+
+  return(path_linnet[full_win])
 }
 
 rpm_design <- tibble(
