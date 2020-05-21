@@ -32,6 +32,7 @@ XSECT_SEP_MAX <- 250
 DIST_INITIAL <- 10000
 DIST_MAX <- 50000
 WP_NUM_INITIAL <- 400
+SERPS_INITIAL <- 5
 HILBERT_ORDER_INITIAL <- 3
 NUM_PAIRS <- 3
 PAIR_RADIUS <- 20 * XSECT_WIDTH
@@ -304,6 +305,67 @@ sys_plans <- bind_rows(
 )
 
 
+#}}}########################
+#{{{ Serpentine transects. #
+############################
+
+serp <- function(full_win, num_xsects = XSECT_NUM_INITIAL,
+                 serp_dist = XSECT_SEP_MIN, serp_num = SERPS_INITIAL,
+                 xsect_radius = XSECT_RADIUS){
+  full_frame <- Frame(full_win)
+  min_x <- min(full_frame$x) + xsect_radius - ifelse(serp_dist < 0, serp_dist, 0)
+  max_x <- max(full_frame$x) - xsect_radius - ifelse(serp_dist > 0, serp_dist, 0)
+  min_y <- min(full_frame$y)
+  max_y <- max(full_frame$y)
+
+  spacing <- (max_x - min_x) / num_xsects
+  edge2edge <- max(spacing - xsect_radius * 2, 0)
+  waypoints <- cbind(
+    x <- runif(1, min_x, min_x + edge2edge) +
+      rep(0:(num_xsects - 1), each = serp_num * 2) * spacing +
+      rep(
+        rep(c(0, 0, 1, 1), serp_num)[c(1:(2 * serp_num), (2 * serp_num):1)],
+        ceiling(num_xsects / 2)
+      )[seq_len(num_xsects * serp_num * 2)] * serp_dist,
+    y = rep(rep(seq(min_y, max_y, length.out = serp_num + 1), each = 2)[
+      c(2:(2 * serp_num + 1), (2 * serp_num + 1):2)
+    ], ceiling(num_xsects / 2))[seq_len(num_xsects * serp_num * 2)]
+  )
+  n_waypoints <- nrow(waypoints)
+  n_segs <- n_waypoints - 1
+
+  path_linnet <- linnet(
+    vertices = as.ppp(waypoints, W = full_frame, xsect_radius),
+    edges = cbind(1:n_segs, 2:n_waypoints)[-seq(0, n_waypoints, 2 * serp_num),],
+    sparse = TRUE,
+    warn = FALSE
+  )
+  return(path_linnet)[full_win]
+}
+
+serp_design <- tibble(
+    reps = N_SIMS,
+    expand.grid(
+      num_xsects = c(7, 22, 47, 67),
+      serp_num = c(5, 8)
+    ),
+    xsect_radius = XSECT_RADIUS
+  ) %>%
+  mutate(serp_dist = 2100 / num_xsects / (serp_num - 1)) %>%
+  uncount(reps)
+clusterExport(cl, c('serp', 'serp_design'))
+serp_plans <- bind_rows(
+  parLapply(cl, seq_len(nrow(serp_design)), function(r){
+    plan <- serp(sim_R, serp_design$num_xsects[r], serp_design$serp_dist[r],
+                 serp_num = serp_design$serp_num[r], serp_design$xsect_radius[r])
+    return(tibble_row(
+      Plan = list(plan),
+      xsect_radius = sys_design$xsect_radius[r],
+      Distance = totallength(plan))
+   )})
+)
+
+
 #}}}###############################
 #{{{ Inhibitory plus close pairs. #
 ###################################
@@ -550,6 +612,13 @@ rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
   while(cum_dist < dist_cutoff){
     reject <- TRUE
 
+#    if(!pos_corr){
+#      a0 <- a
+#      a <- b
+#      b <- a0
+#      p <- corr * (a + b) / (corr + b)
+#    }
+
     while(reject){
       new_angle <- (angle + sample(c(-1, 1), 1, prob = angle_prob) *
         rnorm(1, angle_m, angle_s)) %% (2*pi)
@@ -723,6 +792,10 @@ allplans <- bind_rows(
   tibble(
     Scheme = 'Inhib',
     inhib_plans
+  ),
+  tibble(
+    Scheme = 'Serp',
+    serp_plans
   ),
   tibble(
     Scheme = 'LHS-TSP',
