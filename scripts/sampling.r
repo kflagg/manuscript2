@@ -209,6 +209,33 @@ totallength <- function(x){
   return(sum(lengths.psp(as.psp(x))))
 }
 
+# Lengths of segments in a linear network.
+lengths.linnet <- function(x){
+  return(lengths.psp(as.psp(x)))
+}
+
+# Number of corners in a linear network.
+cornercount.linnet <- function(x){
+  return(sum(x$m) - x$vertices$n)
+}
+
+# Angles of corners in a linear network.
+angles.linnet <- function(x){
+  adj <- x$m + diag(x$vertices$n)
+  links <- apply(adj > 0, 1, which)
+  links <- links[lengths(links) == 3]
+  verts <- cbind(x$vertices$x, x$vertices$y)
+  return(sapply(links, function(idx){
+    vs <- verts[idx,]
+    v1 <- vs[2,] - vs[1,]
+    v3 <- vs[3,] - vs[2,]
+    a <- atan2(v3[1], v3[2]) - atan2(v1[1], v1[2])
+    return(if(a > pi){a - 2 * pi}else if(a < -pi){a + 2 * pi}else{a})
+  }))
+}
+
+clusterExport(cl, c('totallength', 'lengths.linnet', 'angles.linnet', 'cornercount.linnet'))
+
 
 #}}}#######
 #{{{ SRS. #
@@ -245,15 +272,18 @@ srs_design <- tibble(
   xsect_radius = XSECT_RADIUS
 )
 invisible(clusterEvalQ(cl, library(tibble)))
-clusterExport(cl, c('totallength', 'srs', 'srs_design'))
+clusterExport(cl, c('srs', 'srs_design'))
 srs_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(srs_design)), function(r){
     plan <- srs(sim_R, srs_design$num_xsects[r], srs_design$xsect_radius[r])
     return(tibble_row(
       Plan = list(plan),
       xsect_radius = srs_design$xsect_radius[r],
-      Distance = totallength(plan))
-   )})
+      Distance = totallength(plan),
+      Lengths = list(lengths.linnet(plan)),
+      Angles = list(angles.linnet(plan)),
+      Corners = cornercount.linnet(plan)
+   ))})
 )
 
 
@@ -300,8 +330,11 @@ sys_plans <- bind_rows(
     return(tibble_row(
       Plan = list(plan),
       xsect_radius = sys_design$xsect_radius[r],
-      Distance = totallength(plan))
-   )})
+      Distance = totallength(plan),
+      Lengths = list(lengths.linnet(plan)),
+      Angles = list(angles.linnet(plan)),
+      Corners = cornercount.linnet(plan)
+   ))})
 )
 
 
@@ -361,8 +394,11 @@ serp_plans <- bind_rows(
     return(tibble_row(
       Plan = list(plan),
       xsect_radius = sys_design$xsect_radius[r],
-      Distance = totallength(plan))
-   )})
+      Distance = totallength(plan),
+      Lengths = list(lengths.linnet(plan)),
+      Angles = list(angles.linnet(plan)),
+      Corners = cornercount.linnet(plan)
+   ))})
 )
 
 
@@ -459,8 +495,11 @@ inhib_plans <- bind_rows(
     return(tibble_row(
       Plan = list(plan),
       xsect_radius = inhib_design$xsect_radius[r],
-      Distance = totallength(plan))
-   )})
+      Distance = totallength(plan),
+      Lengths = list(lengths.linnet(plan)),
+      Angles = list(angles.linnet(plan)),
+      Corners = cornercount.linnet(plan)
+   ))})
 )
 
 
@@ -508,8 +547,11 @@ lhs_plans <- bind_rows(
     return(tibble_row(
       Plan = list(plan),
       xsect_radius = lhs_design$xsect_radius[r],
-      Distance = totallength(plan))
-   )})
+      Distance = totallength(plan),
+      Lengths = list(lengths.linnet(plan)),
+      Angles = list(angles.linnet(plan)),
+      Corners = cornercount.linnet(plan)
+   ))})
 )
 
 
@@ -554,8 +596,11 @@ hilb_plans <- bind_rows(
     return(tibble_row(
       Plan = list(plan),
       xsect_radius = hilb_design$xsect_radius[r],
-      Distance = totallength(plan))
-   )})
+      Distance = totallength(plan),
+      Lengths = list(lengths.linnet(plan)),
+      Angles = list(angles.linnet(plan)),
+      Corners = cornercount.linnet(plan)
+   ))})
 )
 
 
@@ -568,6 +613,9 @@ rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
                 angle_m = pi/3, angle_s = pi/6, angle_prob = c(0.5, 0.5),
                 a = 1, b = 1, pair_radius = PAIR_RADIUS, antirepulsion = 0.8,
                 margin = WP_MARGIN, animate = FALSE, ...){
+  if(corr < 0 & (a != 1 | b != 1)){
+    warning('Negative correlation only available for a = b = 1!')
+  }
   full_frame <- Frame(full_win)
   min_x <- min(full_frame$x) + margin
   max_x <- max(full_frame$x) - margin
@@ -582,6 +630,10 @@ rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
     corr <- -corr
   }
   p <- corr * (a + b) / (corr + b)
+  if(p >= a){
+    p <- a
+    warning('corr is to big for the given a!')
+  }
 
   # Starting segment.
   wp <- as.data.frame(runifpoint(1, sampleable))
@@ -611,13 +663,6 @@ rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
   # Loop until exceeding the distance cutoff.
   while(cum_dist < dist_cutoff){
     reject <- TRUE
-
-#    if(!pos_corr){
-#      a0 <- a
-#      a <- b
-#      b <- a0
-#      p <- corr * (a + b) / (corr + b)
-#    }
 
     while(reject){
       new_angle <- (angle + sample(c(-1, 1), 1, prob = angle_prob) *
@@ -698,8 +743,11 @@ rpm_plans <- bind_rows(
     return(tibble_row(
       Plan = list(plan),
       xsect_radius = rpm_design$xsect_radius[r],
-      Distance = totallength(plan))
-   )})
+      Distance = totallength(plan),
+      Lengths = list(lengths.linnet(plan)),
+      Angles = list(angles.linnet(plan)),
+      Corners = cornercount.linnet(plan)
+   ))})
 )
 
 
