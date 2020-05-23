@@ -130,6 +130,9 @@ plot(R_mesh_net, add = TRUE, col = '#00000080')
 #plot(sim_R, border = 'white', add = TRUE)
 points(R_mesh_loc[,], pch = 20)
 
+# Prediction projector.
+R_proj <- inla.mesh.projector(R_mesh, dims = c(NPIX_X, NPIX_Y))
+
 
 #}}}##################################
 #{{{ Objects pertaining to the data. #
@@ -198,7 +201,7 @@ sample_ppp <- function(full_ppp, path, xsect_radius = XSECT_RADIUS){
   }
   obs_D <- dilation(path, xsect_radius)
   obs_ppp <- full_ppp[obs_D]
-  return(structure(obs_ppp, path = path))
+  return(structure(obs_ppp, path = path, Lambda = attr(full_ppp, 'Lambda')))
 }
 
 # Function to compute the total length of a path.
@@ -234,7 +237,54 @@ angles.linnet <- function(x){
   }))
 }
 
-clusterExport(cl, c('totallength', 'lengths.linnet', 'angles.linnet', 'cornercount.linnet'))
+nndist.linnet <- function(X, k = 1, agg = 'avg', ...){
+  numsegs <- X$lines$n
+
+  if(k < 1){
+    return(0)
+  }
+
+  # Find which other segments each segment shares vertices with.
+  segshare <- lapply(seq_len(numsegs), function(s){
+    return(sort(unique(c(
+      which(X$from == X$from[s]),
+      which(X$to == X$from[s]),
+      which(X$from == X$to[s]),
+      which(X$to == X$to[s])
+    ))))
+  })
+  segfrom <- unlist(lapply(seq_len(numsegs), function(s){return(rep(s, length(segshare[[s]])))}))
+  segto <- unlist(segshare)
+
+  # Construct the adjacency matrix for segments.
+  adj <- sparseMatrix(i = segfrom, j = segto, symmetric = TRUE)
+
+  # Construct the k-1 order adjacency matrix.
+  adj_k <- sparseMatrix(i = seq_len(numsegs), j = seq_len(numsegs), symmetric = TRUE)
+  if(k > 1){
+    for(power_counter in 2:k){
+      adj_k <- adj_k %*% adj
+    }
+  }
+
+  # Get the kth order inclusion matrix.
+  incl <- !adj_k
+
+  rawdist <- sapply(seq_len(numsegs), function(s){
+    return(min(crossdist.psp(X$lines[s], X$lines[incl[s,]], type = 'separation')))
+  })
+
+  # Return the average if that was requested.
+  if(agg == 'avg'){
+    seglengths <- lengths.linnet(X)
+    return(sum(rawdist * seglengths) / sum(seglengths))
+  }
+
+  # Otherwise return the minimum.
+  return(min(rawdist))
+}
+
+clusterExport(cl, c('totallength', 'lengths.linnet', 'angles.linnet', 'cornercount.linnet', 'nndist.linnet'))
 
 
 #}}}#######
@@ -282,7 +332,10 @@ srs_plans <- bind_rows(
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
-      Corners = cornercount.linnet(plan)
+      Corners = cornercount.linnet(plan),
+      MinNND_2 = nndist(plan, 2, 'min'),
+      AvgNND_2 = nndist(plan, 2, 'avg'),
+      AvgNND_1 = nndist(plan, 1, 'avg')
    ))})
 )
 
@@ -333,7 +386,10 @@ sys_plans <- bind_rows(
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
-      Corners = cornercount.linnet(plan)
+      Corners = cornercount.linnet(plan),
+      MinNND_2 = nndist(plan, 2, 'min'),
+      AvgNND_2 = nndist(plan, 2, 'avg'),
+      AvgNND_1 = nndist(plan, 1, 'avg')
    ))})
 )
 
@@ -397,7 +453,10 @@ serp_plans <- bind_rows(
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
-      Corners = cornercount.linnet(plan)
+      Corners = cornercount.linnet(plan),
+      MinNND_2 = nndist(plan, 2, 'min'),
+      AvgNND_2 = nndist(plan, 2, 'avg'),
+      AvgNND_1 = nndist(plan, 1, 'avg')
    ))})
 )
 
@@ -498,7 +557,10 @@ inhib_plans <- bind_rows(
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
-      Corners = cornercount.linnet(plan)
+      Corners = cornercount.linnet(plan),
+      MinNND_2 = nndist(plan, 2, 'min'),
+      AvgNND_2 = nndist(plan, 2, 'avg'),
+      AvgNND_1 = nndist(plan, 1, 'avg')
    ))})
 )
 
@@ -550,7 +612,10 @@ lhs_plans <- bind_rows(
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
-      Corners = cornercount.linnet(plan)
+      Corners = cornercount.linnet(plan),
+      MinNND_2 = nndist(plan, 2, 'min'),
+      AvgNND_2 = nndist(plan, 2, 'avg'),
+      AvgNND_1 = nndist(plan, 1, 'avg')
    ))})
 )
 
@@ -599,7 +664,10 @@ hilb_plans <- bind_rows(
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
-      Corners = cornercount.linnet(plan)
+      Corners = cornercount.linnet(plan),
+      MinNND_2 = nndist(plan, 2, 'min'),
+      AvgNND_2 = nndist(plan, 2, 'avg'),
+      AvgNND_1 = nndist(plan, 1, 'avg')
    ))})
 )
 
@@ -746,7 +814,10 @@ rpm_plans <- bind_rows(
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
-      Corners = cornercount.linnet(plan)
+      Corners = cornercount.linnet(plan),
+      MinNND_2 = nndist(plan, 2, 'min'),
+      AvgNND_2 = nndist(plan, 2, 'avg'),
+      AvgNND_1 = nndist(plan, 1, 'avg')
    ))})
 )
 
@@ -755,7 +826,7 @@ rpm_plans <- bind_rows(
 #{{{ Fit model to observed data. #
 ##################################
 
-model_fit <- function(model_formula, obs_ppp, R_mesh, dual_tess,
+model_fit <- function(model_formula, obs_ppp, R_mesh, dual_tess, R_proj,
   control.fixed = list(
     # Prior means and precisions for coefficients.
     mean.intercept = 0,
@@ -822,7 +893,20 @@ model_fit <- function(model_formula, obs_ppp, R_mesh, dual_tess,
     ...
   )
 
-  return(result)
+  gpmap <- im(
+    t(inla.mesh.project(R_proj, result$summary.random[[1]]$mean)) +
+      result$summary.fixed['intercept', 'mean'],
+    xrange = sim_R$x,
+    yrange = sim_R$y
+  )
+
+  return(tibble_row(
+    Fit = list(result),
+    Prediction = list(gpmap),
+    MSPE = mean((log(attr(obs_ppp, 'Lambda')) - gpmap)^2),
+    APV = sum(mesh_weights * result$summary.random[[1]]$sd^2) / sum(mesh_weights),
+    MaxPV = max(result$summary.random[[1]]$sd^2)
+  ))
 }
 
 
@@ -861,15 +945,12 @@ allplans <- bind_rows(
 
 clusterExport(cl, c('sample_ppp', 'model_fit', 'R_spde', 'R_formula', 'dual_tess', 'allplans', 'sim_datasets'))
 results <- bind_rows(parLapply(cl, seq_len(nrow(allplans)), function(p){
-  return(tibble_row(Fit = model_fit(R_formula, sample_ppp(sim_datasets[[1]], allplans$Plan[[p]], allplans$xsect_radius[p]), R_mesh, dual_tess)))
+  return(tibble_row(Fit = model_fit(R_formula, sample_ppp(sim_datasets[[1]], allplans$Plan[[p]], allplans$xsect_radius[p]), R_mesh, dual_tess, R_proj, )))
 }))
 
-results1 <- model_fit(R_formula, sample_ppp(sim_datasets[[idx]], rpm(sim_R, animate = TRUE)), R_mesh, dual_tess)
+results1 <- model_fit(R_formula, sample_ppp(sim_datasets[[idx]], allplans$Plan[[205]]), R_mesh, dual_tess, R_proj)
 
-R_proj <- inla.mesh.projector(R_mesh, dims = c(NPIX_X, NPIX_Y))
-plot(im(t(inla.mesh.project(R_proj, result1$summary.random$idx$mean)),
-        xrange = sim_R$x,
-        yrange = sim_R$y),
+plot(results1$Prediction[[1]],
      riblab = expression(E(bold(e)(u)*'|'*bold(x))), ribsep = 0.05,
      main = 'Posterior Predicted Mean of Latent GP')
 
