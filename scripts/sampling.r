@@ -17,7 +17,6 @@ library(tidyr)
 cl <- makeCluster(ceiling(0.75) * detectCores(), outfile = '')
 invisible(clusterEvalQ(cl, {
   library(spatstat)
-  library(maptools)
   library(INLA)
 }))
 
