@@ -14,7 +14,7 @@ library(dplyr)
 library(tidyr)
 
 # Create a cluster for applying in parallel.
-cl <- makeCluster(ceiling(0.75) * detectCores())
+cl <- makeCluster(ceiling(0.75) * detectCores(), outfile = '')
 invisible(clusterEvalQ(cl, {
   library(spatstat)
   library(maptools)
@@ -22,7 +22,8 @@ invisible(clusterEvalQ(cl, {
 }))
 
 # Define user-specified parameters.
-N_SIMS <- 3#1000
+N_SIMS <- 100
+N_REALIZED <- 10
 XSECT_WIDTH <- 4 # Width of transects.
 XSECT_LENGTH_MIN <- 50
 XSECT_LENGTH_MAX <- 500
@@ -36,14 +37,14 @@ SERPS_INITIAL <- 5
 HILBERT_ORDER_INITIAL <- 3
 NUM_PAIRS <- 3
 PAIR_RADIUS <- 20 * XSECT_WIDTH
-WP_MARGIN <- XSECT_WIDTH / 2 # Minimum distance between waypoints and site boundary
+WP_MARGIN <- XSECT_WIDTH / 2 # Minimum distance between waypoints and site boundary.
 
 # Mesh parameters to experiment with.
 MAX_EDGE_LENGTH <- 100
 MAX_EDGE_EXT <- 200
 
 # Graphics parameters.
-NPIX_X <- 500
+NPIX_X <- 250 # Should be 500 but rLGCP to has trouble when NPIX_X != NPIX_Y.
 NPIX_Y <- 250
 
 
@@ -56,42 +57,38 @@ XSECT_NUM_INITIAL <- floor(DIST_INITIAL / XSECT_LENGTH_MAX)
 #{{{ Objects pertaining to the site. #
 ######################################
 
-# Site window.
+# Rectangular window.
 
-#sim_R <- owin(poly = cbind(
-#    x = c(   0, 1600, 1600, 2000, 2000,  500,    0),
-#    y = c(   0,    0,  250,  250, 2000, 2000, 1500)
-#  ), unitnames = c('meter', 'meters'))
-sim_R <- owin(c(0, 1500), c(0, 700))
+rect_R <- owin(c(0, 1500), c(0, 700))
 
 # Mesh covering the site.
-R_boundary <- inla.mesh.segment(loc = do.call(cbind, vertices.owin(sim_R)))
-R_mesh <- inla.mesh.create(
-  boundary = R_boundary,
+rect_R_boundary <- inla.mesh.segment(loc = do.call(cbind, vertices.owin(rect_R)))
+rect_R_mesh <- inla.mesh.create(
+  boundary = rect_R_boundary,
   refine = list(max.edge = MAX_EDGE_LENGTH)
 )
 
 # Get the mesh nodes.
-R_mesh_loc <- R_mesh$loc[,1:2]
+rect_R_mesh_loc <- rect_R_mesh$loc[,1:2]
 
 # Convert mesh triangles to owins and create a tesselation.
-clusterExport(cl, c('R_mesh_loc', 'sim_R'))
-R_mesh_tess <- as.tess(parApply(cl, R_mesh$graph$tv, 1, function(x){
-  return(owin(poly = R_mesh_loc[x,]))
+clusterExport(cl, c('rect_R_mesh_loc', 'rect_R'))
+rect_R_mesh_tess <- as.tess(parApply(cl, rect_R_mesh$graph$tv, 1, function(x){
+  return(owin(poly = rect_R_mesh_loc[x,]))
 }))
 
 # Convert mesh to linear network for plotting.
-R_mesh_net <- linnet(as.ppp(R_mesh_loc, sim_R), as.matrix(R_mesh$graph$vv == 1))
+rect_R_mesh_net <- linnet(as.ppp(rect_R_mesh_loc, rect_R), as.matrix(rect_R_mesh$graph$vv == 1))
 
 # Get the interior area of each triangle.
-R_tri_areas <- parSapply(cl, parLapply(cl, tiles(R_mesh_tess), '[', sim_R), area)
+rect_R_tri_areas <- parSapply(cl, parLapply(cl, tiles(rect_R_mesh_tess), '[', rect_R), area)
 
 # Construct the dual of the mesh.
 # Start by getting a list of triangles for each node.
-clusterExport(cl, 'R_mesh')
-node_tris <- parLapply(cl, parLapply(cl, parLapply(cl, parLapply(cl,
+clusterExport(cl, 'rect_R_mesh')
+rect_node_tris <- parLapply(cl, parLapply(cl, parLapply(cl, parLapply(cl,
   # Indicate which triangles have this node as a vertex.
-  seq_len(R_mesh$n), `==`, R_mesh$graph$tv),
+  seq_len(rect_R_mesh$n), `==`, rect_R_mesh$graph$tv),
   # Flatten the indicator matrix.
   rowSums),
   # Make the indicator vector logical instead of integer 0/1.
@@ -100,38 +97,115 @@ node_tris <- parLapply(cl, parLapply(cl, parLapply(cl, parLapply(cl,
   which)
 
 # Get the centroids of each triangle.
-tri_centroids <- t(parSapply(cl, tiles(R_mesh_tess), centroid.owin))
+rect_tri_centroids <- t(parSapply(cl, tiles(rect_R_mesh_tess), centroid.owin))
 
 # Now, construct the dual mesh. Get the quadrilaterals made by cutting each
 # triangle from its edge midpoints to its centroid, indexed by the mesh nodes.
 # Then union the quadrilaterals for each node.
-clusterExport(cl, c('node_tris', 'tri_centroids'))
-dual_tess <- as.tess(parLapply(cl, seq_len(R_mesh$n), function(i){return(
-  do.call(union.owin, lapply(node_tris[[i]], function(j){return(
+clusterExport(cl, c('rect_node_tris', 'rect_tri_centroids'))
+rect_dual_tess <- as.tess(parLapply(cl, seq_len(rect_R_mesh$n), function(i){return(
+  do.call(union.owin, lapply(rect_node_tris[[i]], function(j){return(
     convexhull.xy(rbind(
       # jth triangle centroid.
-      tri_centroids[j,],
+      rect_tri_centroids[j,],
       # Average of the ith node and all vertices of the jth triangle.
       # This results in the ith node and the midpoints of its edges.
-      t((R_mesh_loc[i,] + t(R_mesh_loc[
-        R_mesh$graph$tv[j,],
+      t((rect_R_mesh_loc[i,] + t(rect_R_mesh_loc[
+        rect_R_mesh$graph$tv[j,],
       1:2])) / 2)
     ))
   )}))
 )}))
 
 # Calculate the interior area represented by each node.
-R_nodes_area <- parSapply(cl, parLapply(cl, tiles(dual_tess), `[`, sim_R), area)
+rect_R_nodes_area <- parSapply(cl, parLapply(cl, tiles(rect_dual_tess), `[`, rect_R), area)
 
 # Neat plot.
-plot(dual_tess, border = '#80808020', do.col = TRUE, values = R_nodes_area,
-     main = 'Mesh with dual colored by node weight')
-plot(R_mesh_net, add = TRUE, col = '#00000080')
-#plot(sim_R, border = 'white', add = TRUE)
-points(R_mesh_loc[,], pch = 20)
+#plot(rect_dual_tess, border = '#80808020', do.col = TRUE, values = rect_R_nodes_area,
+#     main = 'Mesh with dual colored by node weight')
+#plot(rect_R_mesh_net, add = TRUE, col = '#00000080')
+#plot(rect_R, border = 'white', add = TRUE)
+#points(rect_R_mesh_loc[,], pch = 20)
 
 # Prediction projector.
-R_proj <- inla.mesh.projector(R_mesh, dims = c(NPIX_X, NPIX_Y))
+rect_R_proj <- inla.mesh.projector(rect_R_mesh, dims = c(NPIX_X, NPIX_Y))
+
+
+# Complicated window.
+
+#sim_R <- owin(poly = cbind(
+#    x = c(   0, 1400, 1400, 2000, 2000,  500,    0),
+#    y = c(   0,    0,  600,  600, 2000, 2000, 1500)
+#  ), unitnames = c('meter', 'meters'))
+
+# Mesh covering the site.
+#sim_R_boundary <- inla.mesh.segment(loc = do.call(cbind, vertices.owin(sim_R)))
+#sim_R_mesh <- inla.mesh.create(
+#  boundary = sim_R_boundary,
+#  refine = list(max.edge = MAX_EDGE_LENGTH)
+#)
+
+# Get the mesh nodes.
+#sim_R_mesh_loc <- sim_R_mesh$loc[,1:2]
+
+# Convert mesh triangles to owins and create a tesselation.
+#clusterExport(cl, c('sim_R_mesh_loc', 'sim_R'))
+#sim_R_mesh_tess <- as.tess(parApply(cl, sim_R_mesh$graph$tv, 1, function(x){
+#  return(owin(poly = sim_R_mesh_loc[x,]))
+#}))
+
+# Convert mesh to linear network for plotting.
+#sim_R_mesh_net <- linnet(as.ppp(sim_R_mesh_loc, sim_R), as.matrix(sim_R_mesh$graph$vv == 1))
+
+# Get the interior area of each triangle.
+#sim_R_tri_areas <- parSapply(cl, parLapply(cl, tiles(sim_R_mesh_tess), '[', sim_R), area)
+
+# Construct the dual of the mesh.
+# Start by getting a list of triangles for each node.
+#clusterExport(cl, 'sim_R_mesh')
+#sim_node_tris <- parLapply(cl, parLapply(cl, parLapply(cl, parLapply(cl,
+#  # Indicate which triangles have this node as a vertex.
+#  seq_len(sim_R_mesh$n), `==`, sim_R_mesh$graph$tv),
+#  # Flatten the indicator matrix.
+#  rowSums),
+#  # Make the indicator vector logical instead of integer 0/1.
+#  as.logical),
+#  # Find which rows of the matrix (triangles) had this node.
+#  which)
+
+# Get the centroids of each triangle.
+#sim_tri_centroids <- t(parSapply(cl, tiles(sim_R_mesh_tess), centroid.owin))
+
+# Now, construct the dual mesh. Get the quadrilaterals made by cutting each
+# triangle from its edge midpoints to its centroid, indexed by the mesh nodes.
+# Then union the quadrilaterals for each node.
+#clusterExport(cl, c('sim_node_tris', 'sim_tri_centroids'))
+#sim_dual_tess <- as.tess(parLapply(cl, seq_len(sim_R_mesh$n), function(i){return(
+#  do.call(union.owin, lapply(sim_node_tris[[i]], function(j){return(
+#    convexhull.xy(rbind(
+#      # jth triangle centroid.
+#      sim_tri_centroids[j,],
+#      # Average of the ith node and all vertices of the jth triangle.
+#      # This results in the ith node and the midpoints of its edges.
+#      t((sim_R_mesh_loc[i,] + t(sim_R_mesh_loc[
+#        sim_R_mesh$graph$tv[j,],
+#      1:2])) / 2)
+#    ))
+#  )}))
+#)}))
+
+# Calculate the interior area represented by each node.
+#sim_R_nodes_area <- parSapply(cl, parLapply(cl, tiles(sim_dual_tess), `[`, sim_R), area)
+
+# Neat plot.
+#plot(sim_dual_tess, border = '#80808020', do.col = TRUE, values = sim_R_nodes_area,
+#     main = 'Mesh with dual colored by node weight')
+#plot(sim_R_mesh_net, add = TRUE, col = '#00000080')
+#plot(sim_R, border = 'white', add = TRUE)
+#points(sim_R_mesh_loc[,], pch = 20)
+
+# Prediction projector.
+#sim_R_proj <- inla.mesh.projector(sim_R_mesh, dims = c(NPIX_X, NPIX_Y))
 
 
 #}}}##################################
@@ -143,8 +217,8 @@ R_proj <- inla.mesh.projector(R_mesh, dims = c(NPIX_X, NPIX_Y))
 # cluster process. The true intensity function is stored in an attribute
 # called Lambda.
 # Dots should include dimyx = c(NPIX_Y, NPIX_X).
-sim_data <- function(
-  R = sim_R,
+simulate_data <- function(
+  R = rect_R,
   matern_mu = log(1000 / area(R)), matern_sd = 1, matern_range = 200,
   thomas_kappa = 2 / area(R), thomas_scale = 100, thomas_mu = 250,
   ...){
@@ -174,8 +248,46 @@ sim_data <- function(
   return(result)
 }
 
-sim_datasets <- list(sim_data(dimyx = c(NPIX_Y, NPIX_X)))
-idx <- 1
+lgcp_design <- tibble(
+  Model = 'LGCP',
+  matern_mu = log(250 / area(rect_R)),
+  matern_sd = 2,
+  matern_range = 200,
+  thomas_kappa = 0,
+  thomas_scale = 50,
+  thomas_mu = 0,
+  DataID = sprintf('LGCP%06d', seq_len(N_REALIZED))
+)
+
+clust_design <- tibble(
+  Model = 'Cluster',
+  matern_mu = log(250 / area(rect_R)),
+  matern_sd = 1,
+  matern_range = 200,
+  thomas_kappa = 3 / area(rect_R),
+  thomas_scale = 50,
+  thomas_mu = 200,
+  DataID = sprintf('Cluster%06d', seq_len(N_REALIZED))
+)
+
+rect_design <- bind_rows(lgcp_design, clust_design)
+
+invisible(clusterEvalQ(cl, {library(tibble);library(dplyr)}))
+clusterExport(cl, c('simulate_data', 'rect_design', 'NPIX_X', 'NPIX_Y'))
+rect_datasets <- bind_rows(
+  parLapply(cl, seq_len(nrow(rect_design)), function(r){
+    message(rect_design$DataID[r])
+    dataset <- simulate_data(
+      rect_R, rect_design$matern_mu[r], rect_design$matern_sd[r],
+      rect_design$matern_range[r], rect_design$thomas_kappa[r],
+      rect_design$thomas_scale[r], rect_design$thomas_mu[r],
+      dimyx = c(NPIX_Y, NPIX_X))
+    return(tibble_row(
+      DataID = rect_design$DataID[r],
+      Data = list(dataset)
+    ))
+  })
+)
 
 
 #}}}###################################################################
@@ -183,11 +295,23 @@ idx <- 1
 #######################################################################
 
 # Define an SPDE representation of the spatial GP using PC priors.
-# TODO: update this with priors.
-R_spde <- inla.spde2.matern(R_mesh)
+rect_R_spde <- inla.spde2.pcmatern(
+  mesh = rect_R_mesh,
+  alpha = 2,
+  prior.range = c(100, 0.1),
+  prior.sigma = c(3, 0.1)
+)
+
+# Prior means and precisions for coefficients.
+rect_prior_fixed = list(
+    mean.intercept = 0,
+    prec.intercept = 0,
+    mean = 0,
+    prec = 0
+)
 
 # Model formula with no covariates.
-R_formula <- y ~ -1 + intercept + f(idx, model = R_spde)
+rect_R_formula <- y ~ -1 + intercept + f(idx, model = rect_R_spde)
 
 
 #}}}######################################################
@@ -237,6 +361,7 @@ angles.linnet <- function(x){
   }))
 }
 
+# Nearest neighbor distance on a linear network.
 nndist.linnet <- function(X, k = 1, agg = 'avg', ...){
   numsegs <- X$lines$n
 
@@ -320,13 +445,14 @@ srs <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
 srs_design <- tibble(
   num_xsects = rep(c(10, 25, 50, 70), each = N_SIMS),
   xsect_radius = XSECT_RADIUS
-)
-invisible(clusterEvalQ(cl, library(tibble)))
+) %>% mutate(PlanID = sprintf('SRS%06d', 1:n()))
 clusterExport(cl, c('srs', 'srs_design'))
 srs_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(srs_design)), function(r){
-    plan <- srs(sim_R, srs_design$num_xsects[r], srs_design$xsect_radius[r])
+    plan <- srs(rect_R, srs_design$num_xsects[r], srs_design$xsect_radius[r])
+    message(srs_design$PlanID[r])
     return(tibble_row(
+      PlanID = srs_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = srs_design$xsect_radius[r],
       Distance = totallength(plan),
@@ -375,12 +501,14 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
 sys_design <- tibble(
   num_xsects = rep(c(10, 25, 50, 70), each = N_SIMS),
   xsect_radius = XSECT_RADIUS
-)
+) %>% mutate(PlanID = sprintf('Sys%06d', 1:n()))
 clusterExport(cl, c('sys', 'sys_design'))
 sys_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(sys_design)), function(r){
-    plan <- sys(sim_R, sys_design$num_xsects[r], sys_design$xsect_radius[r])
+    plan <- sys(rect_R, sys_design$num_xsects[r], sys_design$xsect_radius[r])
+    message(sys_design$PlanID[r])
     return(tibble_row(
+      PlanID = sys_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = sys_design$xsect_radius[r],
       Distance = totallength(plan),
@@ -441,15 +569,18 @@ serp_design <- tibble(
     xsect_radius = XSECT_RADIUS
   ) %>%
   mutate(serp_dist = 2100 / num_xsects / (serp_num - 1)) %>%
-  uncount(reps)
+  uncount(reps) %>%
+  mutate(PlanID = sprintf('Serp%06d', 1:n()))
 clusterExport(cl, c('serp', 'serp_design'))
 serp_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(serp_design)), function(r){
-    plan <- serp(sim_R, serp_design$num_xsects[r], serp_design$serp_dist[r],
+    plan <- serp(rect_R, serp_design$num_xsects[r], serp_design$serp_dist[r],
                  serp_num = serp_design$serp_num[r], serp_design$xsect_radius[r])
+    message(serp_design$PlanID[r])
     return(tibble_row(
+      PlanID = serp_design$PlanID[r],
       Plan = list(plan),
-      xsect_radius = sys_design$xsect_radius[r],
+      xsect_radius = serp_design$xsect_radius[r],
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
@@ -546,12 +677,15 @@ inhib_design <- tibble(
     num_prim = num_xsects - num_pair,
     pair_radius = 1500 / num_xsects
   ) %>%
-  uncount(reps)
+  uncount(reps) %>%
+  mutate(PlanID = sprintf('Inhib%06d', 1:n()))
 clusterExport(cl, c('inhib', 'inhib_design'))
 inhib_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(inhib_design)), function(r){
-    plan <- inhib(sim_R, inhib_design$num_prim[r], inhib_design$num_pair[r], inhib_design$pair_radius[r], xsect_radius = inhib_design$xsect_radius[r])
+    plan <- inhib(rect_R, inhib_design$num_prim[r], inhib_design$num_pair[r], inhib_design$pair_radius[r], xsect_radius = inhib_design$xsect_radius[r])
+    message(inhib_design$PlanID[r])
     return(tibble_row(
+      PlanID = inhib_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = inhib_design$xsect_radius[r],
       Distance = totallength(plan),
@@ -598,15 +732,18 @@ lhstsp <- function(full_win, num_bins = round(sqrt(WP_NUM_INITIAL)), margin = WP
 }
 
 lhs_design <- tibble(
-  bins = rep(c(50, 300, 1200, 2400), each = N_SIMS),
-  xsect_radius = XSECT_RADIUS
-)
+    bins = rep(c(50, 300, 1200, 2400), each = N_SIMS),
+    xsect_radius = XSECT_RADIUS
+  ) %>%
+  mutate(PlanID = sprintf('LHS-TSP%06d', 1:n()))
 invisible(clusterEvalQ(cl, {library(lhs);library(TSP)}))
 clusterExport(cl, c('lhstsp', 'lhs_design'))
 lhs_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(lhs_design)), function(r){
-    plan <- lhstsp(sim_R, lhs_design$bins[r], lhs_design$xsect_radius[r])
+    plan <- lhstsp(rect_R, lhs_design$bins[r], lhs_design$xsect_radius[r])
+    message(lhs_design$PlanID[r])
     return(tibble_row(
+      PlanID = lhs_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = lhs_design$xsect_radius[r],
       Distance = totallength(plan),
@@ -652,13 +789,15 @@ hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGI
 hilb_design <- tibble(
   order = rep(c(3, 4, 5, 6), each = N_SIMS),
   xsect_radius = XSECT_RADIUS
-)
+) %>% mutate(PlanID = sprintf('Hilbert%06d', 1:n()))
 invisible(clusterEvalQ(cl, library(HilbertVis)))
 clusterExport(cl, c('hilbert', 'hilb_design'))
 hilb_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(hilb_design)), function(r){
-    plan <- hilbert(sim_R, hilb_design$order[r], hilb_design$xsect_radius[r])
+    message(hilb_design$PlanID[r])
+    plan <- hilbert(rect_R, hilb_design$order[r], hilb_design$xsect_radius[r])
     return(tibble_row(
+      PlanID = hilb_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = hilb_design$xsect_radius[r],
       Distance = totallength(plan),
@@ -719,7 +858,7 @@ rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
         reject <- FALSE
     }
   }
-  path_psp <- psp(wp$x, wp$y, new_x, new_y, sim_R)
+  path_psp <- psp(wp$x, wp$y, new_x, new_y, rect_R)
   cum_dist <- new_dist
   current_x <- new_x
   current_y <- new_y
@@ -749,7 +888,7 @@ rpm <- function(full_win, dist_cutoff = DIST_MAX, corr = XSECT_LENGTH_CORR,
 
       if(inside.owin(new_x, new_y, sampleable)){
         if(runif(1) < antirepulsion^(sum(crossdist(
-            psp(current_x, current_y, new_x, new_y, sim_R),
+            psp(current_x, current_y, new_x, new_y, rect_R),
             path_psp, type = 'separation') < pair_radius) - 1)){
           reject <- FALSE
         }
@@ -803,12 +942,15 @@ rpm_design <- tibble(
     seg_min = seg_max * seg_min_prop,
     angle_s = ifelse(angle_m > pi/3, pi/12, pi/6)
   ) %>%
-  uncount(reps)
+  uncount(reps) %>%
+  mutate(PlanID = sprintf('RPM%06d', 1:n()))
 clusterExport(cl, c('rpm', 'rpm_design'))
 rpm_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(rpm_design)), function(r){
-    plan <- rpm(sim_R, rpm_design$max_dist[r], rpm_design$length_corr[r], rpm_design$seg_min[r], rpm_design$seg_max[r], rpm_design$angle_m[r], rpm_design$angle_s[r], pair_radius = rpm_design$pair_radius[r], margin = rpm_design$xsect_radius[r])
+    plan <- rpm(rect_R, rpm_design$max_dist[r], rpm_design$length_corr[r], rpm_design$seg_min[r], rpm_design$seg_max[r], rpm_design$angle_m[r], rpm_design$angle_s[r], pair_radius = rpm_design$pair_radius[r], margin = rpm_design$xsect_radius[r])
+    message(rpm_design$PlanID[r])
     return(tibble_row(
+      PlanID = rpm_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = rpm_design$xsect_radius[r],
       Distance = totallength(plan),
@@ -826,7 +968,7 @@ rpm_plans <- bind_rows(
 #{{{ Fit model to observed data. #
 ##################################
 
-model_fit <- function(model_formula, obs_ppp, R_mesh, dual_tess, R_proj,
+model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_proj,
   control.fixed = list(
     # Prior means and precisions for coefficients.
     mean.intercept = 0,
@@ -844,7 +986,7 @@ model_fit <- function(model_formula, obs_ppp, R_mesh, dual_tess, R_proj,
 
   # Get the numbers of mesh nodes and real events.
   # The sum of these will be the number of pseudodata points.
-  mesh_size <- R_mesh$n
+  mesh_size <- rect_R_mesh$n
   n_events <- nrow(obs_pts)
 
   # Create the psuedodata. This is a vector giving the count of events at each
@@ -860,7 +1002,7 @@ model_fit <- function(model_formula, obs_ppp, R_mesh, dual_tess, R_proj,
 
   # Compute the barycentric coordinates of the observed events
   # (i.e. project into the space spanned by the basis of mesh nodes).
-  bary <- inla.mesh.project(R_mesh, obs_pts)$A
+  bary <- inla.mesh.project(rect_R_mesh, obs_pts)$A
 
   # Compute the barycentric coordinates of the nodes. Because the
   # node coordinatess are the basis vectors, this is an identity matrix.
@@ -894,10 +1036,10 @@ model_fit <- function(model_formula, obs_ppp, R_mesh, dual_tess, R_proj,
   )
 
   gpmap <- im(
-    t(inla.mesh.project(R_proj, result$summary.random[[1]]$mean)) +
+    t(inla.mesh.project(rect_R_proj, result$summary.random[[1]]$mean)) +
       result$summary.fixed['intercept', 'mean'],
-    xrange = sim_R$x,
-    yrange = sim_R$y
+    xrange = rect_R$x,
+    yrange = rect_R$y
   )
 
   return(tibble_row(
@@ -943,17 +1085,23 @@ allplans <- bind_rows(
   )
 )
 
-clusterExport(cl, c('sample_ppp', 'model_fit', 'R_spde', 'R_formula', 'dual_tess', 'allplans', 'sim_datasets'))
-results <- bind_rows(parLapply(cl, seq_len(nrow(allplans)), function(p){
-  return(tibble_row(Fit = model_fit(R_formula, sample_ppp(sim_datasets[[1]], allplans$Plan[[p]], allplans$xsect_radius[p]), R_mesh, dual_tess, R_proj, )))
-}))
+fit_design <- expand.grid(PlanID = allplans$PlanID, DataID = rect_datasets$DataID)
 
-results1 <- model_fit(R_formula, sample_ppp(sim_datasets[[idx]], allplans$Plan[[205]]), R_mesh, dual_tess, R_proj)
+clusterExport(cl, c('sample_ppp', 'model_fit', 'rect_R_spde', 'rect_R_formula', 'rect_dual_tess', 'rect_R_proj', 'allplans', 'fit_design', 'rect_datasets', 'rect_prior_fixed'))
+rect_results <- bind_rows(parLapply(cl, seq_len(nrow(fit_design)), function(r){
+  thisplan <- allplans %>% filter(PlanID == fit_design$PlanID[r])
+  thisdataset <- rect_datasets %>% filter(DataID == fit_design$DataID[r])
+  obs_ppp <- sample_ppp(thisdataset$Data[[1]], thisplan$Plan[[1]], thisplan$xsect_radius)
+  message(sprintf('Dataset %s, Plan %s, observed %d points',
+                  thisdataset$DataID, thisplan$PlanID, obs_ppp$n))
+  return(bind_rows(
+    tibble_row(DataID = thisdataset$DataID, PlanID = thisplan$PlanID),
+    Fit = model_fit(rect_R_formula, obs_ppp, rect_R_mesh, rect_dual_tess, rect_R_proj, rect_prior_fixed)
+  ))}))
 
-plot(results1$Prediction[[1]],
-     riblab = expression(E(bold(e)(u)*'|'*bold(x))), ribsep = 0.05,
-     main = 'Posterior Predicted Mean of Latent GP')
-
+saveRDS(rect_datasets, 'rect_data.rds')
+saveRDS(allplans, 'rect_plans.rds')
+saveRDS(rect_results, 'rect_results.rds')
 
 stopCluster(cl)
 
