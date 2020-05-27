@@ -14,7 +14,7 @@ library(dplyr)
 library(tidyr)
 
 # Create a cluster for applying in parallel.
-cl <- makeCluster(ceiling(0.5) * detectCores(), outfile = '')
+cl <- makeCluster(ceiling(0.75) * detectCores(), outfile = '')
 invisible(clusterEvalQ(cl, {
   library(spatstat)
   library(INLA)
