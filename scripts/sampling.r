@@ -14,7 +14,7 @@ library(dplyr)
 library(tidyr)
 
 # Create a cluster for applying in parallel.
-cl <- makeCluster(ceiling(0.75) * detectCores(), outfile = '')
+cl <- makeCluster(ceiling(0.5) * detectCores(), outfile = '')
 invisible(clusterEvalQ(cl, {
   library(spatstat)
   library(INLA)
@@ -22,7 +22,7 @@ invisible(clusterEvalQ(cl, {
 
 # Define user-specified parameters.
 N_SIMS <- 100
-N_REALIZED <- 10
+N_REALIZED <- 5
 XSECT_WIDTH <- 4 # Width of transects.
 XSECT_LENGTH_MIN <- 50
 XSECT_LENGTH_MAX <- 500
@@ -931,8 +931,7 @@ rpm_design <- tibble(
       seg_max = 500,
       seg_min_prop = 0.1,
       pair_radius = c(80, 300),
-      angle_m = c(pi/3, pi/2),
-      angle_s = c(pi/6, pi/12)
+      angle_m = c(pi/3, pi/2)
     ),
     xsect_radius = XSECT_RADIUS
   ) %>%
