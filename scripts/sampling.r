@@ -1090,7 +1090,7 @@ saveRDS(allplans, 'rect_plans.rds')
 fit_design <- expand.grid(PlanID = allplans$PlanID, DataID = rect_datasets$DataID)
 
 stopCluster(cl)
-cl <- makeCluster(ceiling(0.25) * detectCores(), outfile = '')
+cl <- makeCluster(ceiling(0.5) * detectCores(), outfile = '')
 invisible(clusterEvalQ(cl, {
   library(spatstat)
   library(INLA)
@@ -1098,8 +1098,8 @@ invisible(clusterEvalQ(cl, {
   library(dplyr)
 }))
 
-clusterExport(cl, c('sample_ppp', 'model_fit', 'rect_R_spde', 'rect_R_formula', 'rect_dual_tess', 'rect_R_proj', 'allplans', 'fit_design', 'rect_datasets', 'rect_prior_fixed'))
-rect_results <- bind_rows(lapply(seq_len(nrow(fit_design)), function(r){
+clusterExport(cl, c('sample_ppp', 'model_fit', 'rect_R_spde', 'rect_R_formula', 'rect_dual_tess', 'rect_R_proj', 'rect_R_mesh', 'rect_R', 'allplans', 'fit_design', 'rect_datasets', 'rect_prior_fixed'))
+rect_results <- bind_rows(parLapply(cl, seq_len(nrow(fit_design)), function(r){
   thisplan <- allplans %>% filter(PlanID == fit_design$PlanID[r])
   thisdataset <- rect_datasets %>% filter(DataID == fit_design$DataID[r])
   obs_ppp <- sample_ppp(thisdataset$Data[[1]], thisplan$Plan[[1]], thisplan$xsect_radius)
