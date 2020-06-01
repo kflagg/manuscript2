@@ -14,7 +14,7 @@ library(dplyr)
 library(tidyr)
 
 # Create a cluster for applying in parallel.
-cl <- makeCluster(ceiling(0.75) * detectCores(), outfile = '')
+cl <- makeCluster(ceiling(0.75 * detectCores()), outfile = '')
 invisible(clusterEvalQ(cl, {
   library(spatstat)
   library(INLA)
@@ -1090,7 +1090,7 @@ saveRDS(allplans, 'rect_plans.rds')
 fit_design <- expand.grid(PlanID = allplans$PlanID, DataID = rect_datasets$DataID)
 
 stopCluster(cl)
-cl <- makeCluster(ceiling(0.5) * detectCores(), outfile = '')
+cl <- makeCluster(ceiling(0.25 * detectCores()), outfile = '')
 invisible(clusterEvalQ(cl, {
   library(spatstat)
   library(INLA)
