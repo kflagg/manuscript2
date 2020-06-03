@@ -976,6 +976,7 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
     mean = 0,
     prec = 0
   ),
+  save_fit = FALSE, save_pred = FALSE,
   ...){
 
   # Observation window.
@@ -1043,8 +1044,8 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
   )
 
   return(tibble_row(
-    Fit = list(result),
-    Prediction = list(gpmap),
+    Fit = list(if(save_fit) result),
+    Prediction = list(if(save_pred) gpmap),
     MSPE = mean((log(attr(obs_ppp, 'Lambda')) - gpmap)^2),
     APV = sum(mesh_weights * result$summary.random[[1]]$sd^2) / sum(mesh_weights),
     MaxPV = max(result$summary.random[[1]]$sd^2)
@@ -1090,7 +1091,7 @@ saveRDS(allplans, 'rect_plans.rds')
 fit_design <- expand.grid(PlanID = allplans$PlanID, DataID = rect_datasets$DataID)
 
 stopCluster(cl)
-cl <- makeCluster(ceiling(0.25 * detectCores()), outfile = '')
+cl <- makeCluster(ceiling(0.75 * detectCores()), outfile = '')
 invisible(clusterEvalQ(cl, {
   library(spatstat)
   library(INLA)
