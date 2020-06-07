@@ -1026,15 +1026,30 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
   )
 
   # Fit the model as a Poisson GLM with exposures specified.
-  result <- inla(
-    formula = model_formula,
-    data = inla_data,
-    family = 'poisson',
-    control.fixed = control.fixed,
-    control.predictor = list(A = pseudopoints),
-    E = pseudodata_exp,
-    ...
+  result <- tryCatch(
+    inla(
+      formula = model_formula,
+      data = inla_data,
+      family = 'poisson',
+      control.fixed = control.fixed,
+      control.predictor = list(A = pseudopoints),
+      E = pseudodata_exp,
+      ...
+    ),
+    error = function(...){
+      return(NULL)
+    }
   )
+
+  if(is.null(result)){
+    return(tibble_row(
+      Fit = list(NULL),
+      Prediction = list(NULL),
+      MSPE = NA_real_,
+      APV = NA_real_,
+      MaxPV = NA_real_
+    ))
+  }
 
   gpmap <- im(
     t(inla.mesh.project(rect_R_proj, result$summary.random[[1]]$mean)) +
