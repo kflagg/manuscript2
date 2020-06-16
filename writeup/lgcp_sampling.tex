@@ -108,8 +108,8 @@ In ecological settings, sampling plans are often designed around the goal of
 estimating total abundance. Ordnance response surveys are typically designed
 with the objective of detecting (but not necessarily mapping) intensity
 hotspots~\citep{em200-1-15}. However, to our knowledge, there has been very
-little work done in deciding \emph{where} to collect data when the goal is to
-map the intensity using a spatial point process model. In this paper, we adapt
+little work done in deciding where to collect data when the goal is to map the
+intensity using a spatial point process model. In this paper, we adapt
 nearest-neighbor criteria to the path design setting and introduce a sequential
 path construction scheme as a starting point for future optimization. We then
 compare a variety of path design schemes with respect to a suite of
@@ -278,7 +278,120 @@ INLA~\citep{rueetal}, SPDE~\citep{lindgrenetal}, off-grid~\citep{simpsonetal}
 
 \subsection{Simulation procedure}
 
-describe the simulation and site
+Simulated site \(\mathcal{R}\):
+\begin{itemize}
+\item 1500 units by 700 units rectangle
+\end{itemize}
+
+Data generating models (two methods meant to produce hotspots):
+\begin{itemize}
+\item LGCP
+\begin{itemize}
+\item \(\mu = \log(250 / |\mathcal{R}|)\)
+\item mat\'{e}rn covariance
+\item \(\nu = 1\)
+\item \(\sigma = 2\)
+\item \(\text{range} = 200\)
+\end{itemize}
+\item Two-stage cluster process superimposed on LGCP
+\begin{itemize}
+\item Cluster process
+\begin{itemize}
+\item Number of clusters is Poisson with mean 3
+\item Number of events per cluster is Poisson with mean 200
+\item Cluster centers distributed uniformly over \(\mathcal{R}\)
+\item Events distributed bivariate normal around cluster center, variance
+\(\boldsymbol{\Sigma} = \tau^{2}\mathbf{I}\), \(\tau = 50\)
+\end{itemize}
+\item LGCP
+\begin{itemize}
+\item \(\mu = \log(250 / |\mathcal{R}|)\)
+\item mat\'{e}rn covariance
+\item \(\nu = 1\)
+\item \(\sigma = 1\)
+\item \(\text{range} = 200\)
+\end{itemize}
+\end{itemize}
+\end{itemize}
+
+Path design schemes:
+\begin{itemize}
+\item Simple random sample of north-south line transects
+\begin{itemize}
+\item \(\text{Number of transects} = 10, 25, 50, 70\)
+\item Expect high variance, large prediction error in big gaps.
+\end{itemize}
+\item Systematic sample of north-south line transects
+\begin{itemize}
+\item \(\text{Number of transects} = 10, 25, 50, 70\)
+\item Uniformly distributed starting point
+\item Constant spacing
+\item Expect low bias and ok variance, can miss structures at certain sizes,
+may not have best space-filling properties.
+\end{itemize}
+\item Systematic sample of north-south serpentine transects
+\begin{itemize}
+\item \(\text{Number of transects} = 7, 22, 47, 67\)
+\item Uniformly distributed starting point
+\item Constant spacing
+\item \(\text{Number of zigzags} = 5, 8\)
+\item Horizontal zigzag distance set so that the total horizontal distance
+traveled equals 2100 units (the length of 3 non-zigzag line transects)
+\item Expect better space-filling properties than line-transect designs,
+lower bias/variance farther from path, would be better at estimating
+anisotropic covariance than line-transects.
+\end{itemize}
+\item Inhibitory plus close pairs sample of north-south line transects
+\begin{itemize}
+\item \(\text{Total number of transects (including pairs)} = 10, 25, 50, 70\)
+\item \(\text{Number of pairs} = 0.1, 0.2\) times the total number of transects
+(rounded up or down to nearest whole number)
+\item Pairs uniformly distributed within radius of primaries,
+\(\text{max pair radius} = 1500 / \text{total number of transects}\)
+\item Position of primaries generated from a 1-dimensional Strauss process with
+\(\gamma = 0.05\)
+\item A compromise between SRS and systematic in every way.
+\end{itemize}
+\item Latin Hypercube Sampling waypoints
+\begin{itemize}
+\item \(\text{Number of bins} = 50, 300, 1200, 2400\)
+\item Expect low bias/variance per unit distance traveled, many sharp corners,
+some big open areas.
+\end{itemize}
+\item Hilbert curve
+\begin{itemize}
+\item \(\mathbf{Order} = 3, 4, 5, 6\)
+\item Created in square and then scaled to fit in \(\mathcal{R}\)
+\item A uniform random offset added equal to spacing between segments
+\item Expect good space filling, good bias and variance, lots of short
+segments.
+\end{itemize}
+\item Random particle movement
+\begin{itemize}
+\item \(\text{Distance cutoff} = 6700, 17200, 34700, 49700\)
+\item Segment lengths uniform 50 to 500 units
+\item Adjacent segments uncorrelated or \(\rho = -0.8\)
+\item Turn angle \(\mathrm{N}(\mu = \pi / 3, \sigma = \pi / 6)\) or
+\(\mathrm{N}(\mu = \pi / 2, \sigma = \pi / 12)\)
+\item Angle multiplied by discrete uniform over \(\{-1, 1\}\)
+\item Strauss-esque thinning, \(\text{antirepulsion} = 0.8\),
+\(\text{pair radius} = 80\)
+\item All combinations of the above, plus pair distance of 300 for 6700
+distance cutoff
+\item Expect variation in all characteristics due to extreme randomness, but
+some near-optimality that could be harnessed by search algorithms, should see
+exploration followed by infill, negative \(\rho\) with turns centered tightly
+on \(\pi / 2\) should mimic zigzagging among parallel transects.
+\end{itemize}
+\end{itemize}
+
+{\it (Probably should move explanations of schemes to appendix.)}
+
+100 designs from each scheme. All events within a 2 unit radius of the path are
+observed. Whole experience repeated for 5 realizations from each data
+generating model.
+
+Model (include priors and mesh)
 
 
 %\section{Theory/calculation}
