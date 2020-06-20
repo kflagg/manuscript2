@@ -107,13 +107,14 @@ estimate the detection function~\citep{dspat,baser}.
 In ecological settings, sampling plans are often designed around the goal of
 estimating total abundance. Ordnance response surveys are typically designed
 with the objective of detecting (but not necessarily mapping) intensity
-hotspots~\citep{em200-1-15}. However, to our knowledge, there has been very
-little work done in deciding where to collect data when the goal is to map the
-intensity using a spatial point process model. In this paper, we adapt
-nearest-neighbor criteria to the path design setting and introduce a sequential
-path construction scheme as a starting point for future optimization. We then
-compare a variety of path design schemes with respect to a suite of
-model-based and design-based criteria for simulated point pattern data.
+hotspots~\citep{em200-1-15,flaggetal}. However, to our knowledge, there has
+been very little work done in deciding where to collect data when the goal is
+to map the intensity using a spatial point process model. In this paper, we
+adapt nearest-neighbor criteria to the path design setting and introduce a
+sequential path construction scheme as a starting point for future
+optimization. We then compare a variety of path design schemes with respect
+to a suite of model-based and design-based criteria for simulated point
+pattern data.
 
 
 \subsection{Spatial design}
@@ -278,41 +279,26 @@ INLA~\citep{rueetal}, SPDE~\citep{lindgrenetal}, off-grid~\citep{simpsonetal}
 
 \subsection{Simulation procedure}
 
-Simulated site \(\mathcal{R}\):
-\begin{itemize}
-\item 1500 units by 700 units rectangle
-\end{itemize}
+We consider a fictitious site \(\mathcal{R}\) with the simple shape of a 1500
+unit by 700 unit rectangle. In this site, we will simulate two data generating
+models meant to produce random intensity functions with with hotspots. First,
+a LGCP with latent GP mean \(\mu = \log(250 / |\mathcal{R}|)\) and a
+Mat\'{e}rn covariance with \(\nu = 1\), \(\sigma = 2\), and
+\(\text{range} = 200\). This model produces relatively unstructured hotspots
+due to large variability in the GP.
 
-Data generating models (two methods meant to produce hotspots):
-\begin{itemize}
-\item LGCP
-\begin{itemize}
-\item \(\mu = \log(250 / |\mathcal{R}|)\)
-\item mat\'{e}rn covariance
-\item \(\nu = 1\)
-\item \(\sigma = 2\)
-\item \(\text{range} = 200\)
-\end{itemize}
-\item Two-stage cluster process superimposed on LGCP
-\begin{itemize}
-\item Cluster process
-\begin{itemize}
-\item Number of clusters is Poisson with mean 3
-\item Number of events per cluster is Poisson with mean 200
-\item Cluster centers distributed uniformly over \(\mathcal{R}\)
-\item Events distributed bivariate normal around cluster center, variance
-\(\boldsymbol{\Sigma} = \tau^{2}\mathbf{I}\), \(\tau = 50\)
-\end{itemize}
-\item LGCP
-\begin{itemize}
-\item \(\mu = \log(250 / |\mathcal{R}|)\)
-\item mat\'{e}rn covariance
-\item \(\nu = 1\)
-\item \(\sigma = 1\)
-\item \(\text{range} = 200\)
-\end{itemize}
-\end{itemize}
-\end{itemize}
+Second, the superposition of a two-stage cluster process superposed and a
+LGCP. The cluster process (a Neyman-Scott or, more specifically, a Thomas
+process) is constructed as follows. The number of clusters is Poisson with
+mean 3. The number of events per cluster is Poisson with mean 200. The cluster
+centers distributed uniformly over \(\mathcal{R}\). Events come from a
+bivariate normal distribution with mean equal to the cluster center and
+variance \(\boldsymbol{\Sigma} = \tau^{2}\mathbf{I}\), \(\tau = 50\). The LGCP
+has \(\mu = \log(250 / |\mathcal{R}|)\) and Mat\'{e}rn covariance with
+\(\nu = 1\), \(\sigma = 1\), and \(\text{range} = 200\). This model is based
+upon the typical conceptual model of a firing range, with a background process
+(represented by the LGCP) and a small number of higher-intensity foreground
+clusters containing the events of interest.
 
 Path design schemes:
 \begin{itemize}
@@ -388,10 +374,17 @@ on \(\pi / 2\) should mimic zigzagging among parallel transects.
 {\it (Probably should move explanations of schemes to appendix.)}
 
 100 designs from each scheme. All events within a 2 unit radius of the path are
-observed. Whole experience repeated for 5 realizations from each data
+observed. Whole experiment repeated for 5 realizations from each data
 generating model.
 
 Model (include priors and mesh)
+
+\begin{figure}
+\includegraphics{mesh_full.pdf}
+\caption{Illustration of the mesh and associated numerical integration scheme
+used to approximate the latent GP.}
+\label{meshfull}
+\end{figure}
 
 
 %\section{Theory/calculation}

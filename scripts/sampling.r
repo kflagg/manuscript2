@@ -7,18 +7,6 @@ source('functions.r')
 
 
 #}}}##################################
-#{{{ Objects pertaining to the site. #
-######################################
-
-# Neat plot.
-#plot(rect_dual_tess, border = '#80808020', do.col = TRUE, values = rect_R_nodes_area,
-#     main = 'Mesh with dual colored by node weight')
-#plot(rect_R_mesh_net, add = TRUE, col = '#00000080')
-#plot(rect_R, border = 'white', add = TRUE)
-#points(rect_R_mesh_loc[,], pch = 20)
-
-
-#}}}##################################
 #{{{ Objects pertaining to the data. #
 ######################################
 
