@@ -11,9 +11,10 @@ source('functions.r')
 ######################################
 
 # Neat plot.
-pdf('../writeup/mesh_full.pdf', width = 8, height = 4)
+pdf('../writeup/mesh_full.pdf', width = 9, height = 4)
 par(mar = c(0, 0, 2, 2))
-plot(rect_dual_tess, border = '#80808020', do.col = TRUE, values = rect_R_nodes_area,
+plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
+     values = rect_R_nodes_area, ribargs = list(las = 1),
      main = 'Mesh with dual colored by node weight')
 plot(rect_R_mesh_net, add = TRUE, col = '#00000080')
 plot(rect_R, border = 'white', add = TRUE)
