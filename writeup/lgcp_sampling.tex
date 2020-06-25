@@ -1,6 +1,6 @@
 \documentclass[review]{elsarticle}
 
-\usepackage{lineno,hyperref,amsmath,amsfonts}
+\usepackage{lineno,hyperref,amsmath,amsfonts,subcaption}
 \modulolinenumbers[5]
 
 \journal{Spatial Statistics}
@@ -243,33 +243,44 @@ Minimize maximum prediction variance and average prediction variance for GP.
 
 {\it These are the focus, move them earlier?}
 
-\paragraph{Parallel transects} Parallel transects running the length of the
-site in the vertical axis. Three ways of choosing the horizontal coordinate:
-simple random sample (SRS), systematic with a random starting point and even
-spacing, inhibitory plus close pairs.
+\paragraph{Parallel line transects} Parallel straight-line transects are common
+in ordnance response studies and in ecological studies using distance sampling.
+Systematic designs are common because they pprovides good spatial coverage in
+the sense that any point in the study region has a known maximum distance from
+the path. For point designs, systematic designs are optimal for prediction,
+simple random samples are optimal for estimation, and inhibitory with close
+pair designs are becomming a popular compromise. We adapt all of these to the
+parallel line transect setting. We use line transects running north-south, with
+three ways of choosing the horizontal coordinate: simple random sample (SRS),
+systematic with a random starting point and even spacing, inhibitory plus close
+pairs. To vary the length, we use designs with 10, 25, 50, and 70 transects.
+Figure~\ref{linexsects} shows an example of each scheme with 25 transects.
+
+{\it (note about inhib plus pairs)}
+
+{\it (note about isotropy)}
 
 \begin{figure}
-\includegraphics[width=5in]{SRS000214.pdf}
-\caption{Example of a simple random sample parallel line transect design.}
-\label{srs000214}
-\end{figure}
+\includegraphics[width=5in]{SRS000176.pdf}
 
-\begin{figure}
-\includegraphics[width=5in]{Sys000013.pdf}
-\caption{Example of a systematic parallel line transect design.}
-\label{sys000013}
-\end{figure}
+\includegraphics[width=5in]{Sys000141.pdf}
 
-\begin{figure}
 \includegraphics[width=5in]{Inhib000171.pdf}
-\caption{Example of an inhibitory plus pairs parallel line transect design.}
-\label{inhib000171}
+
+\caption{Examples of three different parallel line transect designs with the
+same number of transects.}
+\label{linexsects}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=5in]{Serp000277.pdf}
-\caption{Example of a systematic serpentine transect design.}
-\label{serp000277}
+\includegraphics[width=5in]{Serp000124.pdf}
+
+\includegraphics[width=5in]{Serp000539.pdf}
+
+\caption{Examples of systematic serpentine transect designs of the same
+distance. The number of zigzags is the number of north-south segmetns per
+transect.}
+\label{serps}
 \end{figure}
 
 \paragraph{Latin hypercube sampling}
@@ -278,7 +289,7 @@ by the \texttt{lhs} R package~\cite{lhs}. Connected into a the shortest path
 by the \texttt{TSP} package~\citep{tsp}.
 
 \begin{figure}
-\includegraphics[width=5in]{LHS-TSP000259.pdf}
+\includegraphics[width=5in]{LHS-TSP000161.pdf}
 \caption{Example of a shortest path through a Latin hypercube smapling design.}
 \label{lhstsp000259}
 \end{figure}

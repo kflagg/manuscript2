@@ -36,18 +36,29 @@ allplans <- readRDS('rect_plans.rds')
 plotplans <- c(
   'Hilbert000180',
   'Inhib000171',
-  'LHS-TSP000259',
+  'LHS-TSP000161',
   'RPM001107',
-  'Serp000277',
-  'SRS000214',
-  'Sys000013'
+  'Serp000124',
+  'Serp000539',
+  'SRS000176',
+  'Sys000141'
+)
+plottitles <- c(
+  'Hilbert design of order 4',
+  '(c) Inhibitory plus close pairs line transect design',
+  'LHS-TSP design',
+  'Random particle movement design',
+  '(a) Serpentine transect design with 5 zigzags',
+  '(b) Serpentine transect design with 8 zigzags',
+  '(a) Simple random sample line transect design',
+  '(b) Systematic line transect design'
 )
 
-for(planid in plotplans){
-  thisplan <- allplans %>% filter(PlanID == planid)
-  pdf(paste0('../writeup/', planid, '.pdf'), width = 9, height = 4)
+for(i in seq_along(plotplans)){
+  thisplan <- allplans %>% filter(PlanID == plotplans[i])
+  pdf(paste0('../writeup/', plotplans[i], '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 0))
-  plot(thisplan$Plan[[1]], main = paste(thisplan$Scheme, 'Example'))
+  plot(thisplan$Plan[[1]], main = plottitles[i])
   plot(rect_R, border = 'grey', add = TRUE)
   dev.off()
 }
