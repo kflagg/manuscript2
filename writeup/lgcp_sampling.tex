@@ -256,9 +256,19 @@ systematic with a random starting point and even spacing, inhibitory plus close
 pairs. To vary the length, we use designs with 10, 25, 50, and 70 transects.
 Figure~\ref{linexsects} shows an example of each scheme with 25 transects.
 
-{\it (note about inhib plus pairs)}
+For the inhibitory plus close pairs, we vary the numbers of paired and unpaired
+transects. The total number of transects is 10, 25, 50, or 70, with 10\% and
+20\% of the transects (rounded to the nearest integer) as redundant members of
+a pair. The remaining primary transects were placed according to a
+one-dimensional Strauss process with \(\gamma = 0.05\) and a radius of 80. Then
+each redundant transect was randomly paired to a primary transect, an placed
+within an 80 unit radius of the primary transect according to a uniform
+distribution.
 
-{\it (note about isotropy)}
+We should note that our we will be using an isotropic covariance function in
+the model. If an anisotropic model is used, parallel transects may need to be
+augmented with perpendicular transects so that the observed data provide the
+full range of pairwise distances in other directions.
 
 \begin{figure}
 \includegraphics[width=5in]{SRS000176.pdf}
@@ -271,6 +281,29 @@ Figure~\ref{linexsects} shows an example of each scheme with 25 transects.
 same number of transects.}
 \label{linexsects}
 \end{figure}
+
+\paragraph{Parallel serpentine transects}
+
+One simple way to observe a greater variety of locations and different
+directions is to add lateral zigzags to transects. We include alternate right
+and left turns at right angles to create serpentine transects. This could
+decrease prediction variance because many points in the study area will be
+closer to the path than they would be under a similar plan of line transects.
+{\it (Check the math---is this true? And does similar mean same length or same
+number of transects?)} They will also improve estimation of covariance
+parameters in the presence of anisotropy.
+
+We generate designs with 7, 22, 47, and 67 serpentine transects. We vary the
+complexity of the serpentines by using versions with 5 and 8 zigzags. We define
+a zigzag as a single north-south segment or a pair of connected north-south and
+east-west segments. The lengths of the east-west segments are set so that the
+total distance equals the total distance of a line transect design with
+three more transects. Figure~\ref{serps} shows examples.
+
+% What to do with the comments about anisotropy? Consolidate them and put them
+% in one spot? Anisotropic models are rarely used (underused) and we are
+% simulating from isotropic models, but "go in more than one direction if you
+% have anisotropic data" is advice worth spending a paragraph on.
 
 \begin{figure}
 \includegraphics[width=5in]{Serp000124.pdf}
@@ -471,6 +504,13 @@ look at examples of designs along the Pareto front
 % This should explore the significance of the results of the work, not repeat them. A combined Results and Discussion section is often appropriate. Avoid extensive citations and discussion of published literature.
 
 discuss starting points for optimization and sequential design
+
+practical issue: path will be smoothed, no instantaneous direction changes at
+corners, equipment may have limitations which is why we looked at number and
+distribution or turn angles
+
+could incorporate turns into loss function or use multi-objective
+optimization~\citep{lark}
 
 
 \section{Conclusions}

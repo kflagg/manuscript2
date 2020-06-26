@@ -45,13 +45,13 @@ plotplans <- c(
 )
 plottitles <- c(
   'Hilbert design of order 4',
-  '(c) Inhibitory plus close pairs line transect design',
+  'Inhibitory plus close pairs line transect design',
   'LHS-TSP design',
   'Random particle movement design',
-  '(a) Serpentine transect design with 5 zigzags',
-  '(b) Serpentine transect design with 8 zigzags',
-  '(a) Simple random sample line transect design',
-  '(b) Systematic line transect design'
+  'Serpentine transect design with 5 zigzags',
+  'Serpentine transect design with 8 zigzags',
+  'Simple random sample line transect design',
+  'Systematic line transect design'
 )
 
 for(i in seq_along(plotplans)){
