@@ -205,21 +205,21 @@ The total distance that traveled is often a constraint. Minimize it.
 Data collection equipment (e.g. metal detectors) may have limited mobility,
 requiring minimizing the nubmer or angle of turns.
 
-\paragraph{Nearest neighbor distance}
-A common criterion for space-filling designs, we adapt it to be meaningfully
-calculated for any point on a path. Define the \(k\)th-order nearest neighbor
-distance as \(\mathrm{nnd}_{k}(u) = \min|u - v|\) where \(v\) is any point
-in the set of path segments at least \(k\) steps away from the segment
-containing \(u\). If \(k = 0\), this includes \(v\) in the same segment as
-\(u\) so trivially \(\mathrm{nnd}_{0}(u) = 0\) for all \(u\) in the path.
-\(\mathrm{nnd}_{1}(u)\) includes all segments except the one containing \(u\).
-\(\mathrm{nnd}_{2}(u)\) excludes the segment containing \(u\) and segments with
-which it shares vertices. Segments not accessible by a connected path starting
-at \(u\) are always included. Maximize \(\min[\mathrm{nnd}_{2}(u)]\),
-\(\mathrm{avg}[\mathrm{nnd}_{2}(u)]\), and
-\(\mathrm{avg}[\mathrm{nnd}_{1}(u)]\).
+%\paragraph{Nearest neighbor distance}
+%A common criterion for space-filling designs, we adapt it to be meaningfully
+%calculated for any point on a path. Define the \(k\)th-order nearest neighbor
+%distance as \(\mathrm{nnd}_{k}(u) = \min|u - v|\) where \(v\) is any point
+%in the set of path segments at least \(k\) steps away from the segment
+%containing \(u\). If \(k = 0\), this includes \(v\) in the same segment as
+%\(u\) so trivially \(\mathrm{nnd}_{0}(u) = 0\) for all \(u\) in the path.
+%\(\mathrm{nnd}_{1}(u)\) includes all segments except the one containing \(u\).
+%\(\mathrm{nnd}_{2}(u)\) excludes the segment containing \(u\) and segments with
+%which it shares vertices. Segments not accessible by a connected path starting
+%at \(u\) are always included. Maximize \(\min[\mathrm{nnd}_{2}(u)]\),
+%\(\mathrm{avg}[\mathrm{nnd}_{2}(u)]\), and
+%\(\mathrm{avg}[\mathrm{nnd}_{1}(u)]\).
 
-{\it (Move details to appendix.)}
+%{\it (Move details to appendix.)}
 
 
 \subsection{Model-based criteria}
@@ -337,25 +337,25 @@ deterministic design, so a random offset is added.
 \label{hilbert000180}
 \end{figure}
 
-\paragraph{Particle movement model}
-Models the way data are actually collected. Waypoints generated sequentially by
-generating a jump distance and a direction. The jump distance is generated from
-a scaled beta distribution, and negatively correlated with previous jump
-distance. This behavior should approximately alternate between a short
-``transition'' and a long transect. The negative correlation was achieved by
-applying a \(1 - x\) transformation to a beta autoregressive
-process~\citep{mckenzie}. The direction angle is drawn from a bimodal
-distribution that is symmetric around 0 (a normal distribution reflectd about
-0). {\it explain the Strauss part}
+%\paragraph{Particle movement model}
+%Models the way data are actually collected. Waypoints generated sequentially by
+%generating a jump distance and a direction. The jump distance is generated from
+%a scaled beta distribution, and negatively correlated with previous jump
+%distance. This behavior should approximately alternate between a short
+%``transition'' and a long transect. The negative correlation was achieved by
+%applying a \(1 - x\) transformation to a beta autoregressive
+%process~\citep{mckenzie}. The direction angle is drawn from a bimodal
+%distribution that is symmetric around 0 (a normal distribution reflectd about
+%0). {\it explain the Strauss part}
 
-{\it set up to think about adaptive sampling (adding a transect at a time or
-stopping early but don't actually do it here)}
+%{\it set up to think about adaptive sampling (adding a transect at a time or
+%stopping early but don't actually do it here)}
 
-\begin{figure}
-\includegraphics[width=5in]{RPM001107.pdf}
-\caption{Example of a random particle movement design.}
-\label{rpm001107}
-\end{figure}
+%\begin{figure}
+%\includegraphics[width=5in]{RPM001107.pdf}
+%\caption{Example of a random particle movement design.}
+%\label{rpm001107}
+%\end{figure}
 
 
 \subsection{Model fitting}
@@ -437,23 +437,6 @@ some big open areas.
 \item A uniform random offset added equal to spacing between segments
 \item Expect good space filling, good bias and variance, lots of short
 segments.
-\end{itemize}
-\item Random particle movement
-\begin{itemize}
-\item \(\text{Distance cutoff} = 6700, 17200, 34700, 49700\)
-\item Segment lengths uniform 50 to 500 units
-\item Adjacent segments uncorrelated or \(\rho = -0.8\)
-\item Turn angle \(\mathrm{N}(\mu = \pi / 3, \sigma = \pi / 6)\) or
-\(\mathrm{N}(\mu = \pi / 2, \sigma = \pi / 12)\)
-\item Angle multiplied by discrete uniform over \(\{-1, 1\}\)
-\item Strauss-esque thinning, \(\text{antirepulsion} = 0.8\),
-\(\text{pair radius} = 80\)
-\item All combinations of the above, plus pair distance of 300 for 6700
-distance cutoff
-\item Expect variation in all characteristics due to extreme randomness, but
-some near-optimality that could be harnessed by search algorithms, should see
-exploration followed by infill, negative \(\rho\) with turns centered tightly
-on \(\pi / 2\) should mimic zigzagging among parallel transects.
 \end{itemize}
 \end{itemize}
 
@@ -590,7 +573,7 @@ observed and observable point patterns
 \end{itemize}
 
 
-\section{Extension of Nearest Neighbor Distance to Paths}
+%\section{Extension of Nearest Neighbor Distance to Paths}
 
 
 \section*{References}

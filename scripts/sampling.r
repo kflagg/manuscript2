@@ -170,29 +170,6 @@ hilb_plans <- bind_rows(
 
 
 #}}}############################
-#{{{ Random particle movement. #
-################################
-
-rpm_plans <- bind_rows(
-  parLapply(cl, seq_len(nrow(rpm_design)), function(r){
-    plan <- rpm(rect_R, rpm_design$max_dist[r], rpm_design$length_corr[r], rpm_design$seg_min[r], rpm_design$seg_max[r], rpm_design$angle_m[r], rpm_design$angle_s[r], pair_radius = rpm_design$pair_radius[r], margin = rpm_design$xsect_radius[r])
-    message(rpm_design$PlanID[r])
-    return(tibble_row(
-      PlanID = rpm_design$PlanID[r],
-      Plan = list(plan),
-      xsect_radius = rpm_design$xsect_radius[r],
-      Distance = totallength(plan),
-      Lengths = list(lengths.linnet(plan)),
-      Angles = list(angles.linnet(plan)),
-      Corners = cornercount.linnet(plan),
-      MinNND_2 = nndist(plan, 2, 'min'),
-      AvgNND_2 = nndist(plan, 2, 'avg'),
-      AvgNND_1 = nndist(plan, 1, 'avg')
-   ))})
-)
-
-
-#}}}##############################
 
 # Combine all plans into one dataset.
 allplans <- bind_rows(
@@ -219,10 +196,6 @@ allplans <- bind_rows(
   tibble(
     Scheme = 'Hilbert',
     hilb_plans
-  ),
-  tibble(
-    Scheme = 'RPM',
-    rpm_plans
   )
 )
 saveRDS(allplans, 'rect_plans.rds')
