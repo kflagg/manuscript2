@@ -26,12 +26,12 @@ dev.off()
 #{{{ Objects pertaining to the data. #
 ######################################
 
-rect_datasets <- readRDS('rect_data.rds')
+rect_datasets <- readRDS('../data/rect_data.rds')
 
 
 #}}}##################################
 
-allplans <- readRDS('rect_plans.rds')
+allplans <- readRDS('../data/rect_plans.rds')
 
 plotplans <- c(
   'Hilbert000180',
@@ -64,7 +64,7 @@ for(i in seq_along(plotplans)){
 # Create combinations of plans and data.
 #fit_design <- expand.grid(PlanID = allplans$PlanID, DataID = rect_datasets$DataID)
 
-rect_results <- readRDS('rect_results.rds')
+rect_results <- readRDS('../data/rect_results.rds')
 
 stopCluster(cl)
 

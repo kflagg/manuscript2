@@ -27,7 +27,7 @@ rect_datasets <- bind_rows(
   })
 )
 
-saveRDS(rect_datasets, 'rect_data.rds')
+saveRDS(rect_datasets, '../data/rect_data.rds')
 
 
 #}}}#######
@@ -198,7 +198,7 @@ allplans <- bind_rows(
     hilb_plans
   )
 )
-saveRDS(allplans, 'rect_plans.rds')
+saveRDS(allplans, '../data/rect_plans.rds')
 
 # Create combinations of plans and data.
 fit_design <- expand.grid(PlanID = allplans$PlanID, DataID = rect_datasets$DataID)
@@ -226,7 +226,7 @@ rect_results <- bind_rows(parLapply(cl, seq_len(nrow(fit_design)), function(r){
     Fit = model_fit(rect_R_formula, obs_ppp, rect_R_mesh, rect_dual_tess, rect_R_proj, rect_prior_fixed)
   ))}))
 
-saveRDS(rect_results, 'rect_results.rds')
+saveRDS(rect_results, '../data/rect_results.rds')
 
 stopCluster(cl)
 
