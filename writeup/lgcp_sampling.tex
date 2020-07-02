@@ -55,13 +55,12 @@
 
 \begin{abstract}
 
-\paragraph{Goal of this paper (placeholder abstract)} Evaluate a wide variety
-of path designs in terms design-based heuristics and model-based criteria for
-spatial prediction using Bayesian LGCP models. Identify promising initial
-designs for later optimization and sequential design (not actually optimizing
-yet). Illuminate any relationships among design characteristica and
-predictive criteria that will be helpful for constrained optimization. Discuss
-sequential contruction of paths as a precursor to online sequential design.
+\paragraph{Goal of this paper (placeholder abstract---add some results when
+available)} Evaluate a wide variety of path designs in terms design-based
+heuristics and model-based criteria for spatial prediction using Bayesian LGCP
+models. Identify promising path designs. Illuminate any relationships among
+design characteristics and predictive criteria that will be helpful for
+constrained optimization.
 
 \end{abstract}
 
@@ -83,13 +82,15 @@ log-Gaussian Cox process\sep optimal sampling\sep model-based design\sep spatial
 Spatial point process models have long been considered generally infeasible
 because of their computational demands, but recent advances in Bayesian
 computing have made the Log-Gaussian Cox process an attainable model in
-practice~\citep{rueetal, lindgrenetal, illianetal, simpsonetal}. Variable
-sampling effort leads to a degraded point pattern~\cite{chakrabortyetal} and
-it is relatively simple to accomodate variable sampling effort in these models
-using modern computing tools~\citep{yuanetal}. However, the literature on
-optimal sampling for spatial point process models is in its
-infancy~\citep{liuvanhatalo}. In this article, we present a variety of sampling
-path designs and assess their optimality for LGCP models.
+practice~\citep{rueetal, lindgrenetal, illianetal, simpsonetal}. In some
+applications, the entire point pattern is not fully observed due to variable
+sampling effort. This is referred to as a degraded point
+pattern~\citep{chakrabortyetal} and it is relatively simple to accomodate
+variable sampling effort in these models using modern Bayesian computing
+tools~\citep{yuanetal}. However, the literature on optimal sampling for spatial
+point process models is in its infancy~\citep{liuvanhatalo}. In this article,
+we present a variety of sampling path designs and assess their optimality for
+LGCP models.
 
 Point pattern data are routinely collected in species distribution studies and
 ordnance response projects. These applications may use quadrat sampling or
@@ -110,20 +111,17 @@ with the objective of detecting (but not necessarily mapping) intensity
 hotspots~\citep{em200-1-15,flaggetal}. However, to our knowledge, there has
 been very little work done in deciding where to collect data when the goal is
 to map the intensity using a spatial point process model. In this paper, we
-adapt nearest-neighbor criteria to the path design setting and introduce a
-sequential path construction scheme as a starting point for future
-optimization. We then compare a variety of path design schemes with respect
-to a suite of model-based and design-based criteria for simulated point
-pattern data.
+compare a variety of path design schemes with respect to a suite of
+model-based and design-based criteria for simulated point pattern data.
 
 
 \subsection{Spatial design}
 
 \paragraph{Design-based sampling}
 Most classical sampling work has been done for points or small quadrats
-approximated as points. Space-filling criteria may be good starting
-points~\citep{borkowskipiepel}. Latin hypercube sampling has space-filling
-properties~\cite{mckayetal,husslageetal}.
+approximated as points,  rather than paths. Space-filling criteria may be good
+starting points~\citep{borkowskipiepel}. Latin hypercube sampling has
+space-filling properties~\cite{mckayetal,husslageetal}.
 
 \paragraph{Space-filling curves}
 Used in design of dense or stretchable circuits~\citep{ogorzalek,mazhang} and
@@ -176,84 +174,48 @@ study region and not connected into a path.
 \section{Materials and methods}
 % Provide sufficient details to allow the work to be reproduced by an independent researcher. Methods that are already published should be summarized, and indicated by a reference. If quoting directly from a previously published method, use quotation marks and also cite the source. Any modifications to existing methods should also be described.
 
-Heuristics of a good path design:
-\begin{itemize}
-\item Should start with a sparse design with regular spacing, then refine with
-infill
-\begin{itemize}
-\item Provides good spatial coverage even if aborted early
-\item Imagine downloading a high-resolution intensity jpeg over 56k
-\end{itemize}
-\item Path should avoid sharp turns but is allowed to cross itself
-\item One option is to generate two segments at a time, first a short-to-medium
-length segment to get to the start of the next transect, then a  medium-to-long
-segment for the transect
-\item Could have new segment length be negatively correlated with the previous
-segment length
-\end{itemize}
+%Kenny's heuristics of a good path design:
+%\begin{itemize}
+%\item Should start with a sparse design with regular spacing, then refine with
+%infill
+%\begin{itemize}
+%\item Provides good spatial coverage even if aborted early
+%\item Imagine downloading a high-resolution intensity jpeg over 56k
+%\end{itemize}
+%\item Path should avoid sharp turns but is allowed to cross itself
+%\item One option is to generate two segments at a time, first a short-to-medium
+%length segment to get to the start of the next transect, then a  medium-to-long
+%segment for the transect
+%\item Could have new segment length be negatively correlated with the previous
+%segment length
+%\end{itemize}
 
-
-\subsection{Design-based criteria}
-
-We give attention to some design-based criteria that tie directly to practical
-considerations of data collection.
-
-\paragraph{Path length}
-The total distance that traveled is often a constraint. Minimize it.
-
-\paragraph{Corners}
-Data collection equipment (e.g. metal detectors) may have limited mobility,
-requiring minimizing the nubmer or angle of turns.
-
-%\paragraph{Nearest neighbor distance}
-%A common criterion for space-filling designs, we adapt it to be meaningfully
-%calculated for any point on a path. Define the \(k\)th-order nearest neighbor
-%distance as \(\mathrm{nnd}_{k}(u) = \min|u - v|\) where \(v\) is any point
-%in the set of path segments at least \(k\) steps away from the segment
-%containing \(u\). If \(k = 0\), this includes \(v\) in the same segment as
-%\(u\) so trivially \(\mathrm{nnd}_{0}(u) = 0\) for all \(u\) in the path.
-%\(\mathrm{nnd}_{1}(u)\) includes all segments except the one containing \(u\).
-%\(\mathrm{nnd}_{2}(u)\) excludes the segment containing \(u\) and segments with
-%which it shares vertices. Segments not accessible by a connected path starting
-%at \(u\) are always included. Maximize \(\min[\mathrm{nnd}_{2}(u)]\),
-%\(\mathrm{avg}[\mathrm{nnd}_{2}(u)]\), and
-%\(\mathrm{avg}[\mathrm{nnd}_{1}(u)]\).
-
-%{\it (Move details to appendix.)}
-
-
-\subsection{Model-based criteria}
-
-\paragraph{Mean-squared prediction error}
-Minimize MSPE for the GP.
-
-\paragraph{Posterior prediction variance}
-Minimize maximum prediction variance and average prediction variance for GP.
-
-%\paragraph{Posterior parameter variance}
-%Minimize posterior variance for each model parameter (intercept, variance,
-%spatial scale).
-
-%\paragraph{Decision-based criteria}
-%Maximize error rates and AUC of thresholding the intensity at an action level.
-%(Leaving for future work.)
+% Andy's words:
+With an eye toward practical considerations of data collection, we present
+criteria to compare sampling strategies that impact LGCP estimates. We compare
+plans with fixed path lengths that avoid sharp turns. Data collection equipment
+(e.g. metal detectors) may have limited mobility, requiring minimizing the
+number or angle of turns. The criteria that we evaluate are mean squared
+prediction error (MSPE) and posterior prediction variance of the Gaussian
+process.
 
 
 \subsection{Sampling schemes}
 
 {\it These are the focus, move them earlier?}
 
-\paragraph{Parallel line transects} Parallel straight-line transects are common
-in ordnance response studies and in ecological studies using distance sampling.
-Systematic designs are common because they pprovides good spatial coverage in
-the sense that any point in the study region has a known maximum distance from
-the path. For point designs, systematic designs are optimal for prediction,
-simple random samples are optimal for estimation, and inhibitory with close
-pair designs are becomming a popular compromise. We adapt all of these to the
-parallel line transect setting. We use line transects running north-south, with
-three ways of choosing the horizontal coordinate: simple random sample (SRS),
-systematic with a random starting point and even spacing, inhibitory plus close
-pairs. To vary the length, we use designs with 10, 25, 50, and 70 transects.
+\subsubsection{Parallel line transects}
+
+Parallel straight-line transects are common in ordnance response studies and in
+ecological studies using distance sampling. Systematic designs are common
+because they provide good spatial coverage in the sense that any point in the
+study region has a known maximum distance from the path. For point designs,
+systematic designs are optimal for prediction, simple random samples are
+optimal for estimation, and inhibitory with close pair designs are becomming a
+popular compromise. We adapt all of these to the parallel line transect
+setting. We use line transects running north-south, with three ways of choosing
+the horizontal coordinate: simple random sample (SRS), systematic with a random
+starting point and even spacing, inhibitory plus close pairs.
 Figure~\ref{linexsects} shows an example of each scheme with 25 transects.
 
 For the inhibitory plus close pairs, we vary the numbers of paired and unpaired
@@ -282,7 +244,7 @@ same number of transects.}
 \label{linexsects}
 \end{figure}
 
-\paragraph{Parallel serpentine transects}
+\subsubsection{Parallel serpentine transects}
 
 One simple way to observe a greater variety of locations and different
 directions is to add lateral zigzags to transects. We include alternate right
@@ -316,7 +278,7 @@ transect.}
 \label{serps}
 \end{figure}
 
-\paragraph{Latin hypercube sampling}
+\subsubsection{Latin hypercube sampling}
 Random Latin hypercube sampling (LHS) produces a design that spreads discrete
 points through a (potentially high-dimensional) design space, ensuring that
 the full range of each dimension is included while remaining balanced and
@@ -342,7 +304,7 @@ and connected into a the shortest path by the \texttt{TSP} package~\citep{tsp}.
 \label{lhstsp000161}
 \end{figure}
 
-\paragraph{Space-filling curves}
+\subsubsection{Space-filling curves}
 Hilbert curve generated by HilbertVis package~\citep{hilbertvis}. This is a
 deterministic design, so a random offset is added.
 
@@ -375,10 +337,11 @@ deterministic design, so a random offset is added.
 
 \subsection{Model fitting}
 
-INLA~\citep{rueetal}, SPDE~\citep{lindgrenetal}, off-grid~\citep{simpsonetal}
+INLA~\citep{rueetal}, SPDE~\citep{lindgrenetal}, off-grid~\citep{simpsonetal},
+Flagg and Hoegh (2020) \emph{knock on wood}
 
 
-\subsection{Simulation procedure}
+\section{Simulation Study}
 
 We consider a fictitious site \(\mathcal{R}\) with the simple shape of a 1500
 unit by 700 unit rectangle. In this site, we will simulate two data generating
