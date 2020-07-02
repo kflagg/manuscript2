@@ -27,7 +27,7 @@ rect_datasets <- bind_rows(
   })
 )
 
-saveRDS(rect_datasets, 'rect_data.rds')
+saveRDS(rect_datasets, '../data/rect_data.rds')
 
 
 #}}}#######
@@ -170,29 +170,6 @@ hilb_plans <- bind_rows(
 
 
 #}}}############################
-#{{{ Random particle movement. #
-################################
-
-rpm_plans <- bind_rows(
-  parLapply(cl, seq_len(nrow(rpm_design)), function(r){
-    plan <- rpm(rect_R, rpm_design$max_dist[r], rpm_design$length_corr[r], rpm_design$seg_min[r], rpm_design$seg_max[r], rpm_design$angle_m[r], rpm_design$angle_s[r], pair_radius = rpm_design$pair_radius[r], margin = rpm_design$xsect_radius[r])
-    message(rpm_design$PlanID[r])
-    return(tibble_row(
-      PlanID = rpm_design$PlanID[r],
-      Plan = list(plan),
-      xsect_radius = rpm_design$xsect_radius[r],
-      Distance = totallength(plan),
-      Lengths = list(lengths.linnet(plan)),
-      Angles = list(angles.linnet(plan)),
-      Corners = cornercount.linnet(plan),
-      MinNND_2 = nndist(plan, 2, 'min'),
-      AvgNND_2 = nndist(plan, 2, 'avg'),
-      AvgNND_1 = nndist(plan, 1, 'avg')
-   ))})
-)
-
-
-#}}}##############################
 
 # Combine all plans into one dataset.
 allplans <- bind_rows(
@@ -219,13 +196,9 @@ allplans <- bind_rows(
   tibble(
     Scheme = 'Hilbert',
     hilb_plans
-  ),
-  tibble(
-    Scheme = 'RPM',
-    rpm_plans
   )
 )
-saveRDS(allplans, 'rect_plans.rds')
+saveRDS(allplans, '../data/rect_plans.rds')
 
 # Create combinations of plans and data.
 fit_design <- expand.grid(PlanID = allplans$PlanID, DataID = rect_datasets$DataID)
@@ -253,7 +226,7 @@ rect_results <- bind_rows(parLapply(cl, seq_len(nrow(fit_design)), function(r){
     Fit = model_fit(rect_R_formula, obs_ppp, rect_R_mesh, rect_dual_tess, rect_R_proj, rect_prior_fixed)
   ))}))
 
-saveRDS(rect_results, 'rect_results.rds')
+saveRDS(rect_results, '../data/rect_results.rds')
 
 stopCluster(cl)
 

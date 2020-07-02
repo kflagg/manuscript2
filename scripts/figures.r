@@ -26,18 +26,17 @@ dev.off()
 #{{{ Objects pertaining to the data. #
 ######################################
 
-rect_datasets <- readRDS('rect_data.rds')
+rect_datasets <- readRDS('../data/rect_data.rds')
 
 
 #}}}##################################
 
-allplans <- readRDS('rect_plans.rds')
+allplans <- readRDS('../data/rect_plans.rds')
 
 plotplans <- c(
   'Hilbert000180',
   'Inhib000171',
   'LHS-TSP000161',
-  'RPM001107',
   'Serp000124',
   'Serp000539',
   'SRS000176',
@@ -45,13 +44,12 @@ plotplans <- c(
 )
 plottitles <- c(
   'Hilbert design of order 4',
-  '(c) Inhibitory plus close pairs line transect design',
+  'Inhibitory plus close pairs line transect design',
   'LHS-TSP design',
-  'Random particle movement design',
-  '(a) Serpentine transect design with 5 zigzags',
-  '(b) Serpentine transect design with 8 zigzags',
-  '(a) Simple random sample line transect design',
-  '(b) Systematic line transect design'
+  'Serpentine transect design with 5 zigzags',
+  'Serpentine transect design with 8 zigzags',
+  'Simple random sample line transect design',
+  'Systematic line transect design'
 )
 
 for(i in seq_along(plotplans)){
@@ -66,7 +64,7 @@ for(i in seq_along(plotplans)){
 # Create combinations of plans and data.
 #fit_design <- expand.grid(PlanID = allplans$PlanID, DataID = rect_datasets$DataID)
 
-rect_results <- readRDS('rect_results.rds')
+rect_results <- readRDS('../data/rect_results.rds')
 
 stopCluster(cl)
 
