@@ -11,7 +11,7 @@ source('functions.r')
 ######################################
 
 invisible(clusterEvalQ(cl, {library(tibble);library(dplyr)}))
-clusterExport(cl, c('simulate_data', 'rect_design', 'NPIX_X', 'NPIX_Y'))
+clusterExport(cl, c('simulate_data', 'rect_design', 'finemesh', 'fineproj', 'NPIX_X', 'NPIX_Y'))
 rect_datasets <- bind_rows(
   parLapply(cl, seq_len(nrow(rect_design)), function(r){
     message(rect_design$DataID[r])
@@ -42,6 +42,7 @@ srs_plans <- bind_rows(
       PlanID = srs_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = srs_design$xsect_radius[r],
+      CoverageMap = pointdist(plan),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
@@ -65,6 +66,7 @@ sys_plans <- bind_rows(
       PlanID = sys_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = sys_design$xsect_radius[r],
+      CoverageMap = pointdist(plan),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
@@ -89,6 +91,7 @@ serp_plans <- bind_rows(
       PlanID = serp_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = serp_design$xsect_radius[r],
+      CoverageMap = pointdist(plan),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
@@ -112,6 +115,7 @@ inhib_plans <- bind_rows(
       PlanID = inhib_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = inhib_design$xsect_radius[r],
+      CoverageMap = pointdist(plan),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
@@ -135,6 +139,7 @@ lhs_plans <- bind_rows(
       PlanID = lhs_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = lhs_design$xsect_radius[r],
+      CoverageMap = pointdist(plan),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),
@@ -158,6 +163,7 @@ hilb_plans <- bind_rows(
       PlanID = hilb_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = hilb_design$xsect_radius[r],
+      CoverageMap = pointdist(plan),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
       Angles = list(angles.linnet(plan)),

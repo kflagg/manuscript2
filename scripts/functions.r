@@ -42,6 +42,7 @@ WP_MARGIN <- XSECT_WIDTH / 2 # Minimum distance between waypoints and site bound
 # Mesh parameters to experiment with.
 MAX_EDGE_LENGTH <- 100
 MAX_EDGE_EXT <- 200
+FINE_EDGE_LENGTH <- 20
 
 # Graphics parameters.
 NPIX_X <- 250 # Should be 500 but rLGCP to has trouble when NPIX_X != NPIX_Y.
@@ -66,6 +67,10 @@ rect_R_boundary <- inla.mesh.segment(loc = do.call(cbind, vertices.owin(rect_R))
 rect_R_mesh <- inla.mesh.create(
   boundary = rect_R_boundary,
   refine = list(max.edge = MAX_EDGE_LENGTH)
+)
+finemesh <- inla.mesh.create(
+  boundary = rect_R_boundary,
+  refine = list(max.edge = FINE_EDGE_LENGTH)
 )
 
 # Get the mesh nodes.
@@ -122,6 +127,7 @@ rect_R_nodes_area <- parSapply(cl, parLapply(cl, tiles(rect_dual_tess), `[`, rec
 
 # Prediction projector.
 rect_R_proj <- inla.mesh.projector(rect_R_mesh, dims = c(NPIX_X, NPIX_Y))
+fineproj <- inla.mesh.projector(finemesh, dims = c(NPIX_X, NPIX_Y))
 
 
 #}}}##################################
@@ -259,6 +265,29 @@ angles.linnet <- function(x){
   }))
 }
 
+# Distances from nodes to the path.
+pointdist <- function(path, mesh = finemesh, meshproj = fineproj){
+  path <- as.psp(path)
+  win <- Window(path)
+  pts <- mesh$loc[,1:2]
+  meshweights <- diag(inla.mesh.fem(mesh)$c0)
+  node_dists <- apply(pts, 1, function(xy){
+    return(min(crossdist.psp(psp(xy[1], xy[2], xy[1], xy[2], win),
+                             path, type = 'separation')))
+  })
+  interp_dists <- inla.mesh.project(meshproj, node_dists)
+  dmap <- im(
+    t(interp_dists),
+    xrange = win$x,
+    yrange = win$y
+  )
+  return(structure(
+    dmap,
+    avg = sum(meshweights * node_dists) / sum(meshweights),
+    max = max(interp_dists)
+  ))
+}
+
 # Nearest neighbor distance on a linear network.
 nndist.linnet <- function(X, k = 1, agg = 'avg', ...){
   numsegs <- X$lines$n
@@ -307,7 +336,7 @@ nndist.linnet <- function(X, k = 1, agg = 'avg', ...){
   return(min(rawdist))
 }
 
-clusterExport(cl, c('totallength', 'lengths.linnet', 'angles.linnet', 'cornercount.linnet', 'nndist.linnet'))
+clusterExport(cl, c('totallength', 'lengths.linnet', 'angles.linnet', 'cornercount.linnet', 'pointdist', 'nndist.linnet'))
 
 
 #}}}#######
@@ -618,7 +647,7 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
     mean = 0,
     prec = 0
   ),
-  save_fit = FALSE, save_pred = FALSE,
+  save_fit = FALSE, save_pred = TRUE,
   ...){
 
   # Observation window.
