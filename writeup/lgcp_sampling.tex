@@ -108,44 +108,46 @@ estimating total abundance. Ordnance response surveys are typically designed
 to provide enough data to detect (but not necessarily map) intensity
 hotspots~\citep{em200-1-15,flaggetal}. However, to our knowledge, there has
 been very little work done in deciding \emph{where} to collect data when the
-goal is to map the intensity using a spatial point process model. In this
-paper, we present a variety of sampling path designs and assess their
-optimality for mapping intensity using LGCP models.
+goal is to map the intensity using a spatial point process model. While some
+ideas about the characteristics of a good point design apply to paths, creating
+an optimal path design is not as simple as connecting the points of a point
+design with line segments. There are many ways to connect points into a path,
+so optimal design criteria must apply to the whole path and not only to the
+waypoints. In this paper, we present a variety of sampling path designs and
+assess their optimality for mapping intensity using LGCP models.
 
 
 \subsection{Spatial design}
 
 Most classical sampling and design work has been done for points or small
 quadrats approximated as points, rather than paths. In two-dimensional
-(geostatistical) design, regularity is optimal for spatial prediction but
-randomness and a variety of interpoint distances are best for parameter
-estimation~\citep{diggle}. Inhibitory plus close pairs is a good
-compromise~\citep{chipetaetal2017}. Design-based space-filling criteria
-exist for spreading points through high-dimensional design
-spaces~\citep{borkowskipiepel}. Latin hypercube sampling has space-filling
-properties~\cite{mckayetal,husslageetal}.
+(geostatistical) model-based design, regularity is optimal for spatial
+prediction but randomness and a variety of interpoint distances are best for
+parameter estimation~\citep{diggle}. Inhibitory plus close pairs designs are a
+good compromise~\citep{chipetaetal2017}. Design-based approaches exist to
+spread points through high-dimensional design spaces~\citep{borkowskipiepel},
+and Latin hypercube sampling has space-filling
+properties~\citep{mckayetal,husslageetal}.
 
-Deterministic space-filling curves used in design of dense or stretchable
+
+\subsection{Space-filling curves}
+
+Another relevant area of research is in deterministic space-filling curves.
+These have used in design of dense or stretchable
 circuits~\citep{ogorzalek,mazhang} and high-dimensional data visualization
-in bioinformatics~\citep{hilbertvis}. Peano
-curve is very flexible for filling irregular shapes~\citep{fanetal}.
-
-Space-filling curves are one-dimensional paths constructed iteratively; as the
-number of iterations goes to infinity, the limiting path has nonzero area and
-actually fills the space~\citep{sagan}. For applications we stop after a finite
-number of iterations. The Hilbert curve is fast and simple to construct.
+in bioinformatics~\citep{hilbertvis}. The Hilbert curve is simple to construct
+and the Peano curve is very flexible for filling irregular
+shapes~\citep{fanetal}. Space-filling curves are one-dimensional paths
+constructed iteratively; as the number of iterations goes to infinity, the
+limiting path has nonzero area and actually fills the space~\citep{sagan}. For
+applications we stop after a finite number of iterations.
 
 
 \subsection{Paths as sampling designs}
 
-While some ideas about the characteristics of a good point design apply to
-paths, creating an optimal path design is not as simple as connecting the
-points of a point design with line segments. There are many ways to connect
-points into a path, so optimal design criteria must apply to the whole path and
-not only to the waypoints.
-
-\citet{pollard} adaptively zigzagged their line transects in a species
-abundance survey.
+The small body of literature on spatial sampling design for point pattern
+data has focused on line transects. \citet{pollard} began with line transcets
+and adaptively added zigzags in a species abundance survey.
 
 The Visual Sample Plan software includes features to create systamatic transect
 plans and augment plans with additional transects in regions lacking spatial
@@ -154,9 +156,10 @@ maximize the probability of detecting the presence of a hotspot of specified
 size and intensity. However, it does not employ criteria to optimize spatial
 prediction.
 
-\citet{liuvanhatalo} used narrow quadrats (swaths along line-transects) as
-their sampling units. The transects were short relative to the size of the
-study region and not connected into a path.
+\citet{liuvanhatalo} provided one of the first explicit discussions of design
+in the context of spatial LGCP models. They used narrow quadrats (swaths along
+line-transects) as their sampling units. The transects were short relative to
+the size of the study region and not connected into a path.
 
 
 %\subsection{Multi-objective optimization}
@@ -193,8 +196,8 @@ criteria to compare sampling strategies that impact LGCP estimates. We compare
 plans with (approximately) fixed path lengths that avoid sharp turns. Data
 collection equipment (e.g. metal detectors) may have limited mobility,
 requiring minimizing the number or angle of turns. The criteria that we
-evaluate are mean squared prediction error (MSPE) and posterior prediction
-variance of the Gaussian process.
+evaluate are mean squared prediction error (MSPE) and average/maximum posterior
+prediction variance of the Gaussian process.
 
 
 \subsection{Sampling design schemes}
@@ -202,10 +205,11 @@ variance of the Gaussian process.
 In this section, we present three variations of parallel line transect designs
 and three schemes that produce more complex designs. To clarify terminology, a
 \emph{path} or \emph{design} is a realized set of one or more connected
-components that has length but not area. A \emph{design scheme} or \emph{scheme}
-is procedure for generating designs with some shared characteristics.
-Figure~\ref{plancomparison} illustrates a selection of designs from these
-schemes.
+components that has length but not area. The paths considered in this work are
+constructed as sequences of line segments. A \emph{design scheme} or
+\emph{scheme} is procedure for generating designs with some shared
+characteristics. Figure~\ref{plancomparison} illustrates a selection of designs
+from these schemes.
 
 
 \subsubsection{Parallel line transects}
@@ -215,17 +219,18 @@ ecological studies using distance sampling. Systematic designs are common
 because they provide good spatial coverage in the sense that any point in the
 study region has an a priori known maximum distance from the path. For point
 designs, systematic designs are optimal for prediction, simple random samples
-are optimal for estimation, and inhibitory with close pair designs are becoming a
-popular compromise. We adapt all of these to the parallel line transect
-setting. We use line transects running north-south, with three ways of choosing
-the horizontal coordinate: simple random sample (SRS), systematic with a random
-starting point and even spacing, inhibitory plus close pairs.
-Figure~\ref{plancomparison} shows an example of each scheme with 25 transects.
+are optimal for estimation, and inhibitory with close pairs designs are
+becoming a popular compromise. We adapt all of these to the parallel line
+transect setting. We use line transects running north-south, with three ways of
+choosing the horizontal coordinate: simple random sample (SRS), systematic with
+a random starting point and even spacing, inhibitory plus close pairs.
+Figure~\ref{plancomparison} (left column) shows an example of each scheme with
+25 transects.
 
-We should note that we will be using an isotropic covariance function in
-the model. If an anisotropic model is used, parallel transects may need to be
-augmented with perpendicular transects so that the observed data provide the
-full range of pairwise distances in other directions.
+%We should note that we will be using an isotropic covariance function in
+%the model. If an anisotropic model is used, parallel transects may need to be
+%augmented with perpendicular transects so that the observed data provide the
+%full range of pairwise distances in other directions.
 
 \begin{figure}
 \includegraphics[width=2.5in]{SRS000176.pdf}
@@ -243,10 +248,11 @@ full range of pairwise distances in other directions.
 \caption{Examples of plans from six design schemes. Left, top to bottom: three
 different parallel line transect schemes with the same number of transects, and
 a shortest path through a Latin hypercube sampling design. Right: two
-serpentine transect plans and two Hilbert curves. Except for the Hilber curve
+serpentine transect plans and two Hilbert curves. Except for the Hilbert curve
 of order 5, all of these plans have approximately the same total length.}
 \label{plancomparison}
 \end{figure}
+
 
 \subsubsection{Parallel serpentine transects}
 
@@ -255,8 +261,9 @@ directions is to add lateral zigzags to transects. We include alternate right
 and left turns at right angles to create serpentine transects. This could
 decrease prediction variance because many points in the study area will be
 closer to the path than they would be under a line transects with similar
-total distance. They will also improve estimation of covariance parameters in
-the presence of anisotropy.
+total distance. They will also improve estimation of the covariance function
+in the presence of anisotropy. Figure~\ref{plancomparison}, top right, shows
+two examples.
 % Note: Serp has higher average and max distance from path than Sys but lower
 % than SRS and Inhib.
 
@@ -265,30 +272,38 @@ the presence of anisotropy.
 % simulating from isotropic models, but "go in more than one direction if you
 % have anisotropic data" is advice worth spending a paragraph on.
 
+
 \subsubsection{Latin hypercube sampling}
+
 Random Latin hypercube sampling (LHS) produces a design that spreads discrete
 points through a (potentially high-dimensional) design space, ensuring that
 the full range of each dimension is included while remaining balanced and
-keeping the number of points small. This is done by partitioning each dimension
-into a specified number \(k\) of intervals (thus stratifying the design space
-into \(k^{d}\) cells), selecting a Latin hypercube design to determine which
-cells will contain a design point, and then drawing each design point from a
-uniform distribution over its cell. In two dimensions, this scheme produces
-point designs with good spatial coverage properties. We use the LHS design as
-waypoints for a path. Because longer distance typically brings increased costs,
-we treat this as a traveling salesperson problem (TSP) and use the shortest
-path through the waypoints as our design. This LHS-TSP scheme produces paths
-that have many sharp corners but leaves few large voids (example in
-Figure~\ref{plancomparison}). A downside of this design scheme is that the length
-cannot be specified directly, and only certain distances are possible depending
-on the number of bins used.
+keeping the number of points small~\cite{mckayetal}. This is done by
+partitioning each dimension into a specified number \(k\) of intervals (thus
+stratifying the design space into \(k^{d}\) cells), selecting a Latin
+hypercube design to determine which \(k\) cells will contain a design point,
+and then drawing each design point from a uniform distribution over its cell.
+In two dimensions, this scheme produces point designs with good spatial
+coverage properties. We use the LHS design as waypoints for a path. Because
+longer distance typically brings increased costs, we treat this as a traveling
+salesperson problem (TSP) and use the shortest path through the waypoints as
+our design. This LHS-TSP scheme produces paths that have many sharp corners but
+leaves few large voids (example in Figure~\ref{plancomparison}, bottom left). A
+downside of this design scheme is that the length cannot be specified directly,
+and only certain distances are possible depending on the number of bins used.
 
 Waypoints are generated by the \texttt{lhs} R package~\cite{lhs}
 and connected into a the shortest path by the \texttt{TSP} package~\citep{tsp}.
 
+
 \subsubsection{Space-filling curves}
-Hilbert curve generated by HilbertVis package~\citep{hilbertvis}. This is a
-deterministic design, so a random offset is added.
+
+As a representative of space-filling curves, we use the Hilbert curve scaled
+to fit the study site. The only parameter of this design scheme is the order,
+or number of iterations used in refining the curve. Each iteration increases
+the length and complexity of the design. This is produces a deterministic
+design, so a random offset is added to vary which points are observed. The
+Hilbert curve is generated by \texttt{HilbertVis} R package~\citep{hilbertvis}.
 
 %\paragraph{Particle movement model}
 %Models the way data are actually collected. Waypoints generated sequentially by
@@ -308,7 +323,7 @@ deterministic design, so a random offset is added.
 \subsection{Model fitting}
 
 INLA~\citep{rueetal}, SPDE~\citep{lindgrenetal}, off-grid~\citep{simpsonetal},
-Flagg and Hoegh (2020) \emph{knock on wood}
+as described in \citet{flagghoegh}.
 
 
 \section{Simulation Study}
