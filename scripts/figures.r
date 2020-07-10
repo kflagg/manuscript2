@@ -1,14 +1,6 @@
-#########################
-#{{{ Setup environment. #
-#########################
-
 # Load packages, create functions, create designs.
 source('functions.r')
 
-
-#}}}##################################
-#{{{ Objects pertaining to the site. #
-######################################
 
 # Neat plot.
 pdf('../writeup/mesh_full.pdf', width = 9, height = 4)
@@ -22,14 +14,7 @@ points(rect_R_mesh_loc[,], pch = 20)
 dev.off()
 
 
-#}}}##################################
-#{{{ Objects pertaining to the data. #
-######################################
-
 rect_datasets <- readRDS('../data/rect_data.rds')
-
-
-#}}}##################################
 
 allplans <- readRDS('../data/rect_plans.rds')
 
@@ -69,5 +54,3 @@ for(i in seq_along(plotplans)){
 rect_results <- readRDS('../data/rect_results.rds')
 
 stopCluster(cl)
-
-# vim: foldmethod=marker:
