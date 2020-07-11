@@ -444,25 +444,38 @@ weighting scheme used to approximate the latent GP.}
 \section{Results}
 % Results should be clear and concise.
 
-look at examples of designs that minimize each criterion
+%look at examples of designs that minimize each criterion
 
-look at examples of designs along the Pareto front
+%look at examples of designs along the Pareto front
+
+The results section will compare the distribution of prediction variance for
+the Gaussian process averaged over space (APV). We will focus on the average of
+APV for the 100 designs from each scheme applied to each dataset, but will
+point out and discuss if any schemes have large variance or skew in the
+distribution of APV. We will plot the relationships among APV, path length, and
+number of segments. The manuscript will focus on one LGCP dataset and one
+clustered dataset; the analysis of the other datasets will be in the
+supplemenatal materials. The supplemental materials will also include a repeat
+of this analysis for mean squared prediction error (MSPE). The conclusions of
+the MSPE analysis will probably be very similar to those of the APV analysis,
+but if there are any difference will will point them out in the main
+manuscript.
 
 
 \section{Discussion}
 % This should explore the significance of the results of the work, not repeat them. A combined Results and Discussion section is often appropriate. Avoid extensive citations and discussion of published literature.
 
-of the schemes considered here, only transect schemes have flexiblility in
-distance and/or a priori known distance
+%of the schemes considered here, only transect schemes have flexiblility in
+%distance and/or a priori known distance
 
-discuss starting points for optimization and sequential design
+%discuss starting points for optimization and sequential design
 
-practical issue: path will be smoothed, no instantaneous direction changes at
-corners, equipment may have limitations which is why we looked at number and
-distribution or turn angles
+%practical issue: path will be smoothed, no instantaneous direction changes at
+%corners, equipment may have limitations which is why we looked at number and
+%distribution or turn angles
 
-could incorporate turns into loss function or use multi-objective
-optimization~\citep{lark}
+%could incorporate turns into loss function or use multi-objective
+%optimization~\citep{lark}
 
 
 \section{Conclusions}

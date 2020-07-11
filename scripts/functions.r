@@ -240,6 +240,11 @@ totallength <- function(x){
   return(sum(lengths.psp(as.psp(x))))
 }
 
+# Number of segments in a linear network.
+segmentcount.linnet <- function(x){
+  return(x$lines$n)
+}
+
 # Lengths of segments in a linear network.
 lengths.linnet <- function(x){
   return(lengths.psp(as.psp(x)))
@@ -336,7 +341,7 @@ nndist.linnet <- function(X, k = 1, agg = 'avg', ...){
   return(min(rawdist))
 }
 
-clusterExport(cl, c('totallength', 'lengths.linnet', 'angles.linnet', 'cornercount.linnet', 'pointdist', 'nndist.linnet'))
+clusterExport(cl, c('totallength', 'lengths.linnet', 'segmentcount.linnet', 'angles.linnet', 'cornercount.linnet', 'pointdist', 'nndist.linnet'))
 
 
 #}}}#######
@@ -731,7 +736,7 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
 
   return(tibble_row(
     Fit = list(if(save_fit) result),
-    Prediction = list(if(save_pred) gpmap),
+    Prediction = list(if(save_pred) result$summary.random[[1]]$mean),
     MSPE = mean((log(attr(obs_ppp, 'Lambda')) - gpmap)^2),
     APV = sum(mesh_weights * result$summary.random[[1]]$sd^2) / sum(mesh_weights),
     MaxPV = max(result$summary.random[[1]]$sd^2)

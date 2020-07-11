@@ -36,15 +36,18 @@ saveRDS(rect_datasets, '../data/rect_data.rds')
 
 srs_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(srs_design)), function(r){
-    plan <- srs(rect_R, srs_design$num_xsects[r], srs_design$xsect_radius[r])
     message(srs_design$PlanID[r])
+    plan <- srs(rect_R, srs_design$num_xsects[r], srs_design$xsect_radius[r])
+    CoverageMap <- pointdist(plan)
     return(tibble_row(
       PlanID = srs_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = srs_design$xsect_radius[r],
-      CoverageMap = pointdist(plan),
+      CoverageAvgDist = attr(CoverageMap, 'avg'),
+      CoverageMaxDist = attr(CoverageMap, 'max'),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
+      Segments = segmentcount.linnet(plan),
       Angles = list(angles.linnet(plan)),
       Corners = cornercount.linnet(plan),
       MinNND_2 = nndist(plan, 2, 'min'),
@@ -60,15 +63,18 @@ srs_plans <- bind_rows(
 
 sys_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(sys_design)), function(r){
-    plan <- sys(rect_R, sys_design$num_xsects[r], sys_design$xsect_radius[r])
     message(sys_design$PlanID[r])
+    plan <- sys(rect_R, sys_design$num_xsects[r], sys_design$xsect_radius[r])
+    CoverageMap <- pointdist(plan)
     return(tibble_row(
       PlanID = sys_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = sys_design$xsect_radius[r],
-      CoverageMap = pointdist(plan),
+      CoverageAvgDist = attr(CoverageMap, 'avg'),
+      CoverageMaxDist = attr(CoverageMap, 'max'),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
+      Segments = segmentcount.linnet(plan),
       Angles = list(angles.linnet(plan)),
       Corners = cornercount.linnet(plan),
       MinNND_2 = nndist(plan, 2, 'min'),
@@ -84,16 +90,19 @@ sys_plans <- bind_rows(
 
 serp_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(serp_design)), function(r){
+    message(serp_design$PlanID[r])
     plan <- serp(rect_R, serp_design$num_xsects[r], serp_design$serp_dist[r],
                  serp_num = serp_design$serp_num[r], serp_design$xsect_radius[r])
-    message(serp_design$PlanID[r])
+    CoverageMap <- pointdist(plan)
     return(tibble_row(
       PlanID = serp_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = serp_design$xsect_radius[r],
-      CoverageMap = pointdist(plan),
+      CoverageAvgDist = attr(CoverageMap, 'avg'),
+      CoverageMaxDist = attr(CoverageMap, 'max'),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
+      Segments = segmentcount.linnet(plan),
       Angles = list(angles.linnet(plan)),
       Corners = cornercount.linnet(plan),
       MinNND_2 = nndist(plan, 2, 'min'),
@@ -109,15 +118,18 @@ serp_plans <- bind_rows(
 
 inhib_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(inhib_design)), function(r){
-    plan <- inhib(rect_R, inhib_design$num_prim[r], inhib_design$num_pair[r], inhib_design$pair_radius[r], xsect_radius = inhib_design$xsect_radius[r])
     message(inhib_design$PlanID[r])
+    plan <- inhib(rect_R, inhib_design$num_prim[r], inhib_design$num_pair[r], inhib_design$pair_radius[r], xsect_radius = inhib_design$xsect_radius[r])
+    CoverageMap <- pointdist(plan)
     return(tibble_row(
       PlanID = inhib_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = inhib_design$xsect_radius[r],
-      CoverageMap = pointdist(plan),
+      CoverageAvgDist = attr(CoverageMap, 'avg'),
+      CoverageMaxDist = attr(CoverageMap, 'max'),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
+      Segments = segmentcount.linnet(plan),
       Angles = list(angles.linnet(plan)),
       Corners = cornercount.linnet(plan),
       MinNND_2 = nndist(plan, 2, 'min'),
@@ -133,15 +145,18 @@ inhib_plans <- bind_rows(
 
 lhs_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(lhs_design)), function(r){
-    plan <- lhstsp(rect_R, lhs_design$bins[r], lhs_design$xsect_radius[r])
     message(lhs_design$PlanID[r])
+    plan <- lhstsp(rect_R, lhs_design$bins[r], lhs_design$xsect_radius[r])
+    CoverageMap <- pointdist(plan)
     return(tibble_row(
       PlanID = lhs_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = lhs_design$xsect_radius[r],
-      CoverageMap = pointdist(plan),
+      CoverageAvgDist = attr(CoverageMap, 'avg'),
+      CoverageMaxDist = attr(CoverageMap, 'max'),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
+      Segments = segmentcount.linnet(plan),
       Angles = list(angles.linnet(plan)),
       Corners = cornercount.linnet(plan),
       MinNND_2 = nndist(plan, 2, 'min'),
@@ -159,13 +174,16 @@ hilb_plans <- bind_rows(
   parLapply(cl, seq_len(nrow(hilb_design)), function(r){
     message(hilb_design$PlanID[r])
     plan <- hilbert(rect_R, hilb_design$order[r], hilb_design$xsect_radius[r])
+    CoverageMap <- pointdist(plan)
     return(tibble_row(
       PlanID = hilb_design$PlanID[r],
       Plan = list(plan),
       xsect_radius = hilb_design$xsect_radius[r],
-      CoverageMap = pointdist(plan),
+      CoverageAvgDist = attr(CoverageMap, 'avg'),
+      CoverageMaxDist = attr(CoverageMap, 'max'),
       Distance = totallength(plan),
       Lengths = list(lengths.linnet(plan)),
+      Segments = segmentcount.linnet(plan),
       Angles = list(angles.linnet(plan)),
       Corners = cornercount.linnet(plan),
       MinNND_2 = nndist(plan, 2, 'min'),
