@@ -1,5 +1,36 @@
 # Load packages, create functions, create designs.
+library(ggplot2)
+theme_set(theme_classic())
+theme_update(plot.title = element_text(hjust = 0.5))
 source('functions.r')
+
+# Create subscheme identifiers based on the combination of scheme options.
+srs_design$Subscheme <- paste0('SRS', as.numeric(factor(apply(
+    srs_design %>% select(-PlanID), 1, paste, collapse = ','
+  ))))
+sys_design$Subscheme <- paste0('Sys', as.numeric(factor(apply(
+    sys_design %>% select(-PlanID), 1, paste, collapse = ','
+  ))))
+serp_design$Subscheme <- paste0('Serp', as.numeric(factor(apply(
+    serp_design %>% select(-PlanID), 1, paste, collapse = ','
+  ))))
+inhib_design$Subscheme <- paste0('Inhib', as.numeric(factor(apply(
+    inhib_design %>% select(-PlanID), 1, paste, collapse = ','
+  ))))
+lhs_design$Subscheme <- paste0('LHS-TSP', as.numeric(factor(apply(
+    lhs_design %>% select(-PlanID), 1, paste, collapse = ','
+  ))))
+hilb_design$Subscheme <- paste0('Hilbert', as.numeric(factor(apply(
+    hilb_design %>% select(-PlanID), 1, paste, collapse = ','
+  ))))
+subschemes <- bind_rows(
+  srs_design %>% select(PlanID, Subscheme),
+  sys_design %>% select(PlanID, Subscheme),
+  serp_design %>% select(PlanID, Subscheme),
+  inhib_design %>% select(PlanID, Subscheme),
+  lhs_design %>% select(PlanID, Subscheme),
+  hilb_design %>% select(PlanID, Subscheme)
+)
 
 
 # Neat plot.
@@ -14,10 +45,13 @@ points(rect_R_mesh_loc[,], pch = 20)
 dev.off()
 
 
+# Read the data and plans.
 rect_datasets <- readRDS('../data/rect_data.rds')
+allplans <- readRDS('../data/rect_plans.rds') %>%
+  left_join(subschemes)
 
-allplans <- readRDS('../data/rect_plans.rds')
 
+# Plot a selection of plans.
 plotplans <- c(
   'Hilbert000180',
   'Hilbert000237',
@@ -38,7 +72,6 @@ plottitles <- c(
   'Simple random sample line transect design',
   'Systematic line transect design'
 )
-
 for(i in seq_along(plotplans)){
   thisplan <- allplans %>% filter(PlanID == plotplans[i])
   pdf(paste0('../writeup/', plotplans[i], '.pdf'), width = 6, height = 4)
@@ -48,9 +81,34 @@ for(i in seq_along(plotplans)){
   dev.off()
 }
 
-# Create combinations of plans and data.
-#fit_design <- expand.grid(PlanID = allplans$PlanID, DataID = rect_datasets$DataID)
 
+# Read the model fitting results.
 rect_results <- readRDS('../data/rect_results.rds')
+
+
+# Examine which data/plan combinations could not be fit.
+rect_results %>%
+  filter(sapply(Prediction, is.null)) %>%
+  print
+
+
+# Focus on LGCP000001 for now.
+thisdataset <- 'LGCP000001'
+
+  rect_results %>%
+    filter(DataID == thisdataset) %>%
+    left_join(allplans %>% select(Scheme, Subscheme, PlanID, Distance, Segments)) %>%
+    ggplot(aes(y = APV, x = Distance)) +
+    # TODO: find a better way to add the averages to the plot.
+    geom_smooth(se = FALSE) +
+    geom_point(aes(col = Segments), alpha = 0.25) +
+    facet_wrap(~Scheme) +
+    ylim(0, 160) +
+    ggtitle('Average Prediction Variance vs Distance Surveyed')
+
+  rect_results %>%
+    filter(DataID == thisdataset, APV > 160) %>%
+    print
+
 
 stopCluster(cl)
