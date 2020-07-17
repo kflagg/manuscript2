@@ -199,26 +199,32 @@ hilb_plans <- bind_rows(
 allplans <- bind_rows(
   tibble(
     Scheme = 'SRS',
+    Subscheme = srs_design$Subscheme,
     srs_plans
   ),
   tibble(
     Scheme = 'Sys',
+    Subscheme = sys_design$Subscheme,
     sys_plans
   ),
   tibble(
     Scheme = 'Inhib',
+    Subscheme = inhib_design$Subscheme,
     inhib_plans
   ),
   tibble(
     Scheme = 'Serp',
+    Subscheme = serp_design$Subscheme,
     serp_plans
   ),
   tibble(
     Scheme = 'LHS-TSP',
+    Subscheme = lhs_design$Subscheme,
     lhs_plans
   ),
   tibble(
     Scheme = 'Hilbert',
+    Subscheme = hilb_design$Subscheme,
     hilb_plans
   )
 )

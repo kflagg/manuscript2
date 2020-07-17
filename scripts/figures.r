@@ -4,34 +4,6 @@ theme_set(theme_classic())
 theme_update(plot.title = element_text(hjust = 0.5))
 source('functions.r')
 
-# Create subscheme identifiers based on the combination of scheme options.
-srs_design$Subscheme <- paste0('SRS', as.numeric(factor(apply(
-    srs_design %>% select(-PlanID), 1, paste, collapse = ','
-  ))))
-sys_design$Subscheme <- paste0('Sys', as.numeric(factor(apply(
-    sys_design %>% select(-PlanID), 1, paste, collapse = ','
-  ))))
-serp_design$Subscheme <- paste0('Serp', as.numeric(factor(apply(
-    serp_design %>% select(-PlanID), 1, paste, collapse = ','
-  ))))
-inhib_design$Subscheme <- paste0('Inhib', as.numeric(factor(apply(
-    inhib_design %>% select(-PlanID), 1, paste, collapse = ','
-  ))))
-lhs_design$Subscheme <- paste0('LHS-TSP', as.numeric(factor(apply(
-    lhs_design %>% select(-PlanID), 1, paste, collapse = ','
-  ))))
-hilb_design$Subscheme <- paste0('Hilbert', as.numeric(factor(apply(
-    hilb_design %>% select(-PlanID), 1, paste, collapse = ','
-  ))))
-subschemes <- bind_rows(
-  srs_design %>% select(PlanID, Subscheme),
-  sys_design %>% select(PlanID, Subscheme),
-  serp_design %>% select(PlanID, Subscheme),
-  inhib_design %>% select(PlanID, Subscheme),
-  lhs_design %>% select(PlanID, Subscheme),
-  hilb_design %>% select(PlanID, Subscheme)
-)
-
 
 # Neat plot.
 pdf('../writeup/mesh_full.pdf', width = 9, height = 4)
@@ -47,8 +19,7 @@ dev.off()
 
 # Read the data and plans.
 rect_datasets <- readRDS('../data/rect_data.rds')
-allplans <- readRDS('../data/rect_plans.rds') %>%
-  left_join(subschemes)
+allplans <- readRDS('../data/rect_plans.rds')
 
 
 # Plot a selection of plans.
@@ -85,6 +56,18 @@ for(i in seq_along(plotplans)){
 # Read the model fitting results.
 rect_results <- readRDS('../data/rect_results.rds')
 
+# Summarize the results.
+rect_summary <- rect_results %>%
+  left_join(allplans %>% select(Scheme, Subscheme, PlanID, Distance)) %>%
+  group_by(DataID, Subscheme) %>%
+  summarize(
+    Scheme = unique(Scheme),
+    AvgAPV = mean(APV, na.rm = TRUE),
+    AvgMaxPV = mean(MaxPV, na.rm = TRUE),
+    AvgDistance = mean(Distance)
+  ) %>%
+  ungroup
+
 
 # Examine which data/plan combinations could not be fit.
 rect_results %>%
@@ -98,12 +81,20 @@ thisdataset <- 'LGCP000001'
   rect_results %>%
     filter(DataID == thisdataset) %>%
     left_join(allplans %>% select(Scheme, Subscheme, PlanID, Distance, Segments)) %>%
-    ggplot(aes(y = APV, x = Distance)) +
-    # TODO: find a better way to add the averages to the plot.
-    geom_smooth(se = FALSE) +
-    geom_point(aes(col = Segments), alpha = 0.25) +
+    left_join(rect_summary %>% select(DataID, Subscheme, AvgDistance)) %>%
+    mutate(Variant = case_when(
+      Subscheme %in% c('Inhib1', 'Inhib2', 'Inhib3', 'Inhib4') ~ '10% pairs',
+      Subscheme %in% c('Inhib5', 'Inhib6', 'Inhib7', 'Inhib8') ~ '20% pairs',
+      Subscheme %in% c('Serp1', 'Serp2', 'Serp3', 'Serp4') ~ '5 zigzags',
+      Subscheme %in% c('Serp5', 'Serp6', 'Serp7', 'Serp8') ~ '8 zizags',
+      TRUE ~ NA_character_
+    )) %>%
+    ggplot(aes(y = APV, x = Distance, col = Variant)) +
+    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
-    ylim(0, 160) +
+#    ylim(0, 160) +
+    scale_y_log10() +
     ggtitle('Average Prediction Variance vs Distance Surveyed')
 
   rect_results %>%

@@ -375,9 +375,10 @@ srs <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
 }
 
 srs_design <- tibble(
-  num_xsects = rep(c(10, 25, 50, 70), each = N_SIMS),
-  xsect_radius = XSECT_RADIUS
-) %>% mutate(PlanID = sprintf('SRS%06d', 1:n()))
+    Subscheme = paste0('SRS', rep(seq_len(4), each = N_SIMS)),
+    num_xsects = rep(c(10, 25, 50, 70), each = N_SIMS),
+    xsect_radius = XSECT_RADIUS
+  ) %>% mutate(PlanID = sprintf('SRS%06d', 1:n()))
 clusterExport(cl, c('srs', 'srs_design'))
 
 
@@ -414,9 +415,10 @@ sys <- function(full_win, num_xsects = XSECT_NUM_INITIAL, xsect_radius = XSECT_R
 }
 
 sys_design <- tibble(
-  num_xsects = rep(c(10, 25, 50, 70), each = N_SIMS),
-  xsect_radius = XSECT_RADIUS
-) %>% mutate(PlanID = sprintf('Sys%06d', 1:n()))
+    Subscheme = paste0('Sys', rep(seq_len(4), each = N_SIMS)),
+    num_xsects = rep(c(10, 25, 50, 70), each = N_SIMS),
+    xsect_radius = XSECT_RADIUS
+  ) %>% mutate(PlanID = sprintf('Sys%06d', 1:n()))
 clusterExport(cl, c('sys', 'sys_design'))
 
 
@@ -460,6 +462,7 @@ serp <- function(full_win, num_xsects = XSECT_NUM_INITIAL,
 
 serp_design <- tibble(
     reps = N_SIMS,
+    Subscheme = paste0('Serp', seq_len(8)),
     expand.grid(
       num_xsects = c(7, 22, 47, 67),
       serp_num = c(5, 8)
@@ -546,6 +549,7 @@ inhib <- function(full_win, num_primary = XSECT_NUM_INITIAL - num_paired,
 
 inhib_design <- tibble(
     reps = N_SIMS,
+    Subscheme = paste0('Inhib', seq_len(8)),
     expand.grid(
       num_xsects = c(10, 25, 50, 70),
       prop_pairs = c(0.1, 0.2)
@@ -595,6 +599,7 @@ lhstsp <- function(full_win, num_bins = round(sqrt(WP_NUM_INITIAL)), margin = WP
 }
 
 lhs_design <- tibble(
+    Subscheme = paste0('LHT-TSP', rep(seq_len(4), each = N_SIMS)),
     bins = rep(c(50, 300, 1200, 2400), each = N_SIMS),
     xsect_radius = XSECT_RADIUS
   ) %>%
@@ -633,9 +638,10 @@ hilbert <- function(full_win, h_order = HILBERT_ORDER_INITIAL, margin = WP_MARGI
 }
 
 hilb_design <- tibble(
-  order = rep(c(3, 4, 5, 6), each = N_SIMS),
-  xsect_radius = XSECT_RADIUS
-) %>% mutate(PlanID = sprintf('Hilbert%06d', 1:n()))
+    Subscheme = paste0('Hilbert', rep(seq_len(4), each = N_SIMS)),
+    order = rep(c(3, 4, 5, 6), each = N_SIMS),
+    xsect_radius = XSECT_RADIUS
+  ) %>% mutate(PlanID = sprintf('Hilbert%06d', 1:n()))
 invisible(clusterEvalQ(cl, library(HilbertVis)))
 clusterExport(cl, c('hilbert', 'hilb_design'))
 
@@ -737,6 +743,7 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
   return(tibble_row(
     Fit = list(if(save_fit) result),
     Prediction = list(if(save_pred) result$summary.random[[1]]$mean),
+    PredictionSD = list(if(save_pred) result$summary.random[[1]]$sd),
     MSPE = mean((log(attr(obs_ppp, 'Lambda')) - gpmap)^2),
     APV = sum(mesh_weights * result$summary.random[[1]]$sd^2) / sum(mesh_weights),
     MaxPV = max(result$summary.random[[1]]$sd^2)
