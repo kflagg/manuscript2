@@ -102,14 +102,15 @@ rect_summary <- rect_results %>%
 
 # Examine which data/plan combinations could not be fit.
 rect_results %>%
-  filter(sapply(Prediction, is.null)) %>%
+  filter(is.na(IntMean)) %>%
   print
 
 
 # Plot APV and MSPE.
 for(thisdataset in rect_datasets$DataID){
   pdf(paste0('../writeup/APV-', thisdataset, '.pdf'), width = 9, height = 4)
-  rect_results %>%
+  print(
+    rect_results %>%
     filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
@@ -117,16 +118,19 @@ for(thisdataset in rect_datasets$DataID){
     facet_wrap(~Scheme) +
     scale_y_log10() +
     ggtitle('Average Prediction Variance vs Distance Surveyed')
+  )
   dev.off()
 
   pdf(paste0('../writeup/MSPE-', thisdataset, '.pdf'), width = 9, height = 4)
-  rect_results %>%
+  print(
+    rect_results %>%
     ggplot(aes(y = MSPE, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
     ggtitle('MSPE vs Distance Surveyed')
+  )
   dev.off()
 
 #  rect_results %>%
