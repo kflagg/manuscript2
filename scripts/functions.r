@@ -726,7 +726,14 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
   if(is.null(result)){
     return(tibble_row(
       Fit = list(NULL),
+      IntMean = NA_real_,
+      IntSD = NA_real_,
+      RangeMean = NA_real_,
+      RangeSD = NA_real_,
+      SigMean = NA_real_,
+      SigSD = NA_real_,
       Prediction = list(NULL),
+      PredictionSD = list(NULL),
       MSPE = NA_real_,
       APV = NA_real_,
       MaxPV = NA_real_
@@ -742,6 +749,12 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
 
   return(tibble_row(
     Fit = list(if(save_fit) result),
+    IntMean = result$summary.fixed['intercept', 'mean'],
+    IntSD = result$summary.fixed['intercept', 'sd'],
+    RangeMean = result$summary.hyperpar['Range for idx', 'mean'],
+    RangeSD = result$summary.hyperpar['Range for idx', 'sd'],
+    SigMean = result$summary.hyperpar['Stdev for idx', 'mean'],
+    SigSD = result$summary.hyperpar['Stdev for idx', 'sd'],
     Prediction = list(if(save_pred) result$summary.random[[1]]$mean),
     PredictionSD = list(if(save_pred) result$summary.random[[1]]$sd),
     MSPE = mean((log(attr(obs_ppp, 'Lambda')) - gpmap)^2),

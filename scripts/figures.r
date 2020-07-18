@@ -53,8 +53,19 @@ for(i in seq_along(plotplans)){
 }
 
 
-# Read the model fitting results.
-rect_results <- readRDS('../data/rect_results.rds')
+# Read the model fitting results and prepare for plotting.
+rect_results <- readRDS('../data/rect_results.rds') %>%
+  left_join(allplans %>% select(Scheme, Subscheme, PlanID, Distance, Segments)) %>%
+  group_by(DataID, Subscheme) %>%
+  mutate(AvgDistance = mean(Distance, na.rm = TRUE)) %>%
+  ungroup %>%
+  mutate(Variant = case_when(
+    Subscheme %in% c('Inhib1', 'Inhib2', 'Inhib3', 'Inhib4') ~ '10% pairs',
+    Subscheme %in% c('Inhib5', 'Inhib6', 'Inhib7', 'Inhib8') ~ '20% pairs',
+    Subscheme %in% c('Serp1', 'Serp2', 'Serp3', 'Serp4') ~ '5 zigzags',
+    Subscheme %in% c('Serp5', 'Serp6', 'Serp7', 'Serp8') ~ '8 zizags',
+    TRUE ~ NA_character_
+  ))
 
 # Summarize the results.
 rect_summary <- rect_results %>%
@@ -63,8 +74,28 @@ rect_summary <- rect_results %>%
   summarize(
     Scheme = unique(Scheme),
     AvgAPV = mean(APV, na.rm = TRUE),
+    SDAPV = sd(APV, na.rm = TRUE),
+    MinAPV = min(APV, na.rm = TRUE),
+    Q1APV = quantile(APV, 0.25, na.rm = TRUE),
+    MedAPV = median(APV, na.rm = TRUE),
+    Q3APV = quantile(APV, 0.75, na.rm = TRUE),
+    MaxAPV = max(APV, na.rm = TRUE),
     AvgMaxPV = mean(MaxPV, na.rm = TRUE),
-    AvgDistance = mean(Distance)
+    SDMaxPV = sd(MaxPV, na.rm = TRUE),
+    MinMaxPV = min(MaxPV, na.rm = TRUE),
+    Q1MaxPV = quantile(MaxPV, 0.25, na.rm = TRUE),
+    MedMaxPV = median(MaxPV, na.rm = TRUE),
+    Q3MaxPV = quantile(MaxPV, 0.75, na.rm = TRUE),
+    MaxMaxPV = max(MaxPV, na.rm = TRUE),
+    AvgMSPE = mean(MSPE, na.rm = TRUE),
+    SDMSPE = sd(MSPE, na.rm = TRUE),
+    MinMSPE = min(MSPE, na.rm = TRUE),
+    Q1MSPE = quantile(MSPE, 0.25, na.rm = TRUE),
+    MedMSPE = median(MSPE, na.rm = TRUE),
+    Q3MSPE = quantile(MSPE, 0.75, na.rm = TRUE),
+    MaxMSPE = max(MSPE, na.rm = TRUE),
+    AvgDistance = mean(Distance),
+    SDDistance = sd(Distance)
   ) %>%
   ungroup
 
@@ -75,31 +106,33 @@ rect_results %>%
   print
 
 
-# Focus on LGCP000001 for now.
-thisdataset <- 'LGCP000001'
-
+# Plot APV and MSPE.
+for(thisdataset in rect_datasets$DataID){
+  pdf(paste0('../writeup/APV-', thisdataset, '.pdf'), width = 9, height = 4)
   rect_results %>%
     filter(DataID == thisdataset) %>%
-    left_join(allplans %>% select(Scheme, Subscheme, PlanID, Distance, Segments)) %>%
-    left_join(rect_summary %>% select(DataID, Subscheme, AvgDistance)) %>%
-    mutate(Variant = case_when(
-      Subscheme %in% c('Inhib1', 'Inhib2', 'Inhib3', 'Inhib4') ~ '10% pairs',
-      Subscheme %in% c('Inhib5', 'Inhib6', 'Inhib7', 'Inhib8') ~ '20% pairs',
-      Subscheme %in% c('Serp1', 'Serp2', 'Serp3', 'Serp4') ~ '5 zigzags',
-      Subscheme %in% c('Serp5', 'Serp6', 'Serp7', 'Serp8') ~ '8 zizags',
-      TRUE ~ NA_character_
-    )) %>%
     ggplot(aes(y = APV, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
-#    ylim(0, 160) +
     scale_y_log10() +
     ggtitle('Average Prediction Variance vs Distance Surveyed')
+  dev.off()
 
+  pdf(paste0('../writeup/MSPE-', thisdataset, '.pdf'), width = 9, height = 4)
   rect_results %>%
-    filter(DataID == thisdataset, APV > 160) %>%
-    print
+    ggplot(aes(y = MSPE, x = Distance, col = Variant)) +
+    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    facet_wrap(~Scheme) +
+    scale_y_log10() +
+    ggtitle('MSPE vs Distance Surveyed')
+  dev.off()
+
+#  rect_results %>%
+#    filter(DataID == thisdataset, APV > 160) %>%
+#    print
+}
 
 
 stopCluster(cl)
