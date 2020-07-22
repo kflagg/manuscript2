@@ -106,9 +106,9 @@ rect_results %>%
   print
 
 
-# Plot APV and MSPE.
+# Plot APV and MSPE. Focus on Cluster000004 and LGCP000004 in the paper.
 for(thisdataset in rect_datasets$DataID){
-  pdf(paste0('../writeup/APV-', thisdataset, '.pdf'), width = 9, height = 4)
+  png(paste0('../writeup/APV-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -121,9 +121,10 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  pdf(paste0('../writeup/MSPE-', thisdataset, '.pdf'), width = 9, height = 4)
+  png(paste0('../writeup/MSPE-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
   print(
     rect_results %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = MSPE, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
