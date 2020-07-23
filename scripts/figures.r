@@ -4,6 +4,8 @@ theme_set(theme_classic())
 theme_update(plot.title = element_text(hjust = 0.5))
 source('functions.r')
 
+stopCluster(cl)
+
 
 # Neat plot.
 pdf('../writeup/mesh_full.pdf', width = 9, height = 4)
@@ -134,10 +136,130 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
+  png(paste0('../writeup/APV-Inhib-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset, Scheme == 'Inhib') %>%
+    left_join(inhib_design) %>%
+    mutate(`Proportion Pairs` = paste0(100 * prop_pairs, '%')) %>%
+    rename(`Total Transects` = num_xsects) %>%
+    ggplot(aes(y = APV, x = `Total Transects`, col = `Proportion Pairs`)) +
+    geom_line(stat = 'summary', fun = median) +
+    geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 5, jitter.width = 2, jitter.height = 0)) +
+    scale_x_continuous(breaks = unique(inhib_design$num_xsects)) +
+    scale_y_log10() +
+    ggtitle('Average Prediction Variance for Inhibitory Plus Close Pairs Designs')
+  )
+  dev.off()
+
+  png(paste0('../writeup/MSPE-Inhib-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset, Scheme == 'Inhib') %>%
+    left_join(inhib_design) %>%
+    mutate(`Proportion Pairs` = paste0(100 * prop_pairs, '%')) %>%
+    rename(`Total Transects` = num_xsects) %>%
+    ggplot(aes(y = MSPE, x = `Total Transects`, col = `Proportion Pairs`)) +
+    geom_line(stat = 'summary', fun = median) +
+    geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 5, jitter.width = 2, jitter.height = 0)) +
+    scale_x_continuous(breaks = unique(inhib_design$num_xsects)) +
+    scale_y_log10() +
+    ggtitle('MSPE for Inhibitory Plus Close Pairs Designs')
+  )
+  dev.off()
+
+  png(paste0('../writeup/APV-Serp-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset, Scheme == 'Serp') %>%
+    left_join(serp_design) %>%
+    mutate(
+      Zigzags = factor(serp_num),
+    ) %>%
+    rename(
+      `Total Transects` = num_xsects
+    ) %>%
+    ggplot(aes(y = APV, x = `Total Transects`, col = Zigzags)) +
+    geom_line(stat = 'summary', fun = median) +
+    geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 3, jitter.width = 2, jitter.height = 0)) +
+    scale_x_continuous(breaks = unique(serp_design$num_xsects)) +
+    scale_y_log10() +
+    ggtitle('Average Prediction Variance for Serpentine Transect Designs')
+  )
+  dev.off()
+
+  png(paste0('../writeup/MSPE-Serp-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset, Scheme == 'Serp') %>%
+    left_join(serp_design) %>%
+    mutate(
+      Zigzags = factor(serp_num),
+    ) %>%
+    rename(
+      `Total Transects` = num_xsects
+    ) %>%
+    ggplot(aes(y = MSPE, x = `Total Transects`, col = Zigzags)) +
+    geom_line(stat = 'summary', fun = median) +
+    geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 3, jitter.width = 2, jitter.height = 0)) +
+    scale_x_continuous(breaks = unique(serp_design$num_xsects)) +
+    scale_y_log10() +
+    ggtitle('MSPE for Serpentine Transect Designs')
+  )
+  dev.off()
+
 #  rect_results %>%
 #    filter(DataID == thisdataset, APV > 160) %>%
 #    print
 }
 
+# Explore some of the high-MSPE vs low-MSPE fits.
+mspe_focus <- c(
+  'Hilbert000131',
+  'Hilbert000130',
+  'Inhib000184',
+  'Inhib000138',
+  'Inhib000534',
+  'Inhib000514',
+  'LHS-TSP000143',
+  'LHS-TSP000131',
+  'Serp000148',
+  'Serp000150',
+  'Serp000553',
+  'SRS000179',
+  'SRS000187',
+  'Sys000174',
+  'Sys000127'
+)
+mspe_results <- rect_results %>%
+  filter(DataID == 'LGCP000004', PlanID %in% mspe_focus) %>%
+  mutate(`MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'))
 
-stopCluster(cl)
+rect_datasets %>%
+  filter(DataID == 'LGCP000004') %>%
+  `$`('Data') %>%
+  `[[`(1) %>%
+  attr('Lambda') %>%
+  log %>%
+  plot(main = 'Realized Log-Intensity of LGCP000004')
+
+for(thisplan in mspe_focus){
+  mspe_results %>%
+  filter(DataID == 'LGCP000004', PlanID == thisplan) %>%
+  `$`('Prediction') %>%
+  `[[`(1) %>%
+  inla.mesh.project.inla.mesh.projector(projector = rect_R_proj) %>% t %>%
+  im(xrange = rect_R$x, yrange = rect_R$y) %>%
+  plot(main = sprintf('Prediction Surface for LGCP000004, %s\n(MSPE = %.2f)',
+                      thisplan,
+                      mspe_results %>%
+                      filter(DataID == 'LGCP000004', PlanID == thisplan) %>%
+                      `[`(1, 'MSPE')
+                      ), ribsep = 0.05)
+  allplans %>%
+  filter(PlanID == thisplan) %>%
+  `$`('Plan') %>%
+  `[[`(1) %>%
+  plot(add = TRUE)
+Sys.sleep(2)
+}
