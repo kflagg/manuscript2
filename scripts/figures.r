@@ -119,7 +119,20 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle('Average Prediction Variance vs Distance Surveyed')
+    ggtitle('APV vs Distance Surveyed')
+  )
+  dev.off()
+
+  png(paste0('../writeup/MaxPV-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = MaxPV, x = Distance, col = Variant)) +
+    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    facet_wrap(~Scheme) +
+    scale_y_log10() +
+    ggtitle('Maximum Prediction Variance vs Distance Surveyed')
   )
   dev.off()
 
@@ -208,9 +221,6 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-#  rect_results %>%
-#    filter(DataID == thisdataset, APV > 160) %>%
-#    print
 }
 
 # Explore some of the high-MSPE vs low-MSPE fits.
@@ -231,35 +241,51 @@ mspe_focus <- c(
   'Sys000174',
   'Sys000127'
 )
+thisdataset <- 'LGCP000004'
 mspe_results <- rect_results %>%
-  filter(DataID == 'LGCP000004', PlanID %in% mspe_focus) %>%
+  filter(DataID == thisdataset, PlanID %in% mspe_focus) %>%
   mutate(`MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'))
 
+pdf(paste0('../writeup/lambda-', thisdataset, '.pdf'), width = 9, height = 4)
+par(mar = c(0, 0, 2, 2))
 rect_datasets %>%
   filter(DataID == 'LGCP000004') %>%
   `$`('Data') %>%
   `[[`(1) %>%
   attr('Lambda') %>%
   log %>%
-  plot(main = 'Realized Log-Intensity of LGCP000004')
+  plot(main = 'Realized Log-Intensity of LGCP000004', ribsep = 0.05)
+rect_datasets %>%
+  filter(DataID == thisdataset) %>%
+  `$`('Data') %>%
+  `[[`(1) %>%
+  points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+dev.off()
 
 for(thisplan in mspe_focus){
-  mspe_results %>%
-  filter(DataID == 'LGCP000004', PlanID == thisplan) %>%
-  `$`('Prediction') %>%
-  `[[`(1) %>%
-  inla.mesh.project.inla.mesh.projector(projector = rect_R_proj) %>% t %>%
-  im(xrange = rect_R$x, yrange = rect_R$y) %>%
-  plot(main = sprintf('Prediction Surface for LGCP000004, %s\n(MSPE = %.2f)',
-                      thisplan,
-                      mspe_results %>%
-                      filter(DataID == 'LGCP000004', PlanID == thisplan) %>%
-                      `[`(1, 'MSPE')
-                      ), ribsep = 0.05)
+  pdf(paste0('../writeup/lambda-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- mspe_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
+    t %>%
+    im(xrange = rect_R$x, yrange = rect_R$y) %>%
+    plot(main = sprintf('Prediction Surface for LGCP000004, %s\n(MSPE = %.2f)',
+                        thisplan,
+                        mspe_results %>%
+                        filter(DataID == 'LGCP000004', PlanID == thisplan) %>%
+                        `[`(1, 'MSPE')
+                        ), ribsep = 0.05)
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
   allplans %>%
-  filter(PlanID == thisplan) %>%
-  `$`('Plan') %>%
-  `[[`(1) %>%
-  plot(add = TRUE)
-Sys.sleep(2)
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = 'white', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
 }
