@@ -110,7 +110,55 @@ rect_results %>%
 
 # Plot APV and MSPE. Focus on Cluster000004 and LGCP000004 in the paper.
 for(thisdataset in rect_datasets$DataID){
-  png(paste0('../writeup/APV-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  png(paste0('../writeup/MaxPV-MSPE-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = MaxPV, x = MSPE, col = Scheme)) +
+    geom_point(alpha = 0.25) +
+    scale_x_log10() +
+    scale_y_log10() +
+    ggtitle('MaxPV vs MSPE')
+  )
+  dev.off()
+
+  png(paste0('../writeup/APV-MSPE-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = APV, x = MSPE, col = Scheme)) +
+    geom_point(alpha = 0.25) +
+    scale_x_log10() +
+    scale_y_log10() +
+    ggtitle('APV vs MSPE')
+  )
+  dev.off()
+
+  png(paste0('../writeup/APV-', thisdataset, '-notpaneled.png'), width = 9, height = 4, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = APV, x = Distance, col = Scheme)) +
+    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    scale_y_log10() +
+    ggtitle('APV vs Distance Surveyed')
+  )
+  dev.off()
+
+  png(paste0('../writeup/MSPE-', thisdataset, '-notpaneled.png'), width = 9, height = 4, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = MSPE, x = Distance, col = Scheme)) +
+    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    scale_y_log10() +
+    ggtitle('MSPE vs Distance Surveyed')
+  )
+  dev.off()
+
+  png(paste0('../writeup/APV-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -123,7 +171,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/MaxPV-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  png(paste0('../writeup/MaxPV-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -136,7 +184,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  png(paste0('../writeup/MSPE-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -149,7 +197,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/APV-Inhib-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  png(paste0('../writeup/APV-Inhib-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
@@ -165,7 +213,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-Inhib-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  png(paste0('../writeup/MSPE-Inhib-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
@@ -181,7 +229,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/APV-Serp-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  png(paste0('../writeup/APV-Serp-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
@@ -201,7 +249,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-Serp-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 300)
+  png(paste0('../writeup/MSPE-Serp-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
