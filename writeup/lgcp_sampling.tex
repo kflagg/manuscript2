@@ -41,7 +41,7 @@
 
 \begin{frontmatter}
 
-\title{Log-Gaussian Cox processes and sampling paths: towards optimal design}
+\title{Spatial Log-Gaussian Cox process models and sampling paths: towards optimal design}
 
 %% Group authors per affiliation:
 \author[msuaddr]{Kenneth Flagg\corref{mycorrespondingauthor}}
@@ -81,7 +81,7 @@ log-Gaussian Cox process\sep optimal sampling\sep model-based design\sep spatial
 
 Spatial point process models have long been considered generally infeasible
 because of their computational demands, but recent advances in Bayesian
-computing have made the Log-Gaussian Cox process an attainable model in
+computing have made the Log-Gaussian Cox process (LGCP) an attainable model in
 practice~\citep{rueetal, lindgrenetal, illianetal, simpsonetal}. In some
 applications, the entire point pattern is not fully observed due to variable
 sampling effort. This is referred to as a degraded point
@@ -91,13 +91,14 @@ tools~\citep{yuanetal}. However, the literature on optimal sampling for spatial
 point process models is in its infancy~\citep{liuvanhatalo}.
 
 Point pattern data are routinely collected in species distribution studies and
-ordnance response projects. These applications may use quadrat sampling or
-line-transect sampling, with transect sampling being more common. When the
-objective is to map where events occur in space, various spatial mapping
-procedures have been used. Traditionally these have involved aggregating the
-data to grid cell counts or computing moving averages. Aggregation has the
-downside of introducing arbitrary structure into the data by the choice of
-gridding scheme or averaging window, and requires uneccessary computation
+ordnance response projects. The data consist of the locations of event in some
+spatial region. These applications may use quadrat sampling or line-transect
+sampling, with transect sampling being more common. When the objective is to
+map where events occur in space, various spatial mapping procedures have been
+used. Traditionally these have involved aggregating the data to grid cell
+counts or computing moving averages. Aggregation has the downside of
+introducing arbitrary structure into the data by the choice of gridding scheme
+or averaging window, and requires uneccessary computation
 effort~\citep{simpsonetal}. Software is now available to fit spatial point
 process models to data acquired via distance sampling and simultaneously
 estimate the detection function~\citep{dspat,baser}.
@@ -119,9 +120,14 @@ assess their optimality for mapping intensity using LGCP models.
 
 \subsection{Log-Gaussian Cox process}
 
-Inhomogeneous Poisson process, log of intensity is a Gaussian process. Flexible
-model for mapping intensity over space. Efficient computation tools available.
-%TODO: expand and add citations.
+The log-Gaussian Cox process is an inhomogeneous Poisson process where the
+logarithm of the intesity function is a Gaussian process \citep{moelleretal}.
+The LGCP provides a flexible model for mapping event intensity over space using
+few parameters. Efficient Bayesian computation tools available using INLA
+to approximate the posterior marginal distributions \cite{rueetal}, a finite
+element approach to represent the Gaussian process \cite{lindgrenetal}, and
+pseudodata \cite{simpsonetal}.
+% Add some example applications.
 
 
 \subsection{Spatial design}
@@ -456,18 +462,18 @@ weighting scheme used to approximate the latent GP.}
 
 %look at examples of designs along the Pareto front
 
-The results section will compare the distribution of prediction variance for
-the Gaussian process averaged over space (APV). We will focus on the average of
-APV for the 100 designs from each scheme applied to each dataset, but will
-point out and discuss if any schemes have large variance or skew in the
-distribution of APV. We will plot the relationships among APV, path length, and
-number of segments. The manuscript will focus on one LGCP dataset and one
-clustered dataset; the analysis of the other datasets will be in the
-supplemenatal materials. The supplemental materials will also include a repeat
-of this analysis for mean squared prediction error (MSPE). The conclusions of
-the MSPE analysis will probably be very similar to those of the APV analysis,
-but if there are any difference will will point them out in the main
-manuscript.
+%The results section will compare the distribution of prediction variance for
+%the Gaussian process averaged over space (APV). We will focus on the average of
+%APV for the 100 designs from each scheme applied to each dataset, but will
+%point out and discuss if any schemes have large variance or skew in the
+%distribution of APV. We will plot the relationships among APV, path length, and
+%number of segments. The manuscript will focus on one LGCP dataset and one
+%clustered dataset; the analysis of the other datasets will be in the
+%supplemenatal materials. The supplemental materials will also include a repeat
+%of this analysis for mean squared prediction error (MSPE). The conclusions of
+%the MSPE analysis will probably be very similar to those of the APV analysis,
+%but if there are any difference will will point them out in the main
+%manuscript.
 
 big takeways:
 \begin{itemize}
