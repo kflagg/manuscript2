@@ -475,11 +475,32 @@ weighting scheme used to approximate the latent GP.}
 %but if there are any difference will will point them out in the main
 %manuscript.
 
+In summarizing the results, we focus on one LGCP dataset and one clustered
+dataset (Figure~\ref{fulldata}). Similar patterns were seen for all datasets
+(see the online supplement.)
+
+\begin{figure}
+\includegraphics[width=5in]{lambda-LGCP000004.pdf}
+
+\includegraphics[width=5in]{lambda-Cluster000004.pdf}
+
+\caption{The realized intensity function and complete point pattern from a LGCP
+(top) and a LGCP superposed with a cluster process (bottom).}
+\label{fulldata}
+\end{figure}
+
 big takeways:
 \begin{itemize}
 \item APV and MSPE both decrease with increasing distance (leveling off at
 some point)
+\item SD is lowest near obsevered events and increases with distance from
+events (not path!), highest at edges of site where there are no events nearby
 \item Insubstantial differences among schemes
+\begin{itemize}
+\item LHS-TSP has lowest median APV for paths under 10000 units but large IQR
+\item For longer paths, SRS isn't bad
+\item SRS has slightly lower  median and IQR of APV than systematic
+\end{itemize}
 \item Look at parameter posteriors? Maybe differences within scheme
 \item Clusters of high-MSPE
 \begin{itemize}
@@ -503,6 +524,8 @@ APV and MSPE both right-skewed. Log all plots. Used median and IQR (or range?)
 
 %of the schemes considered here, only transect schemes have flexiblility in
 %distance and/or a priori known distance
+
+%convergence problems/large variance solution is more data collection?
 
 %discuss starting points for optimization and sequential design
 

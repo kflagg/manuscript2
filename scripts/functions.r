@@ -599,7 +599,7 @@ lhstsp <- function(full_win, num_bins = round(sqrt(WP_NUM_INITIAL)), margin = WP
 }
 
 lhs_design <- tibble(
-    Subscheme = paste0('LHT-TSP', rep(seq_len(4), each = N_SIMS)),
+    Subscheme = paste0('LHS-TSP', rep(seq_len(4), each = N_SIMS)),
     bins = rep(c(50, 300, 1200, 2400), each = N_SIMS),
     xsect_radius = XSECT_RADIUS
   ) %>%

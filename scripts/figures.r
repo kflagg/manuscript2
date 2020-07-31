@@ -75,6 +75,7 @@ rect_summary <- rect_results %>%
   group_by(DataID, Subscheme) %>%
   summarize(
     Scheme = unique(Scheme),
+    Reps = sum(!is.na(IntMean)),
     AvgAPV = mean(APV, na.rm = TRUE),
     SDAPV = sd(APV, na.rm = TRUE),
     MinAPV = min(APV, na.rm = TRUE),
@@ -82,6 +83,7 @@ rect_summary <- rect_results %>%
     MedAPV = median(APV, na.rm = TRUE),
     Q3APV = quantile(APV, 0.75, na.rm = TRUE),
     MaxAPV = max(APV, na.rm = TRUE),
+    IQRAPV = IQR(APV, na.rm = TRUE),
     AvgMaxPV = mean(MaxPV, na.rm = TRUE),
     SDMaxPV = sd(MaxPV, na.rm = TRUE),
     MinMaxPV = min(MaxPV, na.rm = TRUE),
@@ -89,6 +91,7 @@ rect_summary <- rect_results %>%
     MedMaxPV = median(MaxPV, na.rm = TRUE),
     Q3MaxPV = quantile(MaxPV, 0.75, na.rm = TRUE),
     MaxMaxPV = max(MaxPV, na.rm = TRUE),
+    IQRMaxPV = IQR(MaxPV, na.rm = TRUE),
     AvgMSPE = mean(MSPE, na.rm = TRUE),
     SDMSPE = sd(MSPE, na.rm = TRUE),
     MinMSPE = min(MSPE, na.rm = TRUE),
@@ -96,6 +99,7 @@ rect_summary <- rect_results %>%
     MedMSPE = median(MSPE, na.rm = TRUE),
     Q3MSPE = quantile(MSPE, 0.75, na.rm = TRUE),
     MaxMSPE = max(MSPE, na.rm = TRUE),
+    IQRMSPE = IQR(MSPE, na.rm = TRUE),
     AvgDistance = mean(Distance),
     SDDistance = sd(Distance)
   ) %>%
@@ -297,12 +301,13 @@ mspe_results <- rect_results %>%
 pdf(paste0('../writeup/lambda-', thisdataset, '.pdf'), width = 9, height = 4)
 par(mar = c(0, 0, 2, 2))
 rect_datasets %>%
-  filter(DataID == 'LGCP000004') %>%
+  filter(DataID == thisdataset) %>%
   `$`('Data') %>%
   `[[`(1) %>%
   attr('Lambda') %>%
   log %>%
-  plot(main = 'Realized Log-Intensity of LGCP000004', ribsep = 0.05)
+  plot(main = paste('Realized Log-Intensity of', thisdataset),
+       ribsep = 0.05, ribargs = list(las = 1))
 rect_datasets %>%
   filter(DataID == thisdataset) %>%
   `$`('Data') %>%
@@ -323,7 +328,32 @@ for(thisplan in mspe_focus){
                         mspe_results %>%
                         filter(DataID == 'LGCP000004', PlanID == thisplan) %>%
                         `[`(1, 'MSPE')
-                        ), ribsep = 0.05)
+                        ), ribsep = 0.05, ribargs = list(las = 1))
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+  allplans %>%
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = 'white', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
+
+  pdf(paste0('../writeup/lambdaSD-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- mspe_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
+       values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
+       main = sprintf('Prediction SD of the GP for LGCP000004, %s\n(MSPE = %.2f)',
+                      thisplan,
+                      mspe_results %>%
+                      filter(DataID == 'LGCP000004', PlanID == thisplan) %>%
+                      `[`(1, 'MSPE')
+                      ), ribsep = 0.05)
   plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
   allplans %>%
     filter(PlanID == thisplan) %>%
@@ -337,3 +367,25 @@ for(thisplan in mspe_focus){
     points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
   dev.off()
 }
+
+thisdataset <- 'Cluster000004'
+mspe_results <- rect_results %>%
+  filter(DataID == thisdataset, PlanID %in% mspe_focus) %>%
+  mutate(`MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'))
+
+pdf(paste0('../writeup/lambda-', thisdataset, '.pdf'), width = 9, height = 4)
+par(mar = c(0, 0, 2, 2))
+rect_datasets %>%
+  filter(DataID == thisdataset) %>%
+  `$`('Data') %>%
+  `[[`(1) %>%
+  attr('Lambda') %>%
+  log %>%
+  plot(main = paste('Realized Log-Intensity of', thisdataset),
+       ribsep = 0.05, ribargs = list(las = 1))
+rect_datasets %>%
+  filter(DataID == thisdataset) %>%
+  `$`('Data') %>%
+  `[[`(1) %>%
+  points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+dev.off()
