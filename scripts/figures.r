@@ -6,6 +6,8 @@ source('functions.r')
 
 stopCluster(cl)
 
+options(scipen = 5)
+
 
 # Neat plot.
 pdf('../writeup/mesh_full.pdf', width = 9, height = 4)
@@ -84,6 +86,7 @@ rect_summary <- rect_results %>%
     Q3APV = quantile(APV, 0.75, na.rm = TRUE),
     MaxAPV = max(APV, na.rm = TRUE),
     IQRAPV = IQR(APV, na.rm = TRUE),
+    RangeAPV = max(APV, na.rm = TRUE) - min(APV, na.rm = TRUE),
     AvgMaxPV = mean(MaxPV, na.rm = TRUE),
     SDMaxPV = sd(MaxPV, na.rm = TRUE),
     MinMaxPV = min(MaxPV, na.rm = TRUE),
@@ -92,6 +95,7 @@ rect_summary <- rect_results %>%
     Q3MaxPV = quantile(MaxPV, 0.75, na.rm = TRUE),
     MaxMaxPV = max(MaxPV, na.rm = TRUE),
     IQRMaxPV = IQR(MaxPV, na.rm = TRUE),
+    RangeMaxPV = max(MaxPV, na.rm = TRUE) - min(MaxPV, na.rm = TRUE),
     AvgMSPE = mean(MSPE, na.rm = TRUE),
     SDMSPE = sd(MSPE, na.rm = TRUE),
     MinMSPE = min(MSPE, na.rm = TRUE),
@@ -100,6 +104,7 @@ rect_summary <- rect_results %>%
     Q3MSPE = quantile(MSPE, 0.75, na.rm = TRUE),
     MaxMSPE = max(MSPE, na.rm = TRUE),
     IQRMSPE = IQR(MSPE, na.rm = TRUE),
+    RangeMSPE = max(MSPE, na.rm = TRUE) - min(MSPE, na.rm = TRUE),
     AvgDistance = mean(Distance),
     SDDistance = sd(Distance)
   ) %>%
@@ -114,7 +119,7 @@ rect_results %>%
 
 # Plot APV and MSPE. Focus on Cluster000004 and LGCP000004 in the paper.
 for(thisdataset in rect_datasets$DataID){
-  png(paste0('../writeup/MaxPV-MSPE-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/MaxPV-MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -122,11 +127,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle('MaxPV vs MSPE')
+    ggtitle(paste('MaxPV vs MSPE,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/APV-MSPE-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/APV-MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -134,11 +139,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle('APV vs MSPE')
+    ggtitle(paste('APV vs MSPE,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/APV-', thisdataset, '-notpaneled.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/APV-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -146,11 +151,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     scale_y_log10() +
-    ggtitle('APV vs Distance Surveyed')
+    ggtitle(paste('APV vs Distance Surveyed,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-', thisdataset, '-notpaneled.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/MSPE-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -158,11 +163,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     scale_y_log10() +
-    ggtitle('MSPE vs Distance Surveyed')
+    ggtitle(paste('MSPE vs Distance Surveyed,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/APV-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/APV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -171,11 +176,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle('APV vs Distance Surveyed')
+    ggtitle(paste('APV vs Distance Surveyed,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/MaxPV-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/MaxPV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -184,11 +189,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle('Maximum Prediction Variance vs Distance Surveyed')
+    ggtitle(paste('Maximum Prediction Variance vs Distance Surveyed,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -197,11 +202,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle('MSPE vs Distance Surveyed')
+    ggtitle(paste('MSPE vs Distance Surveyed,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/APV-Inhib-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/APV-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
@@ -213,11 +218,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 5, jitter.width = 2, jitter.height = 0)) +
     scale_x_continuous(breaks = unique(inhib_design$num_xsects)) +
     scale_y_log10() +
-    ggtitle('Average Prediction Variance for Inhibitory Plus Close Pairs Designs')
+    ggtitle(paste('Average Prediction Variance for Inhibitory Plus Close Pairs Designs,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-Inhib-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/MSPE-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
@@ -229,11 +234,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 5, jitter.width = 2, jitter.height = 0)) +
     scale_x_continuous(breaks = unique(inhib_design$num_xsects)) +
     scale_y_log10() +
-    ggtitle('MSPE for Inhibitory Plus Close Pairs Designs')
+    ggtitle(paste('MSPE for Inhibitory Plus Close Pairs Designs,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/APV-Serp-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/APV-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
@@ -249,11 +254,11 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 3, jitter.width = 2, jitter.height = 0)) +
     scale_x_continuous(breaks = unique(serp_design$num_xsects)) +
     scale_y_log10() +
-    ggtitle('Average Prediction Variance for Serpentine Transect Designs')
+    ggtitle(paste('Average Prediction Variance for Serpentine Transect Designs,', thisdataset))
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-Serp-', thisdataset, '.png'), width = 9, height = 4, units = 'in', res = 600)
+  png(paste0('../writeup/MSPE-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
@@ -269,10 +274,9 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 3, jitter.width = 2, jitter.height = 0)) +
     scale_x_continuous(breaks = unique(serp_design$num_xsects)) +
     scale_y_log10() +
-    ggtitle('MSPE for Serpentine Transect Designs')
+    ggtitle(paste('MSPE for Serpentine Transect Designs,', thisdataset))
   )
   dev.off()
-
 }
 
 # Explore some of the high-MSPE vs low-MSPE fits.
@@ -293,7 +297,7 @@ mspe_focus <- c(
   'Sys000174',
   'Sys000127'
 )
-thisdataset <- 'LGCP000004'
+for(thisdataset in c('LGCP000004', 'Cluster000004')){
 mspe_results <- rect_results %>%
   filter(DataID == thisdataset, PlanID %in% mspe_focus) %>%
   mutate(`MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'))
@@ -323,10 +327,11 @@ for(thisplan in mspe_focus){
   (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
     t %>%
     im(xrange = rect_R$x, yrange = rect_R$y) %>%
-    plot(main = sprintf('Prediction Surface for LGCP000004, %s\n(MSPE = %.2f)',
+    plot(main = sprintf('Prediction Surface for %s, %s\n(MSPE = %.2f)',
+                        thisdataset,
                         thisplan,
                         mspe_results %>%
-                        filter(DataID == 'LGCP000004', PlanID == thisplan) %>%
+                        filter(DataID == thisdataset, PlanID == thisplan) %>%
                         `[`(1, 'MSPE')
                         ), ribsep = 0.05, ribargs = list(las = 1))
   plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
@@ -348,11 +353,12 @@ for(thisplan in mspe_focus){
     filter(DataID == thisdataset, PlanID == thisplan)
   plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
        values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
-       main = sprintf('Prediction SD of the GP for LGCP000004, %s\n(MSPE = %.2f)',
+       main = sprintf('Prediction SD of the GP for %s, %s\n(APV = %.2f)',
+                      thisdataset,
                       thisplan,
                       mspe_results %>%
-                      filter(DataID == 'LGCP000004', PlanID == thisplan) %>%
-                      `[`(1, 'MSPE')
+                      filter(DataID == thisdataset, PlanID == thisplan) %>%
+                      `[`(1, 'APV')
                       ), ribsep = 0.05)
   plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
   allplans %>%
@@ -367,25 +373,4 @@ for(thisplan in mspe_focus){
     points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
   dev.off()
 }
-
-thisdataset <- 'Cluster000004'
-mspe_results <- rect_results %>%
-  filter(DataID == thisdataset, PlanID %in% mspe_focus) %>%
-  mutate(`MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'))
-
-pdf(paste0('../writeup/lambda-', thisdataset, '.pdf'), width = 9, height = 4)
-par(mar = c(0, 0, 2, 2))
-rect_datasets %>%
-  filter(DataID == thisdataset) %>%
-  `$`('Data') %>%
-  `[[`(1) %>%
-  attr('Lambda') %>%
-  log %>%
-  plot(main = paste('Realized Log-Intensity of', thisdataset),
-       ribsep = 0.05, ribargs = list(las = 1))
-rect_datasets %>%
-  filter(DataID == thisdataset) %>%
-  `$`('Data') %>%
-  `[[`(1) %>%
-  points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
-dev.off()
+}

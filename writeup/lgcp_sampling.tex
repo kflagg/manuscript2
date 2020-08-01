@@ -441,7 +441,10 @@ The covariance parameters \(\sigma\) and \(\rho\) have a PC prior with
 \citep{fuglstadetal,simpsonpc}.
 
 The Gaussian process prediction surface is approximated on the finite element
-mesh shown in Figure~\ref{meshfull}.
+mesh shown in Figure~\ref{meshfull}. The GP is predicted at the nodes (points)
+and is linearly interpolated elsewhere. The nodes are weighted according to
+the area of their dual cells (shading) and used for numerical integration of
+the likelihood \citep{lindgrenetal}.
 
 \begin{figure}
 \includegraphics[width=5in]{mesh_full.pdf}
@@ -475,9 +478,9 @@ weighting scheme used to approximate the latent GP.}
 %but if there are any difference will will point them out in the main
 %manuscript.
 
-In summarizing the results, we focus on one LGCP dataset and one clustered
-dataset (Figure~\ref{fulldata}). Similar patterns were seen for all datasets
-(see the online supplement.)
+In describing the results, we focus on one LGCP dataset and one clustered
+dataset (Figure~\ref{fulldata}). The results are similar for all datasets (see
+the online supplement.)
 
 \begin{figure}
 \includegraphics[width=5in]{lambda-LGCP000004.pdf}
@@ -489,18 +492,81 @@ dataset (Figure~\ref{fulldata}). Similar patterns were seen for all datasets
 \label{fulldata}
 \end{figure}
 
-big takeways:
-\begin{itemize}
-\item APV and MSPE both decrease with increasing distance (leveling off at
-some point)
-\item SD is lowest near obsevered events and increases with distance from
-events (not path!), highest at edges of site where there are no events nearby
-\item Insubstantial differences among schemes
+\begin{figure}
+\includegraphics[width=5in]{lambda-SRS000187-LGCP000004.pdf}
+
+\includegraphics[width=5in]{lambdaSD-SRS000187-LGCP000004.pdf}
+
+\caption{Predicted log-intensity function (top) using data observed via a SRS
+of line transects. The prediction standard deviation (bottom) is shown for each
+finite element node.}
+\label{srs000187}
+\end{figure}
+
+Figure~\ref{srs000187} shows an example where the model does well at predicting
+the intensity of the realized LGCP from data observed along one of the SRS
+paths. In the figure, the path appears in white and the observed events are
+shown as white dots. The posterior predicted mean of the log-intensity (top
+panel) accurately captures the large-scale features, but smooths out much of
+the small-scale variation. The bottom panel shows the prediction standard
+deviation for each mesh node. The SD ranges from 2.0 to 3.1, and is lowest
+near observed events. SD increases farther from observed events, including
+sections where the surveyed strip was observed to contain no events.
+
+Most plans yielded similar prediction surfaces, capturing the large-scale
+trends, and having the least uncertainty near observed events. Results varied
+in accuracy at the most extreme peaks and valleys of the itensity function and
+in oeverall SD across the study region.
+
+However, a small number of model fits suffered from apparent edge effects.
+For example, Figure~\ref{serp000148} shows the prediction surface resulting
+from a serpentine transect plan. The predicted log-intensity has a hotspot of
+extremely large values in the southeast corner (notice the color scale). The
+hotspot is driven by two nodes on the boundary with very large prediction
+values. Another, less extreme, edge effect is present in the northeast corner.
+
+Considered across all survey plans and prediction surfaces, both MSPE and APV
+had right-skewed distributions. Thus we use logarithmic scales for plots and
+summarize them using the median and interquartile range (IQR). Median MSPE
+decreases with increasing path distance, leveling off between 20000 and 30000
+units of distance for the LGCP data but continuing to decrease through 50000
+units for the clustered data (Figure~\ref{msperesults}). Variability (IQR) of
+MSPE also descreases as distance increases. Surfaces with edge effects form a
+cluster of large, outlying MSPE values. There are no substantial differences
+among the different schemes with respect to median MSPE.
+
 \begin{itemize}
 \item LHS-TSP has lowest median APV for paths under 10000 units but large IQR
 \item For longer paths, SRS isn't bad
-\item SRS has slightly lower  median and IQR of APV than systematic
+\item SRS has slightly lower median and IQR of APV than systematic
+\item Inhib has high variability for clustered data
 \end{itemize}
+
+\begin{figure}
+\includegraphics[width=5in]{lambda-Serp000148-LGCP000004.pdf}
+
+\includegraphics[width=5in]{lambdaSD-Serp000148-LGCP000004.pdf}
+
+\caption{Predicted GP surface (top) using data observed via a serpentine transect
+plan. The prediction has an apparent edge effect in the southeastern corner. The
+standard deviation (bottom) is high across much of the site.}
+\label{serp000148}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=5in]{MSPE-LGCP000004.png}
+
+\includegraphics[width=5in]{MSPE-Cluster000004.png}
+
+\caption{Plots of mean squared prediction error (MSPE) vs length of the path
+for each plan applied to one realization of a LGCP (top) and one realization of
+an LGCP with a cluster process overlaid (bottom). Line segments connect the
+median MSPE at each group of distances. The plots are paneled by design
+scheme.}
+\label{msperesults}
+\end{figure}
+
+\begin{itemize}
 \item Look at parameter posteriors? Maybe differences within scheme
 \item Clusters of high-MSPE
 \begin{itemize}
@@ -509,14 +575,13 @@ events (not path!), highest at edges of site where there are no events nearby
 \item Explained by edge effects? Look at more plots
 \end{itemize}
 \item APV and MSPE not convincingly related
+\item APV median and IQR actually increase with distance for some datasets
 \begin{itemize}
 \item Plots vary a lot by dataset
 \item Predictions in high-MSPE clusters have high APV but are not outliers
 \item Examine spatial prediction surface when evaluating posterior
 \end{itemize}
-\item Call out a few high and low MSPE example surfaces
 \end{itemize}
-APV and MSPE both right-skewed. Log all plots. Used median and IQR (or range?)
 
 
 \section{Discussion}
@@ -524,6 +589,9 @@ APV and MSPE both right-skewed. Log all plots. Used median and IQR (or range?)
 
 %of the schemes considered here, only transect schemes have flexiblility in
 %distance and/or a priori known distance
+
+%increasing uncertainty along path --- reasonable, path is narrow, could be
+%events just out of detection range
 
 %convergence problems/large variance solution is more data collection?
 
