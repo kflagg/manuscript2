@@ -478,6 +478,8 @@ weighting scheme used to approximate the latent GP.}
 %but if there are any difference will will point them out in the main
 %manuscript.
 
+\subsection{Initial Observations}
+
 In describing the results, we focus on one LGCP dataset and one clustered
 dataset (Figure~\ref{fulldata}). The results are similar for all datasets (see
 the online supplement.)
@@ -525,6 +527,9 @@ extremely large values in the southeast corner (notice the color scale). The
 hotspot is driven by two nodes on the boundary with very large prediction
 values. Another, less extreme, edge effect is present in the northeast corner.
 
+
+\subsection{MSPE and APV for all simulations}
+
 Considered across all survey plans and prediction surfaces, both MSPE and APV
 had right-skewed distributions. Thus we use logarithmic scales for plots and
 summarize them using the median and interquartile range (IQR). Median MSPE
@@ -533,7 +538,7 @@ units of distance for the LGCP data but continuing to decrease through 50000
 units for the clustered data (Figure~\ref{msperesults}). Variability (IQR) of
 MSPE also descreases as distance increases. Surfaces with edge effects form a
 cluster of large, outlying MSPE values. There are no substantial differences
-among the different schemes with respect to median MSPE.
+among the different schemes with respect to median or variability in MSPE.
 
 \begin{itemize}
 \item LHS-TSP has lowest median APV for paths under 10000 units but large IQR
@@ -582,6 +587,35 @@ scheme.}
 \item Examine spatial prediction surface when evaluating posterior
 \end{itemize}
 \end{itemize}
+
+
+add a subsection with example ad-hoc sequential design
+
+
+\subsection{Spatial coverage}
+
+While the above results suggest the choice of design is relatively unimportant
+and the distance traveled is the main driver of the quality of the spatial
+predictions, it is important to consider that all of the design schemes ensure
+the path is distributed across the entire study region. Designs that leave
+large unexplored voids will not perform as well.
+
+As an example, Figure~\ref{badxsect} shows the results of using a systematic
+sample of 50 parallel transects in the western 20\% of the study site. This
+design traverses a distance of 35000 units but leaves most of the site far from
+the observed path. As a result, the predicted log-intensity is flat near the
+GP posterior mean of \(-8.71\) over most of the site.
+
+\begin{figure}
+\includegraphics[width=5in]{lambda-BadXsect-LGCP000004.pdf}
+
+\includegraphics[width=5in]{lambdaSD-BadXsect-LGCP000004.pdf}
+
+\caption{Predicted log-intensity function (top) using data observed via a
+systematic sample of a small section of the site. The prediction standard
+deviation (bottom) is shown for each finite element node.}
+\label{badxsect}
+\end{figure}
 
 
 \section{Discussion}
