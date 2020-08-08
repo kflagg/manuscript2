@@ -530,6 +530,12 @@ values. Another, less extreme, edge effect is present in the northeast corner.
 
 \subsection{MSPE and APV for all simulations}
 
+There are two important characteristics of a useful spatial prediction. First,
+deviation from the true surface should be low, and is indicated by low
+mean squared prediction error (MSPE). Second, the model's own assessment of
+prediction uncertainty will be used in practice to build trust in the
+inferences, so average prediction variance (APV) should be low.
+
 Considered across all survey plans and prediction surfaces, both MSPE and APV
 had right-skewed distributions. Thus we use logarithmic scales for plots and
 summarize them using the median and interquartile range (IQR). Median MSPE
@@ -537,15 +543,23 @@ decreases with increasing path distance, leveling off between 20000 and 30000
 units of distance for the LGCP data but continuing to decrease through 50000
 units for the clustered data (Figure~\ref{msperesults}). Variability (IQR) of
 MSPE also descreases as distance increases. Surfaces with edge effects form a
-cluster of large, outlying MSPE values. There are no substantial differences
-among the different schemes with respect to median or variability in MSPE.
+cluster of large, outlying MSPE values. The lowest-MSPE prediction surfaces
+result from the longest HIlbert designs. Overall, there are no substantial
+differences among the different schemes with respect to median or variability
+in MSPE.
 
-\begin{itemize}
-\item LHS-TSP has lowest median APV for paths under 10000 units but large IQR
-\item For longer paths, SRS isn't bad
-\item SRS has slightly lower median and IQR of APV than systematic
-\item Inhib has high variability for clustered data
-\end{itemize}
+The relationship between APV and MSPE differs from realization to realization
+(Figure~\ref{apvresults}). Surfaces in the high-MSPE cluster have high APV, but
+otherwise there is little association between APV and MSPE.
+
+%\begin{itemize}
+%\item LHS-TSP has lowest median APV for paths under 10000 units but large IQR
+%\item For longer paths, SRS isn't bad
+%\item SRS has slightly lower median and IQR of APV than systematic
+%\item The longest serp designs with 5 zigzags have lowest IQR of MSPE and APV
+%\item Inhib has high variability for clustered data
+%\item Lowest MSPE designs were Hilbert order 6
+%\end{itemize}
 
 \begin{figure}
 \includegraphics[width=5in]{lambda-Serp000148-LGCP000004.pdf}
@@ -571,25 +585,60 @@ scheme.}
 \label{msperesults}
 \end{figure}
 
-\begin{itemize}
-\item Look at parameter posteriors? Maybe differences within scheme
-\item Clusters of high-MSPE
-\begin{itemize}
-\item Number decrease with distance
-\item Associated with certain schemes?
-\item Explained by edge effects? Look at more plots
-\end{itemize}
-\item APV and MSPE not convincingly related
-\item APV median and IQR actually increase with distance for some datasets
-\begin{itemize}
-\item Plots vary a lot by dataset
-\item Predictions in high-MSPE clusters have high APV but are not outliers
-\item Examine spatial prediction surface when evaluating posterior
-\end{itemize}
-\end{itemize}
+\begin{figure}
+\includegraphics[width=5in]{APV-MSPE-LGCP000004.png}
+
+\includegraphics[width=5in]{APV-MSPE-Cluster000004.png}
+
+\caption{Plots of average prediction variance (APV) vs MSPE for each plan
+applied to one realization of a LGCP (top) and one realization of an LGCP
+with a cluster process overlaid (bottom).}
+\label{apvresults}
+\end{figure}
+
+%\begin{itemize}
+%\item Look at parameter posteriors? Maybe differences within scheme
+%\item Clusters of high-MSPE
+%\begin{itemize}
+%\item Number decrease with distance
+%\item Associated with certain schemes?
+%\item Explained by edge effects? Look at more plots
+%\end{itemize}
+%\item APV and MSPE not convincingly related
+%\item APV median and IQR actually increase with distance for some datasets
+%\begin{itemize}
+%\item Plots vary a lot by dataset
+%\item Predictions in high-MSPE clusters have high APV but are not outliers
+%\item Examine spatial prediction surface when evaluating posterior
+%\end{itemize}
+%\end{itemize}
 
 
-add a subsection with example ad-hoc sequential design
+\subsection{Augmenting a poor-performing design}
+
+Even a poor-performing design could be used as a starting point for sequential
+design. As a simple illustration, we augment the design from
+Figure~\ref{serp000148} with some additional sampling effort in the eastern
+part of the site, where the edge effects were seen in the prediction surface.
+The total distance surveyed increases from 17500 to 20180 units, while the
+predicted log-intensity surface is much more accurate (Figure~\ref{aug}).
+MSPE decreases from 1600.57 to 2.48 and APV improves from 67.20 to 11.02.
+Across the site, the prediction standard deviation is lower than before, and
+is now highest around the edge of the western half. If we were to continue
+adding segments to the path, giving some attention to the western portion of
+the site could improve the prediction.
+
+
+\begin{figure}
+\includegraphics[width=5in]{lambda-Aug-LGCP000004.pdf}
+
+\includegraphics[width=5in]{lambdaSD-Aug-LGCP000004.pdf}
+
+\caption{Predicted log-intensity function (top) using data observed via a
+serpentine transect design augmented post-hoc. The prediction standard
+deviation (bottom) is shown for each finite element node.}
+\label{aug}
+\end{figure}
 
 
 \subsection{Spatial coverage}
@@ -621,26 +670,33 @@ deviation (bottom) is shown for each finite element node.}
 \section{Discussion}
 % This should explore the significance of the results of the work, not repeat them. A combined Results and Discussion section is often appropriate. Avoid extensive citations and discussion of published literature.
 
-%of the schemes considered here, only transect schemes have flexiblility in
-%distance and/or a priori known distance
+\begin{itemize}
+\item increasing uncertainty along path --- reasonable, path is narrow, could
+be events just out of detection range
 
-%increasing uncertainty along path --- reasonable, path is narrow, could be
-%events just out of detection range
+\item convergence problems/large variance solution is more data collection?
 
-%convergence problems/large variance solution is more data collection?
+\item discuss starting points for optimization and sequential design
 
-%discuss starting points for optimization and sequential design
+\item practical issue: path will be smoothed, no instantaneous direction
+changes at corners, equipment may have limitations which is why we looked at
+number and distribution or turn angles
 
-%practical issue: path will be smoothed, no instantaneous direction changes at
-%corners, equipment may have limitations which is why we looked at number and
-%distribution or turn angles
-
-%could incorporate turns into loss function or use multi-objective
-%optimization~\citep{lark}
+\item could incorporate turns into loss function or use multi-objective
+optimization~\citep{lark}
+\end{itemize}
 
 
 \section{Conclusions}
 % The main conclusions of the study may be presented in a short Conclusions section, which may stand alone or form a subsection of a Discussion or Results and Discussion section.
+
+\begin{itemize}
+\item choice of scheme does not matter much as long as it provides spatial
+coverage
+
+\item of the schemes considered here, only transect schemes have flexiblility
+in distance and/or a priori known distance
+\end{itemize}
 
 
 %\appendix

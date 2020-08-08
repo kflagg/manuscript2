@@ -374,3 +374,106 @@ for(thisplan in mspe_focus){
   dev.off()
 }
 }
+
+# Adjust the axes for the plot used in the manuscript.
+thisdataset <- 'LGCP000004'
+thisplan <- 'Serp000148'
+mspe_results <- rect_results %>%
+  filter(DataID == thisdataset, PlanID %in% mspe_focus) %>%
+  mutate(`MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'))
+pdf(paste0('../writeup/lambda-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+par(mar = c(0, 0, 2, 2))
+thisresult <- mspe_results %>%
+  filter(DataID == thisdataset, PlanID == thisplan)
+(thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
+  t %>%
+  im(xrange = rect_R$x, yrange = rect_R$y) %>%
+  plot(main = sprintf('Prediction Surface for %s, %s\n(MSPE = %.2f)',
+                      thisdataset,
+                      thisplan,
+                      mspe_results %>%
+                      filter(DataID == thisdataset, PlanID == thisplan) %>%
+                      `[`(1, 'MSPE')
+                      ), zlim = c(-100, 100), ribsep = 0.05, ribargs = list(las = 1))
+plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+allplans %>%
+  filter(PlanID == thisplan) %>%
+  `$`('Plan') %>%
+  `[[`(1) %>%
+  plot(col = 'white', add = TRUE)
+sample_ppp(
+  rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+  allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+) %>%
+  points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+dev.off()
+
+
+# Plot the lowest-MSPE and lowest-APV surface from each scheme.
+thisdataset <- 'LGCP000004'
+low_mspe <- c(
+  rect_results %>%
+    filter(DataID == thisdataset) %>%
+    group_by(Scheme) %>%
+    top_n(1, desc(MSPE)) %>%
+    `$`('PlanID'),
+  rect_results %>%
+    filter(DataID == thisdataset) %>%
+    group_by(Scheme) %>%
+    top_n(1, desc(APV)) %>%
+    `$`('PlanID')
+) %>% unique
+for(thisplan in low_mspe){
+  pdf(paste0('../writeup/lambda-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- rect_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
+    t %>%
+    im(xrange = rect_R$x, yrange = rect_R$y) %>%
+    plot(main = sprintf('Prediction Surface for %s, %s\n(MSPE = %.2f)',
+                        thisdataset,
+                        thisplan,
+                        rect_results %>%
+                        filter(DataID == thisdataset, PlanID == thisplan) %>%
+                        `[`(1, 'MSPE')
+                        ), ribsep = 0.05, ribargs = list(las = 1))
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+  allplans %>%
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = 'white', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
+
+  pdf(paste0('../writeup/lambdaSD-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- rect_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
+       values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
+       main = sprintf('Prediction SD of the GP for %s, %s\n(APV = %.2f)',
+                      thisdataset,
+                      thisplan,
+                      rect_results %>%
+                      filter(DataID == thisdataset, PlanID == thisplan) %>%
+                      `[`(1, 'APV')
+                      ), ribsep = 0.05)
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+  allplans %>%
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = 'white', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
+}
