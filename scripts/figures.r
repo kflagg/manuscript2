@@ -10,7 +10,7 @@ options(scipen = 5)
 
 
 # Neat plot.
-pdf('../writeup/mesh_full.pdf', width = 9, height = 4)
+pdf('../graphics/mesh_full.pdf', width = 9, height = 4)
 par(mar = c(0, 0, 2, 2))
 plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
      values = rect_R_nodes_area, ribargs = list(las = 1),
@@ -49,7 +49,7 @@ plottitles <- c(
 )
 for(i in seq_along(plotplans)){
   thisplan <- allplans %>% filter(PlanID == plotplans[i])
-  pdf(paste0('../writeup/', plotplans[i], '.pdf'), width = 6, height = 4)
+  pdf(paste0('../graphics/', plotplans[i], '.pdf'), width = 6, height = 4)
   par(mar = c(3, 0, 2, 0))
   plot(thisplan$Plan[[1]], main = plottitles[i])
   plot(rect_R, border = 'grey', add = TRUE)
@@ -119,7 +119,7 @@ rect_results %>%
 
 # Plot APV and MSPE. Focus on Cluster000004 and LGCP000004 in the paper.
 for(thisdataset in rect_datasets$DataID){
-  png(paste0('../writeup/MaxPV-MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MaxPV-MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -131,7 +131,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/APV-MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -143,7 +143,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/APV-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -155,7 +155,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -167,7 +167,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/APV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -180,7 +180,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/MaxPV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MaxPV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -193,7 +193,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -206,7 +206,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/APV-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
@@ -222,7 +222,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
@@ -238,7 +238,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/APV-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
@@ -258,7 +258,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../writeup/MSPE-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
@@ -302,7 +302,7 @@ mspe_results <- rect_results %>%
   filter(DataID == thisdataset, PlanID %in% mspe_focus) %>%
   mutate(`MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'))
 
-pdf(paste0('../writeup/lambda-', thisdataset, '.pdf'), width = 9, height = 4)
+pdf(paste0('../graphics/lambda-', thisdataset, '.pdf'), width = 9, height = 4)
 par(mar = c(0, 0, 2, 2))
 rect_datasets %>%
   filter(DataID == thisdataset) %>%
@@ -320,7 +320,7 @@ rect_datasets %>%
 dev.off()
 
 for(thisplan in mspe_focus){
-  pdf(paste0('../writeup/lambda-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  pdf(paste0('../graphics/lambda-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 2))
   thisresult <- mspe_results %>%
     filter(DataID == thisdataset, PlanID == thisplan)
@@ -347,7 +347,7 @@ for(thisplan in mspe_focus){
     points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
   dev.off()
 
-  pdf(paste0('../writeup/lambdaSD-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  pdf(paste0('../graphics/lambdaSD-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 2))
   thisresult <- mspe_results %>%
     filter(DataID == thisdataset, PlanID == thisplan)
@@ -381,7 +381,7 @@ thisplan <- 'Serp000148'
 mspe_results <- rect_results %>%
   filter(DataID == thisdataset, PlanID %in% mspe_focus) %>%
   mutate(`MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'))
-pdf(paste0('../writeup/lambda-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+pdf(paste0('../graphics/lambda-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
 par(mar = c(0, 0, 2, 2))
 thisresult <- mspe_results %>%
   filter(DataID == thisdataset, PlanID == thisplan)
@@ -424,7 +424,7 @@ low_mspe <- c(
     `$`('PlanID')
 ) %>% unique
 for(thisplan in low_mspe){
-  pdf(paste0('../writeup/lambda-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  pdf(paste0('../graphics/lambda-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 2))
   thisresult <- rect_results %>%
     filter(DataID == thisdataset, PlanID == thisplan)
@@ -451,7 +451,7 @@ for(thisplan in low_mspe){
     points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
   dev.off()
 
-  pdf(paste0('../writeup/lambdaSD-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  pdf(paste0('../graphics/lambdaSD-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 2))
   thisresult <- rect_results %>%
     filter(DataID == thisdataset, PlanID == thisplan)

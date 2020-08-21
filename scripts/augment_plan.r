@@ -41,7 +41,7 @@ aug_results <- bind_rows(lapply(seq_len(nrow(rect_datasets)), function(r){
 
 
 for(thisdataset in rect_datasets$DataID){
-  pdf(paste0('../writeup/lambda-Aug-', thisdataset, '.pdf'), width = 9, height = 4)
+  pdf(paste0('../graphics/lambda-Aug-', thisdataset, '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 2))
   thisresult <- aug_results %>%
     filter(DataID == thisdataset)
@@ -63,7 +63,7 @@ for(thisdataset in rect_datasets$DataID){
     points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
   dev.off()
 
-  pdf(paste0('../writeup/lambdaSD-Aug-', thisdataset, '.pdf'), width = 9, height = 4)
+  pdf(paste0('../graphics/lambdaSD-Aug-', thisdataset, '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 2))
   plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
        values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),

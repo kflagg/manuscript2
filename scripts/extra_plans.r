@@ -27,7 +27,7 @@ bad_xsect_results <- bind_rows(lapply(seq_len(nrow(rect_datasets)), function(r){
 
 
 for(thisdataset in rect_datasets$DataID){
-  pdf(paste0('../writeup/lambda-BadXsect-', thisdataset, '.pdf'), width = 9, height = 4)
+  pdf(paste0('../graphics/lambda-BadXsect-', thisdataset, '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 2))
   thisresult <- bad_xsect_results %>%
     filter(DataID == thisdataset)
@@ -49,7 +49,7 @@ for(thisdataset in rect_datasets$DataID){
     points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
   dev.off()
 
-  pdf(paste0('../writeup/lambdaSD-BadXsect-', thisdataset, '.pdf'), width = 9, height = 4)
+  pdf(paste0('../graphics/lambdaSD-BadXsect-', thisdataset, '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 2))
   plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
        values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
