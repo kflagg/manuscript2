@@ -23,7 +23,8 @@ dev.off()
 
 # Read the data and plans.
 rect_datasets <- readRDS('../data/rect_data.rds')
-allplans <- readRDS('../data/rect_plans.rds')
+allplans <- readRDS('../data/rect_plans.rds') %>%
+  mutate(Segments = sapply(Lengths, length))
 
 
 # Plot a selection of plans.
@@ -106,7 +107,9 @@ rect_summary <- rect_results %>%
     IQRMSPE = IQR(MSPE, na.rm = TRUE),
     RangeMSPE = max(MSPE, na.rm = TRUE) - min(MSPE, na.rm = TRUE),
     AvgDistance = mean(Distance),
-    SDDistance = sd(Distance)
+    SDDistance = sd(Distance),
+    AvgSegments = mean(Segments),
+    SDSegments = sd(Segments)
   ) %>%
   ungroup
 
@@ -140,6 +143,58 @@ for(thisdataset in rect_datasets$DataID){
     scale_x_log10() +
     scale_y_log10() +
     ggtitle(paste('APV vs MSPE,', thisdataset))
+  )
+  dev.off()
+
+  png(paste0('../graphics/MSPE-Segments-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    left_join(allplans %>% select(PlanID, Segments)) %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = MSPE, x = Segments, col = Scheme)) +
+    geom_point(alpha = 0.25) +
+    scale_x_log10() +
+    scale_y_log10() +
+    ggtitle(paste('MSPE vs Number of Segments,', thisdataset))
+  )
+  dev.off()
+
+  png(paste0('../graphics/APV-Segments-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    left_join(allplans %>% select(PlanID, Segments)) %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = APV, x = Segments, col = Scheme)) +
+    geom_point(alpha = 0.25) +
+    scale_x_log10() +
+    scale_y_log10() +
+    ggtitle(paste('APV vs Number of Segments,', thisdataset))
+  )
+  dev.off()
+
+  png(paste0('../graphics/MSPE-Coverage-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = MSPE, x = CoverageMaxDist, col = Scheme)) +
+    geom_point(alpha = 0.25) +
+    scale_x_log10() +
+    scale_y_log10() +
+    ggtitle(paste('MSPE vs Max Distance to Path,', thisdataset))
+  )
+  dev.off()
+
+  png(paste0('../graphics/APV-Coverage-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = APV, x = CoverageMaxDist, col = Scheme)) +
+    geom_point(alpha = 0.25) +
+    scale_x_log10() +
+    scale_y_log10() +
+    ggtitle(paste('APV vs Max Distance to Path,', thisdataset))
   )
   dev.off()
 
