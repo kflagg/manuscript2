@@ -4,8 +4,6 @@ theme_set(theme_classic())
 theme_update(plot.title = element_text(hjust = 0.5))
 source('functions.r')
 
-stopCluster(cl)
-
 options(scipen = 5)
 
 
@@ -23,6 +21,8 @@ dev.off()
 
 # Read the data and plans.
 rect_datasets <- readRDS('../data/rect_data.rds')
+lambda_at_nodes <- readRDS('../data/lambda_at_nodes.rds')
+log_lambda <- log(lambda_at_nodes)
 allplans <- readRDS('../data/rect_plans.rds') %>%
   mutate(Segments = sapply(Lengths, length))
 
@@ -62,7 +62,11 @@ for(i in seq_along(plotplans)){
 rect_results <- readRDS('../data/rect_results.rds') %>%
   left_join(allplans %>% select(Scheme, Subscheme, PlanID, Distance, Segments)) %>%
   group_by(DataID, Subscheme) %>%
-  mutate(AvgDistance = mean(Distance, na.rm = TRUE)) %>%
+  mutate(
+    MedAPE = NA_real_,
+    MedPV = NA_real_,
+    AvgDistance = mean(Distance, na.rm = TRUE)
+  ) %>%
   ungroup %>%
   mutate(Variant = case_when(
     Subscheme %in% c('Inhib1', 'Inhib2', 'Inhib3', 'Inhib4') ~ '10% pairs',
@@ -71,6 +75,22 @@ rect_results <- readRDS('../data/rect_results.rds') %>%
     Subscheme %in% c('Serp5', 'Serp6', 'Serp7', 'Serp8') ~ '8 zizags',
     TRUE ~ NA_character_
   ))
+
+clusterExport(cl, c('rect_results', 'log_lambda', 'rect_R_nodes_area'))
+rect_results$MedAPE <- parSapply(cl, seq_len(nrow(rect_results)), function(r){
+  thesepreds <- rect_results$Prediction[[r]]
+  if(all(is.na(thesepreds))){return(NA_real_)}
+  return(weighted.median(abs(thesepreds - log_lambda[,rect_results$DataID[r]]),
+                         rect_R_nodes_area, na.rm = TRUE))
+})
+
+badpreds <- which(parSapply(cl, parLapply(cl, rect_results$Prediction, is.na), any))
+rect_results$MedPV[-badpreds] <- parSapply(cl,
+  rect_results$PredictionSD[-badpreds], weighted.median, rect_R_nodes_area
+)^2
+
+stopCluster(cl)
+
 
 # Summarize the results.
 rect_summary <- rect_results %>%
@@ -106,6 +126,24 @@ rect_summary <- rect_results %>%
     MaxMSPE = max(MSPE, na.rm = TRUE),
     IQRMSPE = IQR(MSPE, na.rm = TRUE),
     RangeMSPE = max(MSPE, na.rm = TRUE) - min(MSPE, na.rm = TRUE),
+    AvgMedAPE = mean(MedAPE, na.rm = TRUE),
+    SDMedAPE = sd(MedAPE, na.rm = TRUE),
+    MinMedAPE = min(MedAPE, na.rm = TRUE),
+    Q1MedAPE = quantile(MedAPE, 0.25, na.rm = TRUE),
+    MedMedAPE = median(MedAPE, na.rm = TRUE),
+    Q3MedAPE = quantile(MedAPE, 0.75, na.rm = TRUE),
+    MaxMedAPE = max(MedAPE, na.rm = TRUE),
+    IQRMedAPE = IQR(MedAPE, na.rm = TRUE),
+    RangeMedAPE = max(MedAPE, na.rm = TRUE) - min(MSPE, na.rm = TRUE),
+    AvgMedPV = mean(MedPV, na.rm = TRUE),
+    SDMedPV = sd(MedPV, na.rm = TRUE),
+    MinMedPV = min(MedPV, na.rm = TRUE),
+    Q1MedPV = quantile(MedPV, 0.25, na.rm = TRUE),
+    MedMedPV = median(MedPV, na.rm = TRUE),
+    Q3MedPV = quantile(MedPV, 0.75, na.rm = TRUE),
+    MaxMedPV = max(MedPV, na.rm = TRUE),
+    IQRMedPV = IQR(MedPV, na.rm = TRUE),
+    RangeMedPV = max(MedPV, na.rm = TRUE) - min(MSPE, na.rm = TRUE),
     AvgDistance = mean(Distance),
     SDDistance = sd(Distance),
     AvgSegments = mean(Segments),
@@ -235,6 +273,19 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
+  png(paste0('../graphics/MedPV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = MedPV, x = Distance, col = Variant)) +
+    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    facet_wrap(~Scheme) +
+    scale_y_log10() +
+    ggtitle(paste('Median Prediction Variance vs Distance Surveyed,', thisdataset))
+  )
+  dev.off()
+
   png(paste0('../graphics/MaxPV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
@@ -258,6 +309,19 @@ for(thisdataset in rect_datasets$DataID){
     facet_wrap(~Scheme) +
     scale_y_log10() +
     ggtitle(paste('MSPE vs Distance Surveyed,', thisdataset))
+  )
+  dev.off()
+
+  png(paste0('../graphics/MedAPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = MedAPE, x = Distance, col = Variant)) +
+    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    facet_wrap(~Scheme) +
+    scale_y_log10() +
+    ggtitle(paste('Median Absolute Prediction Error vs Distance Surveyed,', thisdataset))
   )
   dev.off()
 
