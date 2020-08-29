@@ -79,13 +79,14 @@ log-Gaussian Cox process\sep optimal sampling\sep model-based design\sep spatial
 \section{Introduction}
 % State the objectives of the work and provide an adequate background, avoiding a detailed literature survey or a summary of the results.
 
-Spatial point process models have long been considered generally infeasible
-because of their computational demands, but recent advances in Bayesian
-computing have made the Log-Gaussian Cox process (LGCP) an attainable model in
-practice~\citep{rueetal, lindgrenetal, illianetal, simpsonetal}. In some
-applications, the entire point pattern is not fully observed due to variable
-sampling effort. This is referred to as a degraded point
-pattern~\citep{chakrabortyetal} and it is relatively simple to accomodate
+Spatial point process models have generally been infeasible because of their
+computational demands, but recent advances in Bayesian computing have made the
+Log-Gaussian Cox process (LGCP) an attainable model in
+practice~\citep{rueetal, lindgrenetal, illianetal, simpsonetal}. These advances
+make it possible to fit LGCP models easily, without time-consuming Monte Carlo
+methods. In some applications, the entire point pattern is not fully observed
+due to variable sampling effort. This is referred to as a degraded point
+pattern~\citep{chakrabortyetal} and it is relatively simple to accommodate
 variable sampling effort in these models using modern Bayesian computing
 tools~\citep{yuanetal}. However, the literature on optimal sampling for spatial
 point process models is in its infancy~\citep{liuvanhatalo}.
@@ -97,8 +98,8 @@ sampling, with transect sampling being more common. When the objective is to
 map where events occur in space, various spatial mapping procedures have been
 used. Traditionally these have involved aggregating the data to grid cell
 counts or computing moving averages. Aggregation has the downside of
-introducing arbitrary structure into the data by the choice of gridding scheme
-or averaging window, and requires uneccessary computation
+introducing arbitrary structure into the data by the choice of grid scheme
+or averaging window, and requires unnecessary computation
 effort~\citep{simpsonetal}. Software is now available to fit spatial point
 process models to data acquired via distance sampling and simultaneously
 estimate the detection function~\citep{dspat,baser}.
@@ -121,7 +122,7 @@ assess their optimality for mapping intensity using LGCP models.
 \subsection{Log-Gaussian Cox process}
 
 The log-Gaussian Cox process is an inhomogeneous Poisson process where the
-logarithm of the intesity function is a Gaussian process \citep{moelleretal}.
+logarithm of the intensity function is a Gaussian process \citep{moelleretal}.
 The LGCP provides a flexible model for mapping event intensity over space using
 few parameters. Efficient Bayesian computation tools are available using INLA
 to approximate the posterior marginal distributions \cite{rueetal}, a finite
@@ -159,10 +160,10 @@ applications we stop after a finite number of iterations.
 \subsection{Paths as sampling designs}
 
 The small body of literature on spatial sampling design for point pattern
-data has focused on line transects. \citet{pollard} began with line transcets
+data has focused on line transects. \citet{pollard} began with line transects
 and adaptively added zigzags in a species abundance survey.
 
-The Visual Sample Plan software includes features to create systamatic transect
+The Visual Sample Plan software includes features to create systematic transect
 plans and augment plans with additional transects in regions lacking spatial
 coverage~\citep{vspguide}. It helps the user choose the transect spacing to
 maximize the probability of detecting the presence of a hotspot of specified
@@ -247,23 +248,53 @@ Figure~\ref{plancomparison} (left column) shows an example of each scheme with
 %full range of pairwise distances in other directions.
 
 \begin{figure}
+
+\begin{subfigure}{2.5in}
 \includegraphics[width=2.5in]{../graphics/SRS000176.pdf}
+\caption{SRS of 25 parallel transects}
+\label{srs000176}
+\end{subfigure}
+\begin{subfigure}{2.5in}
 \includegraphics[width=2.5in]{../graphics/Serp000124.pdf}
+\caption{Serpentine design with fewer corners}
+\label{serp000124}
+\end{subfigure}
 
+\begin{subfigure}{2.5in}
 \includegraphics[width=2.5in]{../graphics/Sys000141.pdf}
+\caption{Systematic design of 25 parallel transects}
+\label{sys000141}
+\end{subfigure}
+\begin{subfigure}{2.5in}
 \includegraphics[width=2.5in]{../graphics/Serp000539.pdf}
+\caption{Serpentine design with more corners}
+\label{serp000539}
+\end{subfigure}
 
+\begin{subfigure}{2.5in}
 \includegraphics[width=2.5in]{../graphics/Inhib000171.pdf}
+\caption{Inhibitory/pairs design with 25 transects}
+\label{inhib000171}
+\end{subfigure}
+\begin{subfigure}{2.5in}
 \includegraphics[width=2.5in]{../graphics/Hilbert000180.pdf}
+\caption{Space-filling Hilbert design, less refined}
+\label{hilbert000180}
+\end{subfigure}
 
+\begin{subfigure}{2.5in}
 \includegraphics[width=2.5in]{../graphics/LHS-TSP000161.pdf}
+\caption{Shortest path through a LHS design}
+\label{lhstsp000161}
+\end{subfigure}
+\begin{subfigure}{2.5in}
 \includegraphics[width=2.5in]{../graphics/Hilbert000237.pdf}
+\caption{Space-filling, Hilbert design, more refined}
+\label{hilbert000237}
+\end{subfigure}
 
-\caption{Examples of plans from six design schemes. Left, top to bottom: three
-different parallel line transect schemes with the same number of transects, and
-a shortest path through a Latin hypercube sampling design. Right: two
-serpentine transect plans and two Hilbert curves. Except for the Hilbert curve
-of order 5, all of these plans have approximately the same total length.}
+\caption{Examples of plans from six design schemes. Except for the Hilbert
+curve of order 5, all of these plans have approximately the same total length.}
 \label{plancomparison}
 \end{figure}
 
@@ -292,7 +323,7 @@ two examples.
 Random Latin hypercube sampling (LHS) produces a design that spreads discrete
 points through a (potentially high-dimensional) design space, ensuring that
 the full range of each dimension is included while remaining balanced and
-keeping the number of points small~\cite{mckayetal}. This is done by
+keeping the number of points small~\citep{mckayetal}. This is done by
 partitioning each dimension into a specified number \(k\) of intervals (thus
 stratifying a \(d\)-dimensional design space into \(k^{d}\) cells), selecting
 a Latin hypercube design to determine which \(k\) cells will contain a design
@@ -381,9 +412,9 @@ clusters containing the events of interest.
 The simulation uses each of the design schemes discussed in
 Section~\ref{methodschemes}. The parallel transect schemes have 10,
 25, 50, or 70 line transects running north-south. We expect the
-simple random sample scheme to produce expect high prediction variance and
-large prediction error in big gaps between transects. The systematic sample
-scheme uses a uniformly-distributed starting point and constant spacing between
+simple random sample scheme to produce high prediction variance and large
+prediction error in big gaps between transects. The systematic sample scheme
+uses a uniformly-distributed starting point and constant spacing between
 adjacent transects. We expect systematic transects to provide low bias and
 moderate prediction variance. However, this scheme can miss structures at
 certain sizes because no transects are close to each other in the east-west
@@ -411,7 +442,7 @@ prediction errors and lower variance farther from path, compared to
 line-transect designs.
 
 Our Latin hypercube sampling/traveling salesperson (LHS-TSP) scheme uses 50,
-300, 1200, or 2400 bins to generate the waypoints. Preliminary experiementation
+300, 1200, or 2400 bins to generate the waypoints. Preliminary experimentation
 found that these bin numbers produced total lengths similar to the
 line-transect schemes. The LHS-TSP scheme is expected to result in small
 prediction errors and low prediction variance per unit distance traveled.
@@ -486,22 +517,40 @@ dataset (Figure~\ref{fulldata}). The results are similar for all datasets (see
 the online supplement.)
 
 \begin{figure}
+
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambda-LGCP000004.pdf}
+\caption{Realized LGCP log-intensity}
+\label{labmdalgcp}
+\end{subfigure}
 
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambda-Cluster000004.pdf}
+\caption{Realized cluster log-intensity}
+\label{lambdacluster}
+\end{subfigure}
 
-\caption{The realized intensity function and complete point pattern from a LGCP
-(top) and a LGCP superposed with a cluster process (bottom).}
+\caption{The realized intensity function (natural log scale) and complete
+point pattern from a LGCP, and from a LGCP superposed with a cluster process.}
 \label{fulldata}
 \end{figure}
 
 \begin{figure}
+
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambda-SRS000187-LGCP000004.pdf}
+\caption{Predicted log-intensity}
+\label{lambdasrs000187}
+\end{subfigure}
 
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambdaSD-SRS000187-LGCP000004.pdf}
+\caption{Prediction SD}
+\label{sdsrs000187}
+\end{subfigure}
 
-\caption{Predicted log-intensity function (top) using data observed via a SRS
-of line transects. The prediction standard deviation (bottom) is shown for each
+\caption{Predicted log-intensity function and prediction standard deviation
+using data observed via a SRS of line transects. The SD is shown for each
 finite element node.}
 \label{srs000187}
 \end{figure}
@@ -519,7 +568,7 @@ in places where the surveyed area was observed to contain no events.
 Most plans yielded similar prediction surfaces, capturing the large-scale
 trends, and having the least uncertainty near observed events. Results varied
 in accuracy at the most extreme peaks and valleys of the itensity function and
-in oeverall SD across the study region.
+in overall SD across the study region.
 
 However, a small number of model fits suffered from apparent edge effects.
 For example, Figure~\ref{serp000148} shows the prediction surface resulting
@@ -545,7 +594,7 @@ units of distance for the LGCP data but continuing to decrease through 50000
 units for the clustered data (Figure~\ref{msperesults}). Variability (IQR) of
 MSPE also descreases as distance increases. Surfaces with edge effects form a
 cluster of large, outlying MSPE values. The lowest-MSPE prediction surfaces
-result from the longest HIlbert designs. Overall, there are no substantial
+result from the longest Hilbert designs. Overall, there are no substantial
 differences among the different schemes with respect to median or variability
 in MSPE.
 % More specifically, this last sentance means there was "more" variation across
@@ -566,37 +615,65 @@ otherwise there is little association between APV and MSPE.
 %\end{itemize}
 
 \begin{figure}
+
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambda-Serp000148-LGCP000004.pdf}
+\caption{Predicted log-intensity. The color scale is truncated at 100, but
+reaches a maximum of 692.}
+\label{lambdaserp000148}
+\end{subfigure}
 
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambdaSD-Serp000148-LGCP000004.pdf}
+\caption{Prediction SD}
+\label{sdserp000148}
+\end{subfigure}
 
-\caption{Predicted GP surface (top) using data observed via a serpentine transect
-plan. The prediction has an apparent edge effect in the southeastern corner. The
-posterior standard deviation (bottom) is high across much of the site.}
+\caption{Predicted GP surface and prediction SD using data observed via a
+serpentine transect plan. The prediction has an apparent edge effect in the
+southeastern corner. The SD is high across much of the site.}
 \label{serp000148}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=5in]{../graphics/MSPE-LGCP000004.png}
 
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/MSPE-LGCP000004.png}
+\caption{MSPE vs length of the path for one LGCP dataset}
+\label{mspelgcp}
+\end{subfigure}
+
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/MSPE-Cluster000004.png}
+\caption{MSPE vs length of the path for one clustered dataset}
+\label{mspecluster}
+\end{subfigure}
 
 \caption{Plots of mean squared prediction error (MSPE) vs length of the path
-for each plan applied to one realization of a LGCP (top) and one realization of
-an LGCP with a cluster process overlaid (bottom). Line segments connect the
+for each plan applied to one realization of a LGCP and one realization of
+an LGCP with a cluster process overlaid. Line segments connect the
 median MSPE at each group of distances. The plots are paneled by design
 scheme.}
 \label{msperesults}
 \end{figure}
 
 \begin{figure}
-\includegraphics[width=5in]{../graphics/APV-MSPE-LGCP000004.png}
 
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/APV-MSPE-LGCP000004.png}
+\caption{APV vs MSPE for one LGCP dataset}
+\label{apvlgcp}
+\end{subfigure}
+
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/APV-MSPE-Cluster000004.png}
+\caption{APV vs MSPE for one clustered dataset}
+\label{apvcluster}
+\end{subfigure}
 
 \caption{Plots of average prediction variance (APV) vs MSPE for each plan
-applied to one realization of a LGCP (top) and one realization of an LGCP
-with a cluster process overlaid (bottom).}
+applied to one realization of a LGCP and one realization of an LGCP with a
+cluster process overlaid.}
 \label{apvresults}
 \end{figure}
 
@@ -634,13 +711,22 @@ the site could further improve the prediction.
 
 
 \begin{figure}
+
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambda-Aug-LGCP000004.pdf}
+\caption{Predicted log-intensity}
+\label{lambdaaug}
+\end{subfigure}
 
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambdaSD-Aug-LGCP000004.pdf}
+\caption{Prediction SD}
+\label{sdaug}
+\end{subfigure}
 
-\caption{Predicted log-intensity function (top) using data observed via a
-serpentine transect design augmented post-hoc. The prediction standard
-deviation (bottom) is shown for each finite element node.}
+\caption{Predicted log-intensity function and prediction standard deviation
+using data observed via a serpentine transect design augmented post-hoc. The
+SD is shown for each finite element node.}
 \label{aug}
 \end{figure}
 
@@ -661,13 +747,22 @@ GP posterior mean of \(-8.71\) over most of the site, rendering the prediction
 mostly useless.
 
 \begin{figure}
+
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambda-BadXsect-LGCP000004.pdf}
+\caption{Predicted log-intensity}
+\label{lambdabad}
+\end{subfigure}
 
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambdaSD-BadXsect-LGCP000004.pdf}
+\caption{Prediction SD}
+\label{sdbad}
+\end{subfigure}
 
-\caption{Predicted log-intensity function (top) using data observed via a
-systematic sample of a small section of the site. The prediction standard
-deviation (bottom) is shown for each finite element node.}
+\caption{Predicted log-intensity function and prediction standard deviation
+using data observed via a systematic sample of a small section of the site. The
+SD is shown for each finite element node.}
 \label{badxsect}
 \end{figure}
 

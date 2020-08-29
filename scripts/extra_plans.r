@@ -34,8 +34,7 @@ for(thisdataset in rect_datasets$DataID){
   (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
     t %>%
     im(xrange = rect_R$x, yrange = rect_R$y) %>%
-    plot(main = sprintf('Prediction Surface for %s, BadXsect\n(MSPE = %.2f)',
-                        thisdataset,
+    plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
                         bad_xsect_results %>%
                         filter(DataID == thisdataset) %>%
                         `[`(1, 'MSPE')
@@ -53,8 +52,7 @@ for(thisdataset in rect_datasets$DataID){
   par(mar = c(0, 0, 2, 2))
   plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
        values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
-       main = sprintf('Prediction SD of the GP for %s, BadXsect\n(APV = %.2f)',
-                      thisdataset,
+       main = sprintf('Prediction SD of the GP\n(APV = %.2f)',
                       bad_xsect_results %>%
                       filter(DataID == thisdataset) %>%
                       `[`(1, 'APV')

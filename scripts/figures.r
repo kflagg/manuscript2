@@ -50,8 +50,8 @@ plottitles <- c(
 )
 for(i in seq_along(plotplans)){
   thisplan <- allplans %>% filter(PlanID == plotplans[i])
-  pdf(paste0('../graphics/', plotplans[i], '.pdf'), width = 6, height = 4)
-  par(mar = c(3, 0, 2, 0))
+  pdf(paste0('../graphics/', plotplans[i], '.pdf'), width = 6, height = 3)
+  par(mar = c(0, 0, 1, 0))
   plot(thisplan$Plan[[1]], main = plottitles[i])
   plot(rect_R, border = 'grey', add = TRUE)
   dev.off()
@@ -168,7 +168,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle(paste('MaxPV vs MSPE,', thisdataset))
+    ggtitle('MaxPV vs MSPE')
   )
   dev.off()
 
@@ -180,7 +180,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle(paste('APV vs MSPE,', thisdataset))
+    ggtitle('APV vs MSPE')
   )
   dev.off()
 
@@ -193,7 +193,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle(paste('MSPE vs Number of Segments,', thisdataset))
+    ggtitle('MSPE vs Number of Segments')
   )
   dev.off()
 
@@ -206,7 +206,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle(paste('APV vs Number of Segments,', thisdataset))
+    ggtitle('APV vs Number of Segments')
   )
   dev.off()
 
@@ -219,7 +219,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle(paste('MSPE vs Max Distance to Path,', thisdataset))
+    ggtitle('MSPE vs Max Distance to Path')
   )
   dev.off()
 
@@ -232,7 +232,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle(paste('APV vs Max Distance to Path,', thisdataset))
+    ggtitle('APV vs Max Distance to Path')
   )
   dev.off()
 
@@ -244,7 +244,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     scale_y_log10() +
-    ggtitle(paste('APV vs Distance Surveyed,', thisdataset))
+    ggtitle('APV vs Distance Surveyed')
   )
   dev.off()
 
@@ -256,7 +256,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     scale_y_log10() +
-    ggtitle(paste('MSPE vs Distance Surveyed,', thisdataset))
+    ggtitle('MSPE vs Distance Surveyed')
   )
   dev.off()
 
@@ -269,7 +269,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle(paste('APV vs Distance Surveyed,', thisdataset))
+    ggtitle('APV vs Distance Surveyed')
   )
   dev.off()
 
@@ -282,7 +282,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle(paste('Median Prediction Variance vs Distance Surveyed,', thisdataset))
+    ggtitle('Median Prediction Variance vs Distance Surveyed')
   )
   dev.off()
 
@@ -295,7 +295,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle(paste('Maximum Prediction Variance vs Distance Surveyed,', thisdataset))
+    ggtitle('Maximum Prediction Variance vs Distance Surveyed')
   )
   dev.off()
 
@@ -308,7 +308,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle(paste('MSPE vs Distance Surveyed,', thisdataset))
+    ggtitle('MSPE vs Distance Surveyed')
   )
   dev.off()
 
@@ -321,7 +321,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle(paste('Median Absolute Prediction Error vs Distance Surveyed,', thisdataset))
+    ggtitle('Median Absolute Prediction Error vs Distance Surveyed')
   )
   dev.off()
 
@@ -337,7 +337,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 5, jitter.width = 2, jitter.height = 0)) +
     scale_x_continuous(breaks = unique(inhib_design$num_xsects)) +
     scale_y_log10() +
-    ggtitle(paste('Average Prediction Variance for Inhibitory Plus Close Pairs Designs,', thisdataset))
+    ggtitle('Average Prediction Variance for Inhibitory Plus Close Pairs Designs')
   )
   dev.off()
 
@@ -353,7 +353,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 5, jitter.width = 2, jitter.height = 0)) +
     scale_x_continuous(breaks = unique(inhib_design$num_xsects)) +
     scale_y_log10() +
-    ggtitle(paste('MSPE for Inhibitory Plus Close Pairs Designs,', thisdataset))
+    ggtitle('MSPE for Inhibitory Plus Close Pairs Designs')
   )
   dev.off()
 
@@ -373,7 +373,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 3, jitter.width = 2, jitter.height = 0)) +
     scale_x_continuous(breaks = unique(serp_design$num_xsects)) +
     scale_y_log10() +
-    ggtitle(paste('Average Prediction Variance for Serpentine Transect Designs,', thisdataset))
+    ggtitle('Average Prediction Variance for Serpentine Transect Designs')
   )
   dev.off()
 
@@ -393,7 +393,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.5, position = position_jitterdodge(dodge.width = 3, jitter.width = 2, jitter.height = 0)) +
     scale_x_continuous(breaks = unique(serp_design$num_xsects)) +
     scale_y_log10() +
-    ggtitle(paste('MSPE for Serpentine Transect Designs,', thisdataset))
+    ggtitle('MSPE for Serpentine Transect Designs')
   )
   dev.off()
 }
@@ -429,7 +429,7 @@ rect_datasets %>%
   `[[`(1) %>%
   attr('Lambda') %>%
   log %>%
-  plot(main = paste('Realized Log-Intensity of', thisdataset),
+  plot(main = 'Realized Log-Intensity',
        ribsep = 0.05, ribargs = list(las = 1))
 rect_datasets %>%
   filter(DataID == thisdataset) %>%
@@ -446,9 +446,7 @@ for(thisplan in mspe_focus){
   (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
     t %>%
     im(xrange = rect_R$x, yrange = rect_R$y) %>%
-    plot(main = sprintf('Prediction Surface for %s, %s\n(MSPE = %.2f)',
-                        thisdataset,
-                        thisplan,
+    plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
                         mspe_results %>%
                         filter(DataID == thisdataset, PlanID == thisplan) %>%
                         `[`(1, 'MSPE')
@@ -472,9 +470,7 @@ for(thisplan in mspe_focus){
     filter(DataID == thisdataset, PlanID == thisplan)
   plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
        values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
-       main = sprintf('Prediction SD of the GP for %s, %s\n(APV = %.2f)',
-                      thisdataset,
-                      thisplan,
+       main = sprintf('Prediction SD of the GP\n(APV = %.2f)',
                       mspe_results %>%
                       filter(DataID == thisdataset, PlanID == thisplan) %>%
                       `[`(1, 'APV')
@@ -507,9 +503,7 @@ thisresult <- mspe_results %>%
 (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
   t %>%
   im(xrange = rect_R$x, yrange = rect_R$y) %>%
-  plot(main = sprintf('Prediction Surface for %s, %s\n(MSPE = %.2f)',
-                      thisdataset,
-                      thisplan,
+  plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
                       mspe_results %>%
                       filter(DataID == thisdataset, PlanID == thisplan) %>%
                       `[`(1, 'MSPE')
@@ -550,9 +544,7 @@ for(thisplan in low_mspe){
   (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
     t %>%
     im(xrange = rect_R$x, yrange = rect_R$y) %>%
-    plot(main = sprintf('Prediction Surface for %s, %s\n(MSPE = %.2f)',
-                        thisdataset,
-                        thisplan,
+    plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
                         rect_results %>%
                         filter(DataID == thisdataset, PlanID == thisplan) %>%
                         `[`(1, 'MSPE')
@@ -576,9 +568,7 @@ for(thisplan in low_mspe){
     filter(DataID == thisdataset, PlanID == thisplan)
   plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
        values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
-       main = sprintf('Prediction SD of the GP for %s, %s\n(APV = %.2f)',
-                      thisdataset,
-                      thisplan,
+       main = sprintf('Prediction SD of the GP\n(APV = %.2f)',
                       rect_results %>%
                       filter(DataID == thisdataset, PlanID == thisplan) %>%
                       `[`(1, 'APV')
