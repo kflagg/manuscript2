@@ -23,6 +23,7 @@ dev.off()
 rect_datasets <- readRDS('../data/rect_data.rds')
 lambda_at_nodes <- readRDS('../data/lambda_at_nodes.rds')
 log_lambda <- log(lambda_at_nodes)
+intercept <- apply(log_lambda, 2, weighted.mean, rect_R_nodes_area, na.rm = TRUE)
 allplans <- readRDS('../data/rect_plans.rds') %>%
   mutate(
     Segments = sapply(Lengths, length),
@@ -75,6 +76,7 @@ rect_results <- readRDS('../data/rect_results.rds') %>%
   mutate(AvgDistance = mean(Distance, na.rm = TRUE)) %>%
   ungroup %>%
   mutate(
+    IntMeanError = NA_real_,
     MedAPE = NA_real_,
     MedPV = NA_real_,
     Variant = case_when(
@@ -86,7 +88,15 @@ rect_results <- readRDS('../data/rect_results.rds') %>%
     )
   )
 
-clusterExport(cl, c('rect_results', 'log_lambda', 'rect_R_nodes_area'))
+clusterExport(cl, c('rect_results', 'log_lambda', 'intercept', 'rect_R_nodes_area'))
+rect_results$IntMeanError <- parSapply(cl, seq_len(nrow(rect_results)), function(r){
+  return(intercept[rect_results$DataID[r]] - rect_results$IntMean[r])
+#  thesepreds <- rect_results$Prediction[[r]]
+#  if(all(is.na(thesepreds))){return(NA_real_)}
+#  return(weighted.median(abs(thesepreds - log_lambda[,rect_results$DataID[r]]),
+#                         rect_R_nodes_area, na.rm = TRUE))
+})
+
 rect_results$MedAPE <- parSapply(cl, seq_len(nrow(rect_results)), function(r){
   thesepreds <- rect_results$Prediction[[r]]
   if(all(is.na(thesepreds))){return(NA_real_)}
@@ -144,7 +154,7 @@ rect_summary <- rect_results %>%
     Q3MedAPE = quantile(MedAPE, 0.75, na.rm = TRUE),
     MaxMedAPE = max(MedAPE, na.rm = TRUE),
     IQRMedAPE = IQR(MedAPE, na.rm = TRUE),
-    RangeMedAPE = max(MedAPE, na.rm = TRUE) - min(MSPE, na.rm = TRUE),
+    RangeMedAPE = max(MedAPE, na.rm = TRUE) - min(MedAPE, na.rm = TRUE),
     AvgMedPV = mean(MedPV, na.rm = TRUE),
     SDMedPV = sd(MedPV, na.rm = TRUE),
     MinMedPV = min(MedPV, na.rm = TRUE),
@@ -153,7 +163,14 @@ rect_summary <- rect_results %>%
     Q3MedPV = quantile(MedPV, 0.75, na.rm = TRUE),
     MaxMedPV = max(MedPV, na.rm = TRUE),
     IQRMedPV = IQR(MedPV, na.rm = TRUE),
-    RangeMedPV = max(MedPV, na.rm = TRUE) - min(MSPE, na.rm = TRUE),
+    RangeMedPV = max(MedPV, na.rm = TRUE) - min(MedPV, na.rm = TRUE),
+    MinInt = min(IntMeanError, na.rm = TRUE),
+    Q1Int = quantile(IntMeanError, 0.25, na.rm = TRUE),
+    MedInt = median(IntMeanError, na.rm = TRUE),
+    Q3Int = quantile(IntMeanError, 0.75, na.rm = TRUE),
+    MaxInt = max(IntMeanError, na.rm = TRUE),
+    IQRInt = IQR(IntMeanError, na.rm = TRUE),
+    RangeInt = max(IntMeanError, na.rm = TRUE) - min(IntMeanError, na.rm = TRUE),
     AvgDistance = mean(Distance),
     SDDistance = sd(Distance),
     AvgArea = mean(Area),
@@ -174,6 +191,52 @@ rect_results %>%
 
 # Plot APV and MSPE. Focus on Cluster000004 and LGCP000004 in the paper.
 for(thisdataset in rect_datasets$DataID){
+  png(paste0('../graphics/Int-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = IntMeanError, x = Distance, col = Variant)) +
+    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    facet_wrap(~Scheme) +
+    ggtitle('Error in Posterior Mean vs Distance Surveyed')
+  )
+  dev.off()
+
+  png(paste0('../graphics/Int-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = IntMeanError, x = Distance, col = Variant)) +
+    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    ggtitle('Error in Posterior Mean vs Distance Surveyed')
+  )
+  dev.off()
+
+  png(paste0('../graphics/Int-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = IntMeanError, x = Effort, col = Variant, group = Variant)) +
+    geom_line(stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    facet_wrap(~Scheme) +
+    ggtitle('Error in Posterior Mean vs Survey Effort')
+  )
+  dev.off()
+
+  png(paste0('../graphics/Int-effort-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = IntMeanError, x = Effort, col = Variant, group = Variant)) +
+    geom_line(stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    ggtitle('Error in Posterior Mean vs Survey Effort')
+  )
+  dev.off()
+
   png(paste0('../graphics/MaxPV-MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
@@ -286,7 +349,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-effort', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-effort-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -294,7 +357,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     scale_y_log10() +
-    ggtitle('MSPE vs Surbey Effort')
+    ggtitle('MSPE vs Survey Effort')
   )
   dev.off()
 
@@ -311,7 +374,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-effort', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -337,7 +400,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MedPV-effort', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MedPV-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -363,7 +426,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MaxPV-effort', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MaxPV-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -389,7 +452,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-effort', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -415,11 +478,11 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MedAPE-effort', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MedAPE-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = MedAPE, x = Effort, col = Variant, group = Effort)) +
+    ggplot(aes(y = MedAPE, x = Effort, col = Variant, group = Variant)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
