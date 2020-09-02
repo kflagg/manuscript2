@@ -1,0 +1,159 @@
+<html>
+<head>
+
+<title>Results Plot Gallery</title>
+
+<!-- Center everything on the page. -->
+<style type="text/css">
+body{
+  text-align: center
+}
+</style>
+
+<script style="text/javascript">
+// Filename components identifying plots.
+var plotvalues = [
+  "APV", "APV-Coverage", "APV-effort", "APV-MSPE", "APV-Segments",
+  "Int", "Int-effort",
+  "MaxPV", "MaxPV-effort", "MaxPV-MSPE",
+  "MedAPE", "MedAPE-effort",
+  "MedPV", "MedPV-effort",
+  "MSPE", "MSPE-Coverage", "MSPE-Segments"
+];
+
+// Labels for the plot selector dropdown.
+var plotlabels = [
+  "APV vs Distance Surveyed",
+  "APV vs Maximum Distance to Path",
+  "APV vs Survey Effort",
+  "APV vs MSPE",
+  "APV vs Number of Segments",
+  "Posterior Mean vs Distance Surveyed",
+  "Posterior Mean vs Survey Effort",
+  "Maximum Prediction Variance vs Distance Surveyed",
+  "Maximum Prediction Variance vs Survey Effort",
+  "Maximum Prediction Variance vs MSPE",
+  "Median Absolute Prediction Error vs Distance Surveyed",
+  "Median Absolute Prediction Error vs Survey Effort",
+  "Median Prediction Variance vs Distance Surveyed",
+  "Median Prediction Variance vs Survey Effort",
+  "MSPE vs Distance Surveyed",
+  "MSPE vs Maximum Distance to Path",
+  "MSPE vs Number of Segments"
+];
+
+// Filename components identifying datasets.
+var datavalues = [
+  "Cluster000001",
+  "Cluster000002",
+  "Cluster000003",
+  "Cluster000004",
+  "Cluster000005",
+  "LGCP000001",
+  "LGCP000002",
+  "LGCP000003",
+  "LGCP000004",
+  "LGCP000005"
+];
+
+// Labels for the dataset selector dropdown.
+var datalabels = [
+  "Cluster000001",
+  "Cluster000002",
+  "Cluster000003",
+  "Cluster000004",
+  "Cluster000005",
+  "LGCP000001",
+  "LGCP000002",
+  "LGCP000003",
+  "LGCP000004 (for manuscript)",
+  "LGCP000005"
+];
+
+// Function to update the image.
+function updateDisplay(){
+  document.getElementById("theplot").src = document.getElementById("plotselect").value +
+    "-" + document.getElementById("dataselect").value + ".png";
+}
+
+// Function to go back one plot.
+function prevPlot(){
+  if(document.getElementById("plotselect").selectedIndex > 0){
+    document.getElementById("plotselect").selectedIndex--;
+  }
+  updateDisplay();
+}
+
+// Function to go forward one plot.
+function nextPlot(){
+  if(document.getElementById("plotselect").selectedIndex < plotvalues.length - 1){
+    document.getElementById("plotselect").selectedIndex++;
+  }
+  updateDisplay();
+}
+
+// Function to go back one dataset.
+function prevData(){
+  if(document.getElementById("dataselect").selectedIndex > 0){
+    document.getElementById("dataselect").selectedIndex--;
+  }
+  updateDisplay();
+}
+
+// Function to go forward one dataset.
+function nextData(){
+  if(document.getElementById("dataselect").selectedIndex < datavalues.length - 1){
+    document.getElementById("dataselect").selectedIndex++;
+  }
+  updateDisplay();
+}
+</script>
+
+</head>
+<body>
+
+<!-- Buttons and selector for navigating plots. -->
+Plot:
+<button onclick="prevPlot()">&larr;</button>
+<select name="plotselect" id="plotselect" onchange="updateDisplay()"></select>
+<button onclick="nextPlot()">&rarr;</button> <br />
+
+<script style="text/javascript">
+// Populate the plot selector.
+document.getElementById("plotselect").innerHTML = '';
+for(i = 0; i < plotvalues.length; i++){
+  document.getElementById("plotselect").innerHTML += "<option value=\"" +
+    plotvalues[i] + "\">" + plotlabels[i] + "</option>\n";
+}
+
+// Set a default selection.
+document.getElementById("plotselect").value = 'MSPE';
+</script>
+
+<!-- Buttons and selector for navigating datasets. -->
+Dataset:
+<button onclick="prevData()">&larr;</button>
+<select names="dataselect" id="dataselect" onchange="updateDisplay()">
+</select>
+<button onclick="nextData()">&rarr;</button> <br />
+
+<script style="text/javascript">
+// Populate the dataset selector.
+document.getElementById("dataselect").innerHTML = '';
+for(i = 0; i < datavalues.length; i++){
+  document.getElementById("dataselect").innerHTML += "<option value=\"" +
+    datavalues[i] + "\">" + datalabels[i] + "</option>\n";
+}
+
+// Set a default selection.
+document.getElementById("dataselect").value = 'LGCP000004';
+</script>
+
+<!-- Image display. -->
+<img id="theplot" src="" height = 90%>
+<script style="text/javascript">
+updateDisplay()
+</script>
+
+</body>
+</html>
