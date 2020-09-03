@@ -759,7 +759,8 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
     PredictionSD = list(if(save_pred) result$summary.random[[1]]$sd),
     MSPE = mean((log(attr(obs_ppp, 'Lambda')) - gpmap)^2),
     APV = sum(mesh_weights * result$summary.random[[1]]$sd^2) / sum(mesh_weights),
-    MaxPV = max(result$summary.random[[1]]$sd^2)
+    MaxPV = max(result$summary.random[[1]]$sd^2),
+    Area = area(Window(obs_ppp))
   ))
 }
 

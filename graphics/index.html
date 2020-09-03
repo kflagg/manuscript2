@@ -13,23 +13,27 @@ body{
 <script style="text/javascript">
 // Filename components identifying plots.
 var plotvalues = [
-  "APV", "APV-Coverage", "APV-effort", "APV-MSPE", "APV-Segments",
-  "Int", "Int-effort",
+  "APV", "APV-notpaneled", "APV-Coverage", "APV-effort", "APV-effort-notpaneled", "APV-MSPE", "APV-Segments",
+  "Int", "Int-notpaneled", "Int-effort", "Int-effort-notpaneled",
   "MaxPV", "MaxPV-effort", "MaxPV-MSPE",
   "MedAPE", "MedAPE-effort",
   "MedPV", "MedPV-effort",
-  "MSPE", "MSPE-Coverage", "MSPE-effort", "MSPE-Segments"
+  "MSPE", "MSPE-notpaneled", "MSPE-Coverage", "MSPE-effort", "MSPE-effort-notpaneled", "MSPE-Segments"
 ];
 
 // Labels for the plot selector dropdown.
 var plotlabels = [
   "APV vs Distance Surveyed",
+  "APV vs Distance Surveyed (single panel)",
   "APV vs Maximum Distance to Path",
   "APV vs Survey Effort",
+  "APV vs Survey Effort (single panel)",
   "APV vs MSPE",
   "APV vs Number of Segments",
   "Posterior Mean vs Distance Surveyed",
+  "Posterior Mean vs Distance Surveyed (single panel)",
   "Posterior Mean vs Survey Effort",
+  "Posterior Mean vs Survey Effort (single panel)",
   "Maximum Prediction Variance vs Distance Surveyed",
   "Maximum Prediction Variance vs Survey Effort",
   "Maximum Prediction Variance vs MSPE",
@@ -38,8 +42,10 @@ var plotlabels = [
   "Median Prediction Variance vs Distance Surveyed",
   "Median Prediction Variance vs Survey Effort",
   "MSPE vs Distance Surveyed",
+  "MSPE vs Distance Surveyed (single panel)",
   "MSPE vs Maximum Distance to Path",
   "MSPE vs Survey Effort",
+  "MSPE vs Survey Effort (single panel)",
   "MSPE vs Number of Segments"
 ];
 
@@ -128,7 +134,7 @@ for(i = 0; i < plotvalues.length; i++){
 }
 
 // Set a default selection.
-document.getElementById("plotselect").value = 'MSPE';
+document.getElementById("plotselect").value = 'MSPE-effort';
 </script>
 
 <!-- Buttons and selector for navigating datasets. -->

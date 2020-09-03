@@ -203,7 +203,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Int-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Int-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -226,7 +226,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Int-effort-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Int-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -313,7 +313,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -325,7 +325,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-effort-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -337,7 +337,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -349,7 +349,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-effort-', thisdataset, '-notpaneled.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
