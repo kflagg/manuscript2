@@ -210,8 +210,9 @@ criteria to compare sampling strategies that impact LGCP estimates. We compare
 plans with (approximately) fixed path lengths, most of which avoid sharp turns.
 Data collection equipment (e.g. metal detectors) may have limited mobility,
 requiring minimizing the number or angle of turns. The criteria that we
-evaluate are average prediction variance (APV) and mean squared prediction
-error (MSPE) of the Gaussian process.
+evaluate are the mean squared prediction error (MSPE) of the latent Gaussian,
+process, the average prediction variance (APV), and the estimation error in the
+posterior mean of the intercept.
 
 
 \subsection{Sampling design schemes}
@@ -385,13 +386,33 @@ realizations from each of two data generating models.
 
 \subsection{Study site}
 
+\begin{figure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambda-LGCP000004.pdf}
+\caption{Realized LGCP log-intensity}
+\label{lambdalgcp}
+\end{subfigure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambda-Cluster000004.pdf}
+\caption{Realized cluster log-intensity}
+\label{lambdacluster}
+\end{subfigure}
+
+\caption{The realized intensity function (natural log scale) and complete
+point pattern from a LGCP, and from a LGCP superposed with a cluster process.}
+\label{fulldata}
+\end{figure}
+
 We consider a fictitious site \(\mathcal{R}\) with the simple shape of a 1500
 unit by 700 unit rectangle. In this site, we simulate two data generating
 models that produce random intensity functions with hotspots. First, a LGCP
-with latent GP mean \(\mu = \log(250 / |\mathcal{R}|)\) and a Mat\'{e}rn
-covariance with \(\nu = 1\), \(\sigma = 2\), and \(\text{range} = 200\). This
-model produces relatively unstructured hotspots due to large variability in the
-GP.
+with latent GP mean \(\mu = \log(250 / |\mathcal{R}|) = -8.34\) and
+Mat\'{e}rn covariance function with \(\nu = 1\), \(\sigma = 2\), and
+\(\text{range} = 200\). This model produces relatively unstructured hotspots
+due to large variability in the GP. Figure \ref{lambdalgcp} shows an example
+realization from this process.
 
 Second, a two-stage cluster process and a LGCP are superposed. The cluster
 process (a Neyman-Scott or, more specifically, a Thomas process) is constructed
@@ -400,17 +421,28 @@ number of events per cluster is Poisson-distributed with mean 200. The cluster
 centers are distributed uniformly over \(\mathcal{R}\). Events come from a
 bivariate normal distribution with mean equal to the cluster center and
 variance \(\boldsymbol{\Sigma} = \tau^{2}\mathbf{I}\), \(\tau = 50\). The LGCP
-has \(\mu = \log(250 / |\mathcal{R}|)\) and Mat\'{e}rn covariance with
-\(\nu = 1\), \(\sigma = 1\), and \(\text{range} = 200\). This model is based
-upon the typical conceptual model of a firing range, with a background process
-(represented by the LGCP) and a small number of higher-intensity foreground
-clusters containing the events of interest.
+component has \(\mu = \log(250 / |\mathcal{R}|) = -8.34\) and Mat\'{e}rn
+covariance with \(\nu = 1\), \(\sigma = 1\), and \(\text{range} = 200\). This
+model is based upon the typical conceptual model of a firing range, with a
+background process (represented by the LGCP) and a small number of
+higher-intensity foreground clusters containing the events of interest
+(example in Figure \ref{lambdacluster}). As a shorthand, we refer to this
+generative process as LGCP with Clusters.
+
+The LGCP generating process matches the model we fit to the realized data. The
+model should both produce accurate predictions and have low bias in the
+posterior means of the parameters. On the other hand, the parameters of the
+LGCP with Clusters process will not correspond to the LGCP model parameters,
+but we anticipate that in general the latent GP in the LGCP model will still
+accurately predict the log-intensity function.
 
 
 \subsection{Path design schemes}
 
 \begin{table}
-\caption{Design schemes used in the simulation study.\\
+\caption{Design schemes used in the simulation study. The table presents the
+design parameters, distance travelled along the path, and percent of the study
+area surveyed under each of four survey effort level.\\
 * Variable area due to overlapping segments, reported as average (SD).\\
 ** Variable distance surveyed, reported as average (SD).}
 \label{designtable}
@@ -682,7 +714,7 @@ LHS-TSP
 &
 12.9\% (0.0835\%)**
 &
-18.2\% (12.7\%)**
+18.2\% (0.127\%)**
 \\
 \hline
 Hilbert Curve
@@ -720,15 +752,22 @@ Hilbert Curve
 \end{table}
 
 The simulation uses each of the design schemes discussed in
-Section~\ref{methodschemes}. The parallel transect schemes have 10,
-25, 50, or 70 line transects running north-south. We expect the
-simple random sample scheme to produce high prediction variance and large
-prediction error in big gaps between transects. The systematic sample scheme
-uses a uniformly-distributed starting point and constant spacing between
-adjacent transects. We expect systematic transects to provide low bias and
-moderate prediction variance. However, this scheme can miss structures at
-certain sizes because no transects are close to each other in the east-west
-direction.
+Section~\ref{methodschemes}. The design parameters for each scheme are varied
+to create four different levels of survey effort: low, medium, high, and very
+high. Within each effort level, the total lengh or distance traveled is
+comparable across all schemes. The inhibitory plus close pairs scheme and the
+serpentine scheme are further varied to employ different numbers of pairs
+and different numbers of zigzags, respectively. Table \ref{designtable}
+provides an overview of the different settings.
+
+The parallel transect schemes have 10, 25, 50, or 70 line transects running
+north-south. We expect the simple random sample scheme to produce high
+prediction variance and large prediction error in big gaps between transects.
+The systematic sample scheme uses a uniformly-distributed starting point and
+constant spacing between adjacent transects. We expect systematic transects to
+provide low bias and moderate prediction variance. However, this scheme can
+miss structures at certain sizes because no transects are close to each other
+in the east-west direction.
 
 For the inhibitory plus close pairs line transect scheme, we vary the numbers of
 paired and unpaired transects. The total number of transects is 10, 25, 50, or
@@ -825,25 +864,6 @@ weighting scheme used to approximate the latent GP.}
 In describing the results, we focus on one LGCP dataset and one clustered
 dataset (Figure~\ref{fulldata}). The results are similar for all datasets (see
 the online supplement.)
-
-\begin{figure}
-
-\begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambda-LGCP000004.pdf}
-\caption{Realized LGCP log-intensity}
-\label{labmdalgcp}
-\end{subfigure}
-
-\begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambda-Cluster000004.pdf}
-\caption{Realized cluster log-intensity}
-\label{lambdacluster}
-\end{subfigure}
-
-\caption{The realized intensity function (natural log scale) and complete
-point pattern from a LGCP, and from a LGCP superposed with a cluster process.}
-\label{fulldata}
-\end{figure}
 
 \begin{figure}
 

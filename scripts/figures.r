@@ -536,7 +536,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/MSPE-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = MSPE, x = Effort, col = Variant, group = Variant)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -702,7 +702,7 @@ for(thisplan in mspe_focus){
     filter(PlanID == thisplan) %>%
     `$`('Plan') %>%
     `[[`(1) %>%
-    plot(col = 'white', add = TRUE)
+    plot(col = '#ffffff40', add = TRUE)
   sample_ppp(
     rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
     allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
@@ -726,7 +726,7 @@ for(thisplan in mspe_focus){
     filter(PlanID == thisplan) %>%
     `$`('Plan') %>%
     `[[`(1) %>%
-    plot(col = 'white', add = TRUE)
+    plot(col = '#ffffff40', add = TRUE)
   sample_ppp(
     rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
     allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
