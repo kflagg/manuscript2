@@ -13,23 +13,29 @@ body{
 <script style="text/javascript">
 // Filename components identifying plots.
 var plotvalues = [
-  "APV", "APV-notpaneled", "APV-Coverage", "APV-effort", "APV-effort-notpaneled", "APV-MSPE", "APV-Segments",
+  "HighMSPE",
+  "APV", "APV-notpaneled", "APV-Inhib", "APV-Serp", "APV-Coverage", "APV-Coverage-notpaneled", "APV-effort", "APV-effort-notpaneled", "APV-MSPE", "APV-Segments", "APV-Segments-notpaneled",
   "Int", "Int-notpaneled", "Int-effort", "Int-effort-notpaneled",
   "MaxPV", "MaxPV-effort", "MaxPV-MSPE",
   "MedAPE", "MedAPE-effort",
   "MedPV", "MedPV-effort",
-  "MSPE", "MSPE-notpaneled", "MSPE-Coverage", "MSPE-effort", "MSPE-effort-notpaneled", "MSPE-Segments"
+  "MSPE", "MSPE-notpaneled", "MSPE-Inhib", "MSPE-Serp", "MSPE-Coverage", "MSPE-Coverage-notpaneled", "MSPE-effort", "MSPE-effort-notpaneled", "MSPE-Segments", "MSPE-Segments-notpaneled"
 ];
 
 // Labels for the plot selector dropdown.
 var plotlabels = [
+  "High and Low MSPE Distribution",
   "APV vs Distance Surveyed",
   "APV vs Distance Surveyed (single panel)",
+  "APV vs Number of Transects (Inhib designs)",
+  "APV vs Number of Transects (Serp designs)",
   "APV vs Maximum Distance to Path",
+  "APV vs Maximum Distance to Path (single panel)",
   "APV vs Survey Effort",
   "APV vs Survey Effort (single panel)",
   "APV vs MSPE",
   "APV vs Number of Segments",
+  "APV vs Number of Segments (single panel)",
   "Posterior Mean vs Distance Surveyed",
   "Posterior Mean vs Distance Surveyed (single panel)",
   "Posterior Mean vs Survey Effort",
@@ -43,10 +49,14 @@ var plotlabels = [
   "Median Prediction Variance vs Survey Effort",
   "MSPE vs Distance Surveyed",
   "MSPE vs Distance Surveyed (single panel)",
+  "MSPE vs Number of Transects (Inhib designs)",
+  "MSPE vs Number of Transects (Serp designs)",
   "MSPE vs Maximum Distance to Path",
+  "MSPE vs Maximum Distance to Path (single panel)",
   "MSPE vs Survey Effort",
   "MSPE vs Survey Effort (single panel)",
-  "MSPE vs Number of Segments"
+  "MSPE vs Number of Segments",
+  "MSPE vs Number of Segments (single panel)"
 ];
 
 // Filename components identifying datasets.
@@ -68,7 +78,7 @@ var datalabels = [
   "Cluster000001",
   "Cluster000002",
   "Cluster000003",
-  "Cluster000004",
+  "Cluster000004 (manuscript alt)",
   "Cluster000005",
   "LGCP000001",
   "LGCP000002",
@@ -134,7 +144,7 @@ for(i = 0; i < plotvalues.length; i++){
 }
 
 // Set a default selection.
-document.getElementById("plotselect").value = 'MSPE-effort';
+document.getElementById("plotselect").value = 'MSPE-effort-notpaneled';
 </script>
 
 <!-- Buttons and selector for navigating datasets. -->
@@ -161,6 +171,8 @@ document.getElementById("dataselect").value = 'LGCP000004';
 <script style="text/javascript">
 updateDisplay()
 </script>
+
+<br />Fits with MSPE &gt; 100 are omitted except where MSPE is explicitely plotted.
 
 </body>
 </html>
