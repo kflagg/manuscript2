@@ -303,8 +303,8 @@ curve of order 5, all of these plans have approximately the same total length.}
 \subsubsection{Parallel serpentine transects}
 
 One simple way to observe a greater variety of locations and different
-directions is to add lateral zigzags to transects. We include alternate right
-and left turns at right angles to create serpentine transects. This could
+directions is to add lateral ``zigzags'' to transects. We include alternate
+right and left turns at right angles to create serpentine transects. This could
 decrease prediction variance because more of the path will be close to each
 point in the study area than would be under a line transect design with similar
 total distance. They will also improve estimation of the covariance function
@@ -396,7 +396,7 @@ realizations from each of two data generating models.
 
 \begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambda-Cluster000004.pdf}
-\caption{Realized cluster log-intensity}
+\caption{Realized LGCP with Clusters log-intensity}
 \label{lambdacluster}
 \end{subfigure}
 
@@ -783,12 +783,12 @@ the simple random sample and the systematic line transect schemes.
 
 The serpentine transect scheme has 7, 22, 47, or 67 transects running
 north-south with constant east-west spacing and a random starting point for the
-first transect. The number of zigzags is 5 or 8, and the zigzag perpedicular
-length is set so the the total east-west distance equals the length of three
-north-south line transects. Thus, the serpentine designs have the same length
-as the line transect designs. These designs should result in smaller
-prediction errors and lower variance farther from path, compared to
-line-transect designs.
+first transect. The number of zigzags (north-south segments) is 5 or 8 per
+transect, and the pedicular offest is set so the the total east-west
+distance equals the length of three north-south line transects. Thus, the
+serpentine designs traverse the same length as the line transect designs. These
+designs should result in smaller prediction errors and lower variance farther
+from the path, compared to line-transect designs.
 
 Our Latin hypercube sampling/traveling salesperson (LHS-TSP) scheme uses 50,
 300, 1200, or 2400 bins to generate the waypoints. Preliminary experimentation
@@ -861,9 +861,9 @@ weighting scheme used to approximate the latent GP.}
 
 \subsection{Initial Observations}
 
-In describing the results, we focus on one LGCP dataset and one clustered
-dataset (Figure~\ref{fulldata}). The results are similar for all datasets (see
-the online supplement.)
+In describing the results, we focus on one LGCP dataset and one LGCP with
+Clusters dataset (Figure~\ref{fulldata}). The results are similar for all
+datasets (see the online supplement.)
 
 \begin{figure}
 
@@ -921,12 +921,12 @@ had right-skewed distributions. Thus we use logarithmic scales for plots and
 summarize them using the median and interquartile range (IQR). Median MSPE
 decreases with increasing path distance, leveling off between 20000 and 30000
 units of distance for the LGCP data but continuing to decrease through 50000
-units for the clustered data (Figure~\ref{msperesults}). Variability (IQR) of
-MSPE also descreases as distance increases. Surfaces with edge effects form a
-cluster of large, outlying MSPE values. The lowest-MSPE prediction surfaces
-result from the longest Hilbert designs. Overall, there are no substantial
-differences among the different schemes with respect to median or variability
-in MSPE.
+units for the LGCP with Clusters data (Figure~\ref{msperesults}). Variability
+(IQR) of MSPE also descreases as distance increases. Prediction surfaces with
+edge effects form a cluster of large, outlying MSPE values. The lowest-MSPE
+prediction surfaces result from the longest Hilbert designs. Overall, the
+differences among the different schemes with respect to median MSPE are much
+less than the variability in MSPE within each effort level.
 % More specifically, this last sentance means there was "more" variation across
 % realizations than with variations. No scheme was best or least variable for
 % all realizations.
@@ -934,8 +934,9 @@ in MSPE.
 The relationship between APV and MSPE differs from realization to realization
 (Figure~\ref{apvresults}). Surfaces in the high-MSPE cluster have high APV, but
 otherwise there is little association between APV and MSPE.
+% Point out which did best anyways.
 
-\emph{Maybe omit fits with \(\mathrm{MSPE} > 100\) from other results?}
+%\emph{Maybe omit fits with \(\mathrm{MSPE} > 100\) from other results?}
 
 %\begin{itemize}
 %\item LHS-TSP has lowest median APV for paths under 10000 units but large IQR
@@ -970,22 +971,21 @@ southeastern corner. The SD is high across much of the site.}
 \begin{figure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/MSPE-LGCP000004.png}
-\caption{MSPE vs length of the path for one LGCP dataset}
+\includegraphics[width=5in]{../graphics/MSPE-effort-LGCP000004.png}
+\caption{MSPE vs survey effort for one LGCP dataset}
 \label{mspelgcp}
 \end{subfigure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/MSPE-Cluster000004.png}
-\caption{MSPE vs length of the path for one clustered dataset}
+\includegraphics[width=5in]{../graphics/MSPE-effort-Cluster000004.png}
+\caption{MSPE vs survey effort for one LGCP with Clusters dataset}
 \label{mspecluster}
 \end{subfigure}
 
-\caption{Plots of mean squared prediction error (MSPE) vs length of the path
-for each plan applied to one realization of a LGCP and one realization of
-an LGCP with a cluster process overlaid. Line segments connect the
-median MSPE at each group of distances. The plots are paneled by design
-scheme.}
+\caption{Plots of mean squared prediction error (MSPE) vs survey effort for
+each plan applied to one realization of a LGCP and one realization of a LGCP
+with Clusters. Line segments connect the median MSPE at each group of
+distances. The plots are paneled by design scheme.}
 \label{msperesults}
 \end{figure}
 
@@ -999,13 +999,13 @@ scheme.}
 
 \begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/APV-MSPE-Cluster000004.png}
-\caption{APV vs MSPE for one clustered dataset}
+\caption{APV vs MSPE for one LGCP with Clusters dataset}
 \label{apvcluster}
 \end{subfigure}
 
 \caption{Plots of average prediction variance (APV) vs MSPE for each plan
-applied to one realization of a LGCP and one realization of an LGCP with a
-cluster process overlaid.}
+applied to one realization of a LGCP and one realization of a LGCP with a
+Clusters.}
 \label{apvresults}
 \end{figure}
 
