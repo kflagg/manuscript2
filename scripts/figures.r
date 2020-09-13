@@ -182,6 +182,64 @@ rect_summary <- rect_results %>%
   ungroup
 
 
+# Plot MSPE, APV, and error in posterior mean intercept for everything
+png(paste0('../graphics/MSPE-profile.png'), width = 9, height = 6, units = 'in', res = 600)
+print(
+  rect_results %>%
+  mutate(
+    Effort = factor(Effort, levels = levels(Effort),
+                    labels = paste(levels(Effort), 'Effort')),
+    Dataset = DataID %>%
+      gsub(pattern = '0+', replacement = ' ') %>%
+      gsub(pattern = 'Cluster', replacement = 'LGCP with Clusters')
+  ) %>%
+  ggplot(aes(y = MSPE, x = Dataset, col = Scheme, group = PlanID)) +
+  geom_line(alpha = 0.1) +
+  scale_y_log10() +
+  facet_wrap(~Effort) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle('MSPE by Survey Plan')
+)
+dev.off()
+
+png(paste0('../graphics/APV-profile.png'), width = 9, height = 6, units = 'in', res = 600)
+print(
+  rect_results %>%
+  mutate(
+    Effort = factor(Effort, levels = levels(Effort),
+                    labels = paste(levels(Effort), 'Effort')),
+    Dataset = DataID %>%
+      gsub(pattern = '0+', replacement = ' ') %>%
+      gsub(pattern = 'Cluster', replacement = 'LGCP with Clusters')
+  ) %>%
+  ggplot(aes(y = APV, x = Dataset, col = Scheme, group = PlanID)) +
+  geom_line(alpha = 0.1) +
+  scale_y_log10() +
+  facet_wrap(~Effort) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle('APV by Survey Plan')
+)
+dev.off()
+
+png(paste0('../graphics/IntError-profile.png'), width = 9, height = 6, units = 'in', res = 600)
+print(
+  rect_results %>%
+  mutate(
+    Effort = factor(Effort, levels = levels(Effort),
+                    labels = paste(levels(Effort), 'Effort')),
+    Dataset = DataID %>%
+      gsub(pattern = '0+', replacement = ' ') %>%
+      gsub(pattern = 'Cluster', replacement = 'LGCP with Clusters')
+  ) %>%
+  ggplot(aes(y = IntMeanError, x = Dataset, col = Scheme, group = PlanID)) +
+  geom_line(alpha = 0.1) +
+  facet_wrap(~Effort) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle('Error in Posterior Mean by Survey Plan')
+)
+dev.off()
+
+
 # Plot APV and MSPE. Focus on Cluster000004 and LGCP000004 in the paper.
 for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/HighMSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
@@ -214,7 +272,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/Int-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = IntMeanError, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -226,7 +284,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/Int-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = IntMeanError, x = Distance, col = Scheme)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -237,7 +295,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/Int-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = IntMeanError, x = Effort, col = Variant, group = Variant)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -249,7 +307,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/Int-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = IntMeanError, x = Effort, col = Scheme, group = Scheme)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25,
@@ -314,7 +372,7 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, Segments)) %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = Segments, col = Scheme)) +
     geom_point(alpha = 0.25) +
     scale_x_log10() +
@@ -328,7 +386,7 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, Segments)) %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = Segments, col = Scheme)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -369,7 +427,7 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = CoverageMaxDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
     scale_x_log10() +
@@ -383,7 +441,7 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = CoverageMaxDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
     scale_x_log10() +
@@ -395,7 +453,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/APV-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = Distance, col = Scheme)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -407,7 +465,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/APV-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = Effort, col = Scheme, group = Scheme)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25,
@@ -445,7 +503,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/APV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -458,7 +516,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/APV-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = Effort, col = Variant, group = Variant)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -471,7 +529,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/MedPV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = MedPV, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -484,7 +542,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/MedPV-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = MedPV, x = Effort, col = Variant, group = Variant)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -497,7 +555,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/MaxPV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = MaxPV, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -510,7 +568,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/MaxPV-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = MaxPV, x = Effort, col = Variant, group = Variant)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -549,7 +607,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/MedAPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = MedAPE, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -562,7 +620,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/MedAPE-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, MSPE < 100) %>%
+    filter(DataID == thisdataset) %>%
     ggplot(aes(y = MedAPE, x = Effort, col = Variant, group = Variant)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
@@ -575,7 +633,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/APV-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, Scheme == 'Inhib', MSPE < 100) %>%
+    filter(DataID == thisdataset, Scheme == 'Inhib') %>%
     left_join(inhib_design) %>%
     mutate(`Proportion Pairs` = paste0(100 * prop_pairs, '%')) %>%
     rename(`Total Transects` = num_xsects) %>%
@@ -607,7 +665,7 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/APV-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    filter(DataID == thisdataset, Scheme == 'Serp', MSPE < 100) %>%
+    filter(DataID == thisdataset, Scheme == 'Serp') %>%
     left_join(serp_design) %>%
     mutate(
       Zigzags = factor(serp_num),

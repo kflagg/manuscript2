@@ -870,22 +870,23 @@ datasets (see the online supplement.)
 \begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambda-SRS000187-LGCP000004.pdf}
 \caption{Predicted log-intensity}
-\label{lambdasrs000187}
+\label{lambdasrs000187lgcp}
 \end{subfigure}
 
 \begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/lambdaSD-SRS000187-LGCP000004.pdf}
 \caption{Prediction SD}
-\label{sdsrs000187}
+\label{sdsrs000187lgcp}
 \end{subfigure}
 
 \caption{Predicted log-intensity function and prediction standard deviation
 using data observed via a SRS of line transects. The SD is shown for each
-finite element node.}
-\label{srs000187}
+finite element node. This example is a medium-effort plan applied to a
+LGCP dataset.}
+\label{srs000187lgcp}
 \end{figure}
 
-Figure~\ref{srs000187} shows an example where the model does well at predicting
+Figure~\ref{srs000187lgcp} shows an example where the model does well at predicting
 the intensity of the realized LGCP from data observed along one of the SRS
 paths. In the figure, the path appears in white and the observed events are
 shown as white dots. The posterior predicted mean of the log-intensity (top
@@ -894,6 +895,27 @@ the small-scale variation. The bottom panel shows the prediction standard
 deviation for each mesh node. The SD ranges from 2.0 to 3.1, and is lowest
 near observed events. SD increases farther from observed events, including
 in places where the surveyed area was observed to contain no events.
+
+\begin{figure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambda-SRS000187-Cluster000004.pdf}
+\caption{Predicted log-intensity}
+\label{lambdasrs000187clust}
+\end{subfigure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambdaSD-SRS000187-Cluster000004.pdf}
+\caption{Prediction SD}
+\label{sdsrs000187clust}
+\end{subfigure}
+
+\caption{Predicted log-intensity function and prediction standard deviation
+using data observed via a SRS of line transects. The SD is shown for each
+finite element node. This example is a medium-effort plan applied to a
+LGCP with Clusters dataset.}
+\label{srs000187clust}
+\end{figure}
 
 Most plans yielded similar prediction surfaces, capturing the large-scale
 trends, and having the least uncertainty near observed events. Results varied
@@ -908,7 +930,28 @@ hotspot is driven by two nodes on the boundary with very large prediction
 values. Another, less extreme, edge effect is present in the northeast corner.
 
 
-\subsection{MSPE and APV for all simulations}
+\begin{figure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/HighMSPE-LGCP000004.png}
+\caption{MSPE distribution for one LGCP dataset}
+\label{highmspelgcp}
+\end{subfigure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/HighMSPE-Cluster000004.png}
+\caption{MSPE distribtuion for one LGCP with Clusters dataset}
+\label{highmspecluster}
+\end{subfigure}
+
+\caption{Plots of the distribution of high and low mean squared prediction
+error (MSPE) vs survey effort for each plan applied to one realization of a
+LGCP and one realization of a LGCP with Clusters.}
+\label{histmsperesults}
+\end{figure}
+
+
+\subsection{LGCP simulation results}
 
 There are two important characteristics of a useful spatial prediction. First,
 deviation from the true surface should be low, and is indicated by low
@@ -1009,22 +1052,8 @@ Clusters.}
 \label{apvresults}
 \end{figure}
 
-%\begin{itemize}
-%\item Look at parameter posteriors? Maybe differences within scheme
-%\item Clusters of high-MSPE
-%\begin{itemize}
-%\item Number decrease with distance
-%\item Associated with certain schemes?
-%\item Explained by edge effects? Look at more plots
-%\end{itemize}
-%\item APV and MSPE not convincingly related
-%\item APV median and IQR actually increase with distance for some datasets
-%\begin{itemize}
-%\item Plots vary a lot by dataset
-%\item Predictions in high-MSPE clusters have high APV but are not outliers
-%\item Examine spatial prediction surface when evaluating posterior
-%\end{itemize}
-%\end{itemize}
+
+\subsection{LGCP with Clusters simulation results}
 
 
 \subsection{Augmenting a poor-performing design}
