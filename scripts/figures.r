@@ -115,6 +115,7 @@ rect_summary <- rect_results %>%
   summarize(
     Scheme = unique(Scheme),
     Variant = unique(Variant),
+    Effort = unique(Effort),
     Reps = sum(!is.na(IntMean)),
     NAMSPE = mean(is.na(MSPE)),
     HighMSPE = mean(!(is.na(MSPE) | MSPE < 100)),
@@ -202,6 +203,26 @@ print(
 )
 dev.off()
 
+png(paste0('../graphics/HighMSPE-profile.png'), width = 9, height = 6, units = 'in', res = 600)
+print(
+  rect_summary %>%
+  mutate(
+    Variant = ifelse(is.na(Variant), '', Variant),
+    Effort = factor(Effort, levels = levels(Effort),
+                    labels = paste(levels(Effort), 'Effort')),
+    Dataset = DataID %>%
+      gsub(pattern = '0+', replacement = ' ') %>%
+      gsub(pattern = 'Cluster', replacement = 'LGCP with Clusters')
+  ) %>%
+  ggplot(aes(y = HighMSPE, x = Dataset, col = Scheme, group = interaction(Scheme, Variant))) +
+  geom_line(alpha = 0.4) +
+  facet_wrap(~Effort) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle('Percent of Simulations with MSPE above 100')
+)
+dev.off()
+
 png(paste0('../graphics/APV-profile.png'), width = 9, height = 6, units = 'in', res = 600)
 print(
   rect_results %>%
@@ -258,12 +279,13 @@ for(thisdataset in rect_datasets$DataID){
     ggplot(aes(x = Effort, fill = Result)) +
     geom_bar(position = 'fill') +
     scale_y_continuous(labels = scales::percent_format()) +
-    scale_fill_manual(values = c('#808080', '#f8766d', '#00bfc4'), breaks = c(
-      'Not converged',
+    scale_fill_manual(values = c('#00bfc4', '#f8766d', '#808080'), breaks = c(
+      'MSPE below 100',
       'MSPE 100 or larger',
-      'MSPE below 100'
-    )) +
+      'Not converged'
+    ), drop = FALSE) +
     facet_wrap(~Scheme) +
+    theme(legend.position = 'top') +
     ylab('Percent') +
     ggtitle('High and Low MSPE')
   )
@@ -406,7 +428,7 @@ for(thisdataset in rect_datasets$DataID){
     scale_x_log10() +
     scale_y_log10() +
     facet_wrap(~factor(paste(Effort, 'Effort'), levels = paste(levels(Effort), 'Effort'))) +
-    ggtitle('MSPE vs Max Distance to Path')
+    ggtitle('MSPE vs Maximin Distance to Path')
   )
   dev.off()
 
@@ -419,7 +441,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle('MSPE vs Max Distance to Path')
+    ggtitle('MSPE vs Maximin Distance to Path')
   )
   dev.off()
 
@@ -433,7 +455,7 @@ for(thisdataset in rect_datasets$DataID){
     scale_x_log10() +
     scale_y_log10() +
     facet_wrap(~factor(paste(Effort, 'Effort'), levels = paste(levels(Effort), 'Effort'))) +
-    ggtitle('APV vs Max Distance to Path')
+    ggtitle('APV vs Maximin Distance to Path')
   )
   dev.off()
 
@@ -446,7 +468,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle('APV vs Max Distance to Path')
+    ggtitle('APV vs Maximin Distance to Path')
   )
   dev.off()
 
@@ -817,7 +839,7 @@ allplans %>%
   filter(PlanID == thisplan) %>%
   `$`('Plan') %>%
   `[[`(1) %>%
-  plot(col = 'white', add = TRUE)
+  plot(col = '#ffffff40', add = TRUE)
 sample_ppp(
   rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
   allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)

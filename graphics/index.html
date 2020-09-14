@@ -6,11 +6,21 @@
 <!-- Center everything on the page. -->
 <style type="text/css">
 body{
-  text-align: center
+  text-align: center;
 }
 </style>
 
 <script style="text/javascript">
+// Filename components identifying profiles.
+var profvalues = [
+  "HighMSPE", "APV", "IntError", "MSPE"
+];
+
+// Labels for the profile selector dropdown.
+var proflabels = [
+  "High MSPE Distribution",  "APV", "Error in Posterior Mean", "MSPE"
+];
+
 // Filename components identifying plots.
 var plotvalues = [
   "HighMSPE",
@@ -87,13 +97,22 @@ var datalabels = [
   "LGCP000005"
 ];
 
-// Function to update the image.
+// Functions to update the images.
+function updateProfile(){
+  document.getElementById("theprofile").src = document.getElementById("profselect").value + "-profile.png";
+}
 function updateDisplay(){
   document.getElementById("theplot").src = document.getElementById("plotselect").value +
     "-" + document.getElementById("dataselect").value + ".png";
 }
 
-// Function to go back one plot.
+// Functions to go back one plot.
+function prevProf(){
+  if(document.getElementById("profselect").selectedIndex > 0){
+    document.getElementById("profselect").selectedIndex--;
+  }
+  updateProfile();
+}
 function prevPlot(){
   if(document.getElementById("plotselect").selectedIndex > 0){
     document.getElementById("plotselect").selectedIndex--;
@@ -101,7 +120,13 @@ function prevPlot(){
   updateDisplay();
 }
 
-// Function to go forward one plot.
+// Functions to go forward one plot.
+function nextProf(){
+  if(document.getElementById("profselect").selectedIndex < profvalues.length - 1){
+    document.getElementById("profselect").selectedIndex++;
+  }
+  updateProfile();
+}
 function nextPlot(){
   if(document.getElementById("plotselect").selectedIndex < plotvalues.length - 1){
     document.getElementById("plotselect").selectedIndex++;
@@ -124,16 +149,65 @@ function nextData(){
   }
   updateDisplay();
 }
+
+// Function to show the profile and hide the single-dataset display.
+function showProfile(){
+  document.getElementById("theprofile").style.display = "inline";
+  document.getElementById("profspan").style.display = "inline";
+
+  document.getElementById("theplot").style.display = "none";
+  document.getElementById("plotspan").style.display = "none";
+  document.getElementById("dataspan").style.display = "none";
+
+  document.getElementById("galleryprofile").checked = true;
+}
+
+// Function to show the single-dataset display and hide the profile.
+function showDisplay(){
+  document.getElementById("theprofile").style.display = "none";
+  document.getElementById("profspan").style.display = "none";
+
+  document.getElementById("theplot").style.display = "inline";
+  document.getElementById("plotspan").style.display = "inline";
+  document.getElementById("dataspan").style.display = "inline";
+
+  document.getElementById("gallerydataset").checked = true;
+}
 </script>
 
 </head>
 <body>
 
 <!-- Buttons and selector for navigating plots. -->
+<input name="gallerychoice" id="galleryprofile" type="radio" onclick="showProfile()"/>
+<label for="galleryprofile">Profiles Across Datasets</label>
+<input name="gallerychoice" id="gallerydataset" type="radio" onclick="showDisplay()"/>
+<label for="gallerydataset">Single Dataset</label> <br />
+
 Plot:
-<button onclick="prevPlot()">&larr;</button>
+<span id="profspan">
+<button name="prevprof" id="prevprof" onclick="prevProf()">&larr;</button>
+<select name="profselect" id="profselect" onchange="updateProfile()"></select>
+<button name="nextprof" id="nextprof" onclick="nextProf()">&rarr;</button>
+</span>
+
+<script style="text/javascript">
+// Populate the profile selector.
+document.getElementById("profselect").innerHTML = '';
+for(i = 0; i < profvalues.length; i++){
+  document.getElementById("profselect").innerHTML += "<option value=\"" +
+    profvalues[i] + "\">" + proflabels[i] + "</option>\n";
+}
+
+// Set a default selection.
+document.getElementById("profselect").value = 'HighMSPE';
+</script>
+
+<span id="plotspan">
+<button name="prevplot" id="nextplot" onclick="prevPlot()">&larr;</button>
 <select name="plotselect" id="plotselect" onchange="updateDisplay()"></select>
-<button onclick="nextPlot()">&rarr;</button> <br />
+<button name="nextplot" id="nextplot" onclick="nextPlot()">&rarr;</button>
+</span><br />
 
 <script style="text/javascript">
 // Populate the plot selector.
@@ -148,11 +222,12 @@ document.getElementById("plotselect").value = 'MSPE-effort-notpaneled';
 </script>
 
 <!-- Buttons and selector for navigating datasets. -->
+<span id="dataspan">
 Dataset:
-<button onclick="prevData()">&larr;</button>
-<select names="dataselect" id="dataselect" onchange="updateDisplay()">
-</select>
-<button onclick="nextData()">&rarr;</button> <br />
+<button name="prevdata" id="prevdata" onclick="prevData()">&larr;</button>
+<select names="dataselect" id="dataselect" onchange="updateDisplay()"></select>
+<button name="nextdata" id="nextdata" onclick="nextData()">&rarr;</button>
+</span><br />
 
 <script style="text/javascript">
 // Populate the dataset selector.
@@ -167,9 +242,19 @@ document.getElementById("dataselect").value = 'LGCP000004';
 </script>
 
 <!-- Image display. -->
+<img id="theprofile" src="" height = 90%>
+<script style="text/javascript">
+updateProfile()
+</script>
+
 <img id="theplot" src="" height = 90%>
 <script style="text/javascript">
 updateDisplay()
+</script>
+
+<script style="text/javascript">
+// Show profiles by default.
+showProfile()
 </script>
 
 </body>

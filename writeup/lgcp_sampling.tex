@@ -442,7 +442,7 @@ accurately predict the log-intensity function.
 \begin{table}
 \caption{Design schemes used in the simulation study. The table presents the
 design parameters, distance travelled along the path, and percent of the study
-area surveyed under each of four survey effort level.\\
+area surveyed under each of four survey effort levels.\\
 * Variable area due to overlapping segments, reported as average (SD).\\
 ** Variable distance surveyed, reported as average (SD).}
 \label{designtable}
@@ -896,6 +896,13 @@ deviation for each mesh node. The SD ranges from 2.0 to 3.1, and is lowest
 near observed events. SD increases farther from observed events, including
 in places where the surveyed area was observed to contain no events.
 
+This same survey plan also did well for the LGCP with Clusters dataset, with
+the model accurately capturing the large-scale details of the intensitiy
+function, including two of the circular hotspots corresponding to clusters
+(Figure \ref{lambdasrs000187clust}). However, it also smoothed the surface
+quite a bit, notably merging the two overlapping clusters into a single oblong
+hotspot.
+
 \begin{figure}
 
 \begin{subfigure}{5in}
@@ -928,6 +935,28 @@ from a serpentine transect plan. The predicted log-intensity has a hotspot of
 extremely large values in the southeast corner (notice the color scale). The
 hotspot is driven by two nodes on the boundary with very large prediction
 values. Another, less extreme, edge effect is present in the northeast corner.
+
+\begin{figure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambda-Serp000148-LGCP000004.pdf}
+\caption{Predicted log-intensity. The color scale is truncated at 100, but
+reaches a maximum of 692.}
+\label{lambdaserp000148lgcp}
+\end{subfigure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambdaSD-Serp000148-LGCP000004.pdf}
+\caption{Prediction SD}
+\label{sdserp000148lgcp}
+\end{subfigure}
+
+\caption{Predicted GP surface and prediction SD using data observed via a
+serpentine transect plan. The prediction has an apparent edge effect in the
+southeastern corner. The SD is high across much of the site. This example is
+a medium-effort plan applied to a LGCP dataset.}
+\label{serp000148}
+\end{figure}
 
 
 \begin{figure}
@@ -964,7 +993,7 @@ had right-skewed distributions. Thus we use logarithmic scales for plots and
 summarize them using the median and interquartile range (IQR). Median MSPE
 decreases with increasing path distance, leveling off between 20000 and 30000
 units of distance for the LGCP data but continuing to decrease through 50000
-units for the LGCP with Clusters data (Figure~\ref{msperesults}). Variability
+units for the LGCP with Clusters data (Figure~\ref{lgcpresults}). Variability
 (IQR) of MSPE also descreases as distance increases. Prediction surfaces with
 edge effects form a cluster of large, outlying MSPE values. The lowest-MSPE
 prediction surfaces result from the longest Hilbert designs. Overall, the
@@ -974,9 +1003,9 @@ less than the variability in MSPE within each effort level.
 % realizations than with variations. No scheme was best or least variable for
 % all realizations.
 
-The relationship between APV and MSPE differs from realization to realization
-(Figure~\ref{apvresults}). Surfaces in the high-MSPE cluster have high APV, but
-otherwise there is little association between APV and MSPE.
+%The relationship between APV and MSPE differs from realization to realization
+%(Figure~\ref{apvresults}). Surfaces in the high-MSPE cluster have high APV, but
+%otherwise there is little association between APV and MSPE.
 % Point out which did best anyways.
 
 %\emph{Maybe omit fits with \(\mathrm{MSPE} > 100\) from other results?}
@@ -993,67 +1022,67 @@ otherwise there is little association between APV and MSPE.
 \begin{figure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambda-Serp000148-LGCP000004.pdf}
-\caption{Predicted log-intensity. The color scale is truncated at 100, but
-reaches a maximum of 692.}
-\label{lambdaserp000148}
-\end{subfigure}
-
-\begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambdaSD-Serp000148-LGCP000004.pdf}
-\caption{Prediction SD}
-\label{sdserp000148}
-\end{subfigure}
-
-\caption{Predicted GP surface and prediction SD using data observed via a
-serpentine transect plan. The prediction has an apparent edge effect in the
-southeastern corner. The SD is high across much of the site.}
-\label{serp000148}
-\end{figure}
-
-\begin{figure}
-
-\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/MSPE-effort-LGCP000004.png}
 \caption{MSPE vs survey effort for one LGCP dataset}
 \label{mspelgcp}
 \end{subfigure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/MSPE-effort-Cluster000004.png}
-\caption{MSPE vs survey effort for one LGCP with Clusters dataset}
-\label{mspecluster}
+\includegraphics[width=5in]{../graphics/APV-effort-LGCP000004.png}
+\caption{APV vs survey effort for one LGCP dataset}
+\label{apvlgcp}
 \end{subfigure}
 
-\caption{Plots of mean squared prediction error (MSPE) vs survey effort for
-each plan applied to one realization of a LGCP and one realization of a LGCP
-with Clusters. Line segments connect the median MSPE at each group of
-distances. The plots are paneled by design scheme.}
-\label{msperesults}
+\caption{Plots of mean squared prediction error (MSPE) and average prediction
+variance (APV) vs survey effort for each plan applied to one realization of a
+LGCP. Line segments connect the median at each effort level. The plots are
+paneled by design scheme.}
+\label{lgcpresults}
 \end{figure}
+
+%\begin{figure}
+%
+%\begin{subfigure}{5in}
+%\includegraphics[width=5in]{../graphics/APV-MSPE-LGCP000004.png}
+%\caption{APV vs MSPE for one LGCP dataset}
+%\label{apvlgcp}
+%\end{subfigure}
+%
+%\begin{subfigure}{5in}
+%\includegraphics[width=5in]{../graphics/APV-MSPE-Cluster000004.png}
+%\caption{APV vs MSPE for one LGCP with Clusters dataset}
+%\label{apvcluster}
+%\end{subfigure}
+%
+%\caption{Plots of average prediction variance (APV) vs MSPE for each plan
+%applied to one realization of a LGCP and one realization of a LGCP with a
+%Clusters.}
+%\label{apvresults}
+%\end{figure}
+
+
+\subsection{LGCP with Clusters simulation results}
 
 \begin{figure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/APV-MSPE-LGCP000004.png}
-\caption{APV vs MSPE for one LGCP dataset}
-\label{apvlgcp}
+\includegraphics[width=5in]{../graphics/MSPE-effort-Cluster000004.png}
+\caption{MSPE vs survey effort for one LGCP with Clusters dataset}
+\label{mspeclust}
 \end{subfigure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/APV-MSPE-Cluster000004.png}
-\caption{APV vs MSPE for one LGCP with Clusters dataset}
-\label{apvcluster}
+\includegraphics[width=5in]{../graphics/APV-effort-Cluster000004.png}
+\caption{APV vs survey effort for one LGCP with Clusters dataset}
+\label{apvclust}
 \end{subfigure}
 
-\caption{Plots of average prediction variance (APV) vs MSPE for each plan
-applied to one realization of a LGCP and one realization of a LGCP with a
-Clusters.}
-\label{apvresults}
+\caption{Plots of mean squared prediction error (MSPE) and average prediction
+variance (APV) vs survey effort for each plan applied to one LGCP with Clusters
+dataset. Line segments connect the median at each effort level. The plots are
+paneled by design scheme.}
+\label{clustresults}
 \end{figure}
-
-
-\subsection{LGCP with Clusters simulation results}
 
 
 \subsection{Augmenting a poor-performing design}
@@ -1129,10 +1158,23 @@ SD is shown for each finite element node.}
 
 
 \begin{figure}
+
+\begin{subfigure}{5in}
 \includegraphics[width=5in]{../graphics/MSPE-Coverage-LGCP000004.png}
+\caption{MSPE vs coverage for one LGCP dataset}
+\label{covglgcp}
+\end{subfigure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/MSPE-Coverage-Cluster000004.png}
+\caption{MSPE vs coverage for one LGCP with Clusters dataset}
+\label{covgclust}
+\end{subfigure}
 
 \caption{MSPE plotted against the maximum distance from any point in the site
-to the nearest point on the path.}
+to its the nearest point on the path. As survey effort increases, the cloud of
+points drifts down (lower MSPE) and to the left (lower minimax distance to the
+path).}
 \label{covg}
 \end{figure}
 
@@ -1166,11 +1208,19 @@ optimization~\citep{lark}
 % The main conclusions of the study may be presented in a short Conclusions section, which may stand alone or form a subsection of a Discussion or Results and Discussion section.
 
 \begin{itemize}
-\item choice of scheme does not matter much as long as it provides spatial
-coverage
+\item for accuracy, choice of scheme does not matter much as long as it provides
+spatial coverage
 
 \item of the schemes considered here, only transect schemes have flexiblility
 in distance and/or a priori known distance
+
+\item corners and regularity important for short paths to avoid model fitting
+problems (Hilbert or serpentine)
+
+\item systematic line-transects provide best spatial coverage but require many
+transects for good model performance
+
+\item tradeoff useable posterior and simple designs
 \end{itemize}
 
 
