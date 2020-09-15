@@ -418,6 +418,62 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
+  png(paste0('../graphics/Coverage-Distance-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = CoverageMaxDist, x = Distance, col = Variant)) +
+    geom_line(aes(x = AvgDistance, group = interaction(Scheme, Variant)), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    facet_wrap(~Scheme) +
+    ggtitle('Maximin Distance to Path vs Total Distance Surveyed')
+  )
+  dev.off()
+
+  png(paste0('../graphics/Coverage-Distance-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    mutate(Variant = ifelse(is.na(Variant), Scheme, Variant)) %>%
+    filter(DataID == thisdataset) %>%
+    ggplot(aes(y = CoverageMaxDist, x = Distance, col = Scheme)) +
+    geom_line(aes(x = AvgDistance, group = Variant), stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    ggtitle('Maximin Distance to Path vs Total Distance Surveyed')
+  )
+  dev.off()
+
+  png(paste0('../graphics/Coverage-Distance-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset, Scheme == 'Inhib') %>%
+    left_join(inhib_design) %>%
+    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    mutate(`Proportion Pairs` = paste0(100 * prop_pairs, '%')) %>%
+    ggplot(aes(y = CoverageMaxDist, x = Distance, col = `Proportion Pairs`)) +
+    geom_line(stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    scale_x_continuous(breaks = unique(rect_results$Distance[rect_results$Scheme == 'Inhib'])) +
+    ggtitle('Maximin Distance vs Path Lengh for Inhibitory Plus Close Pairs Designs')
+  )
+  dev.off()
+
+  png(paste0('../graphics/Coverage-Distance-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset, Scheme == 'Serp') %>%
+    left_join(serp_design) %>%
+    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    mutate(Zigzags = factor(serp_num)) %>%
+    ggplot(aes(y = CoverageMaxDist, x = Distance, col = Zigzags)) +
+    geom_line(stat = 'summary', fun = median) +
+    geom_point(alpha = 0.25) +
+    scale_x_continuous(breaks = unique(rect_results$Distance[rect_results$Scheme == 'Serp'])) +
+    ggtitle('Maximin Distance vs Path Lengh for Serpentine Transect Designs')
+  )
+  dev.off()
+
   png(paste0('../graphics/MSPE-Coverage-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
@@ -689,9 +745,7 @@ for(thisdataset in rect_datasets$DataID){
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
     left_join(serp_design) %>%
-    mutate(
-      Zigzags = factor(serp_num),
-    ) %>%
+    mutate(Zigzags = factor(serp_num)) %>%
     rename(
       `Total Transects` = num_xsects
     ) %>%

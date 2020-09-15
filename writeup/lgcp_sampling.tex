@@ -209,10 +209,10 @@ With an eye toward practical considerations of data collection, we present
 criteria to compare sampling strategies that impact LGCP estimates. We compare
 plans with (approximately) fixed path lengths, most of which avoid sharp turns.
 Data collection equipment (e.g. metal detectors) may have limited mobility,
-requiring minimizing the number or angle of turns. The criteria that we
-evaluate are the mean squared prediction error (MSPE) of the latent Gaussian,
-process, the average prediction variance (APV), and the estimation error in the
-posterior mean of the intercept.
+requiring minimizing the number or angle of turns. The model-based criteria
+that we evaluate are the mean squared prediction error (MSPE) of the latent
+Gaussian, process, the average prediction variance (APV), and the estimation
+error in the posterior mean of the intercept.
 
 
 \subsection{Sampling design schemes}
@@ -1085,42 +1085,6 @@ paneled by design scheme.}
 \end{figure}
 
 
-\subsection{Augmenting a poor-performing design}
-
-Even a poor-performing design could be used as a starting point for sequential
-design. As a simple illustration, we augment the design from
-Figure~\ref{serp000148} with some additional sampling effort in the eastern
-part of the site, where the edge effects were seen in the prediction surface.
-The total distance surveyed increases from 17500 to 20180 units, while the
-predicted log-intensity surface is much more accurate (Figure~\ref{aug}).
-MSPE decreases from 1600.57 to 2.48 and APV improves from 67.20 to 11.02.
-Across the site, the prediction standard deviation is lower than before, and
-is now highest around the edge of the western half. If we were to continue
-adding segments to the path, giving some attention to the western portion of
-the site could further improve the prediction.
-
-
-\begin{figure}
-
-\begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambda-Aug-LGCP000004.pdf}
-\caption{Predicted log-intensity}
-\label{lambdaaug}
-\end{subfigure}
-
-\begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambdaSD-Aug-LGCP000004.pdf}
-\caption{Prediction SD}
-\label{sdaug}
-\end{subfigure}
-
-\caption{Predicted log-intensity function and prediction standard deviation
-using data observed via a serpentine transect design augmented post-hoc. The
-SD is shown for each finite element node.}
-\label{aug}
-\end{figure}
-
-
 \subsection{Spatial coverage}
 
 While the above results suggest the choice of design is relatively unimportant
@@ -1135,6 +1099,17 @@ design traverses a distance of 35000 units but leaves most of the site far from
 the observed path. As a result, the predicted log-intensity is flat near the
 GP posterior mean of \(-8.71\) over most of the site, rendering the prediction
 mostly useless.
+
+The problem with this example is easily explained in terms of the ``maximin''
+distance between the path an arbitrary point in the study site. That is, if we
+define the distance between point and the path as the distance between that
+point and its nearest point on the path, the maximin distance is the distance
+between the path and the unsurveyed point farthest from the path. This can be
+thought of as a radius of the largest unsurveyed void. This example design has
+a maximin distance of 1207 units; the designs used in the simulation study all
+had maximin distances under 600 (with most under 200).
+% Move explanation of maximin distance to methods then add to table.
+% On second thought, the story might really be about the average.
 
 \begin{figure}
 
@@ -1182,6 +1157,42 @@ path).}
 % MSPE vs number of segments - Decreasing variability, no improvement after some point.
 % MSPE vs average distance from path - linear relationship, varies by realization.
 % Neither has a relationship with APV.
+
+
+\subsection{Augmenting a poor-performing design}
+
+Even a poor-performing design could be used as a starting point for sequential
+design. As a simple illustration, we augment the design from
+Figure~\ref{serp000148} with some additional sampling effort in the eastern
+part of the site, where the edge effects were seen in the prediction surface.
+The total distance surveyed increases from 17500 to 20180 units, while the
+predicted log-intensity surface is much more accurate (Figure~\ref{aug}).
+MSPE decreases from 1600.57 to 2.48 and APV improves from 67.20 to 11.02.
+Across the site, the prediction standard deviation is lower than before, and
+is now highest around the edge of the western half. If we were to continue
+adding segments to the path, giving some attention to the western portion of
+the site could further improve the prediction.
+
+
+\begin{figure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambda-Aug-LGCP000004.pdf}
+\caption{Predicted log-intensity}
+\label{lambdaaug}
+\end{subfigure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambdaSD-Aug-LGCP000004.pdf}
+\caption{Prediction SD}
+\label{sdaug}
+\end{subfigure}
+
+\caption{Predicted log-intensity function and prediction standard deviation
+using data observed via a serpentine transect design augmented post-hoc. The
+SD is shown for each finite element node.}
+\label{aug}
+\end{figure}
 
 
 \section{Discussion}
