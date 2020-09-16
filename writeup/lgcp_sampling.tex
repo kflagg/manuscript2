@@ -824,13 +824,16 @@ The covariance parameters \(\sigma\) and \(\rho\) have a PC prior with
 The Gaussian process prediction surface is approximated on the finite element
 mesh shown in Figure~\ref{meshfull}. The GP is predicted at the nodes (points)
 and is linearly interpolated elsewhere. The nodes are weighted according to
-the area of their dual cells (shading) and used for numerical integration of
-the likelihood \citep{lindgrenetal}.
+the area of their dual cells (grey outlines) and used for numerical integration
+of the likelihood \citep{lindgrenetal}. This mesh is adequately fine to model
+the large-scale trends in the surface while keeping the computing time well
+under a minute for each model fit.
 
 \begin{figure}
-\includegraphics[width=5in]{../graphics/mesh_full.pdf}
-\caption{Illustration of the mesh and associated numerical integration
-weighting scheme used to approximate the latent GP.}
+\includegraphics[width=5in]{../graphics/mesh-LGCP000004.pdf}
+\caption{Illustration of the mesh used to approximate the latent GP. The mesh
+nodes are used in a numerical integration scheme where they are weighted by the
+area of their dual cells (outlined in grey).}
 \label{meshfull}
 \end{figure}
 
@@ -936,6 +939,14 @@ extremely large values in the southeast corner (notice the color scale). The
 hotspot is driven by two nodes on the boundary with very large prediction
 values. Another, less extreme, edge effect is present in the northeast corner.
 
+There are two important characteristics of a useful spatial prediction. First,
+deviation from the true surface should be low, and is indicated by low
+mean squared prediction error (MSPE). Second, the model's own assessment of
+prediction uncertainty will be used in practice to build trust in the
+inferences, so average prediction variance (APV) should be low. The next
+sections compare the schemes in terms of MSPE and APV applied to one realized
+LGCP dataset and one realized LGCP with Clusters dataset.
+
 \begin{figure}
 
 \begin{subfigure}{5in}
@@ -982,23 +993,19 @@ LGCP and one realization of a LGCP with Clusters.}
 
 \subsection{LGCP simulation results}
 
-There are two important characteristics of a useful spatial prediction. First,
-deviation from the true surface should be low, and is indicated by low
-mean squared prediction error (MSPE). Second, the model's own assessment of
-prediction uncertainty will be used in practice to build trust in the
-inferences, so average prediction variance (APV) should be low.
-
-Considered across all survey plans and prediction surfaces, both MSPE and APV
-had right-skewed distributions. Thus we use logarithmic scales for plots and
-summarize them using the median and interquartile range (IQR). Median MSPE
-decreases with increasing path distance, leveling off between 20000 and 30000
-units of distance for the LGCP data but continuing to decrease through 50000
-units for the LGCP with Clusters data (Figure~\ref{lgcpresults}). Variability
-(IQR) of MSPE also descreases as distance increases. Prediction surfaces with
-edge effects form a cluster of large, outlying MSPE values. The lowest-MSPE
-prediction surfaces result from the longest Hilbert designs. Overall, the
+Considered across all survey plans applied to one LGCP dataset, both MSPE and
+APV had right-skewed distributions. Thus we use logarithmic scales for plots
+and summarize them using the median and interquartile range (IQR). Median MSPE
+decreases with increasing path distance, leveling off around between the medium
+and high effort levels (Figure~\ref{mspelgcp}). Variability (IQR) of MSPE
+also descreases as effort increases. Prediction surfaces with edge effects form
+a cluster of large, outlying MSPE values. At all levels of effort, systematic
+designs had the least variability in MSPE. The lowest-MSPE prediction surfaces
+result from the longest Hilbert designs, but the distributions of MSPE are
+similar for all schemes at the high and very effort levels. Overall, the
 differences among the different schemes with respect to median MSPE are much
-less than the variability in MSPE within each effort level.
+less than the variability in MSPE within each effort level. The results are
+largely the same for APV (Figure \ref{apvlgcp}).
 % More specifically, this last sentance means there was "more" variation across
 % realizations than with variations. No scheme was best or least variable for
 % all realizations.
@@ -1022,13 +1029,13 @@ less than the variability in MSPE within each effort level.
 \begin{figure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/MSPE-effort-LGCP000004.png}
+\includegraphics[width=5in]{../graphics/MSPE-effort-notpaneled-LGCP000004.png}
 \caption{MSPE vs survey effort for one LGCP dataset}
 \label{mspelgcp}
 \end{subfigure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/APV-effort-LGCP000004.png}
+\includegraphics[width=5in]{../graphics/APV-effort-notpaneled-LGCP000004.png}
 \caption{APV vs survey effort for one LGCP dataset}
 \label{apvlgcp}
 \end{subfigure}
@@ -1063,16 +1070,27 @@ paneled by design scheme.}
 
 \subsection{LGCP with Clusters simulation results}
 
+For the LGCP with Clusters dataset, MSPE and APV again had right-skewed
+distributions. Median MSPE decreases as effort increases
+(Figure~\ref{mspeclust}). Variability in MSPE is roughly constant across effort
+levels. The systematic scheme had the lowest median MSPE for low and medium
+effort and low IQR for all effort levels, while the serpentine and Hilbert
+schemes have the lowest median at high and very high effort. However,
+difference between schemes are much less than differences across survey effort.
+At low effort, the distribution of APV has a long tail. Otherwise there are
+is little difference in distribution of APV across schemes or effort
+(Figure \ref{apvclust}).
+
 \begin{figure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/MSPE-effort-Cluster000004.png}
+\includegraphics[width=5in]{../graphics/MSPE-effort-notpaneled-Cluster000004.png}
 \caption{MSPE vs survey effort for one LGCP with Clusters dataset}
 \label{mspeclust}
 \end{subfigure}
 
 \begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/APV-effort-Cluster000004.png}
+\includegraphics[width=5in]{../graphics/APV-effort-notpaneled-Cluster000004.png}
 \caption{APV vs survey effort for one LGCP with Clusters dataset}
 \label{apvclust}
 \end{subfigure}
@@ -1100,14 +1118,13 @@ the observed path. As a result, the predicted log-intensity is flat near the
 GP posterior mean of \(-8.71\) over most of the site, rendering the prediction
 mostly useless.
 
-The problem with this example is easily explained in terms of the ``maximin''
-distance between the path an arbitrary point in the study site. That is, if we
-define the distance between point and the path as the distance between that
-point and its nearest point on the path, the maximin distance is the distance
-between the path and the unsurveyed point farthest from the path. This can be
-thought of as a radius of the largest unsurveyed void. This example design has
-a maximin distance of 1207 units; the designs used in the simulation study all
-had maximin distances under 600 (with most under 200).
+The problem with this example is easily explained in terms of the average
+distance between the path and arbitrary points in the study site. We define
+the distance between a point and the path as the distance between that point
+and the nearest point on the path, then take the average over all points in
+the study area. This example design has an averge distance from the path of
+486 units; the designs used in the simulation study all had average distances
+to the path under 130 (with most under 50).
 % Move explanation of maximin distance to methods then add to table.
 % On second thought, the story might really be about the average.
 

@@ -184,25 +184,6 @@ rect_summary <- rect_results %>%
 
 
 # Plot MSPE, APV, and error in posterior mean intercept for everything
-png(paste0('../graphics/MSPE-profile.png'), width = 9, height = 6, units = 'in', res = 600)
-print(
-  rect_results %>%
-  mutate(
-    Effort = factor(Effort, levels = levels(Effort),
-                    labels = paste(levels(Effort), 'Effort')),
-    Dataset = DataID %>%
-      gsub(pattern = '0+', replacement = ' ') %>%
-      gsub(pattern = 'Cluster', replacement = 'LGCP with Clusters')
-  ) %>%
-  ggplot(aes(y = MSPE, x = Dataset, col = Scheme, group = PlanID)) +
-  geom_line(alpha = 0.1) +
-  scale_y_log10() +
-  facet_wrap(~Effort) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle('MSPE by Survey Plan')
-)
-dev.off()
-
 png(paste0('../graphics/HighMSPE-profile.png'), width = 9, height = 6, units = 'in', res = 600)
 print(
   rect_summary %>%
@@ -220,6 +201,25 @@ print(
   scale_y_continuous(labels = scales::percent_format()) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   ggtitle('Percent of Simulations with MSPE above 100')
+)
+dev.off()
+
+png(paste0('../graphics/MSPE-profile.png'), width = 9, height = 6, units = 'in', res = 600)
+print(
+  rect_results %>%
+  mutate(
+    Effort = factor(Effort, levels = levels(Effort),
+                    labels = paste(levels(Effort), 'Effort')),
+    Dataset = DataID %>%
+      gsub(pattern = '0+', replacement = ' ') %>%
+      gsub(pattern = 'Cluster', replacement = 'LGCP with Clusters')
+  ) %>%
+  ggplot(aes(y = MSPE, x = Dataset, col = Scheme, group = PlanID)) +
+  geom_line(alpha = 0.1) +
+  scale_y_log10() +
+  facet_wrap(~Effort) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle('MSPE by Survey Plan')
 )
 dev.off()
 
@@ -263,6 +263,21 @@ dev.off()
 
 # Plot APV and MSPE. Focus on Cluster000004 and LGCP000004 in the paper.
 for(thisdataset in rect_datasets$DataID){
+  pdf(paste0('../graphics/mesh-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 1, 2, 1))
+  rect_datasets %>%
+    filter(DataID == thisdataset) %>%
+    `$`('Data') %>%
+    `[[`(1) %>%
+    attr('Lambda') %>%
+    log %>%
+    plot(main = 'Mesh over Realized Log-Intensity', ribbon = FALSE)
+  plot(rect_dual_tess, add = TRUE, border = '#808080', do.col = TRUE,
+       values = rep(1, rect_dual_tess$n), col = '#ffffff40')
+  plot(rect_R_mesh_net, add = TRUE, col = '#00000080')
+  points(rect_R_mesh_loc[,], pch = 20)
+  dev.off()
+
   png(paste0('../graphics/HighMSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
@@ -421,26 +436,26 @@ for(thisdataset in rect_datasets$DataID){
   png(paste0('../graphics/Coverage-Distance-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = CoverageMaxDist, x = Distance, col = Variant)) +
+    ggplot(aes(y = CoverageAvgDist, x = Distance, col = Variant)) +
     geom_line(aes(x = AvgDistance, group = interaction(Scheme, Variant)), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
-    ggtitle('Maximin Distance to Path vs Total Distance Surveyed')
+    ggtitle('Averave Distance to Path vs Total Distance Surveyed')
   )
   dev.off()
 
   png(paste0('../graphics/Coverage-Distance-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     mutate(Variant = ifelse(is.na(Variant), Scheme, Variant)) %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = CoverageMaxDist, x = Distance, col = Scheme)) +
+    ggplot(aes(y = CoverageAvgDist, x = Distance, col = Scheme)) +
     geom_line(aes(x = AvgDistance, group = Variant), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
-    ggtitle('Maximin Distance to Path vs Total Distance Surveyed')
+    ggtitle('Average Distance to Path vs Total Distance Surveyed')
   )
   dev.off()
 
@@ -449,13 +464,13 @@ for(thisdataset in rect_datasets$DataID){
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
     left_join(inhib_design) %>%
-    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     mutate(`Proportion Pairs` = paste0(100 * prop_pairs, '%')) %>%
-    ggplot(aes(y = CoverageMaxDist, x = Distance, col = `Proportion Pairs`)) +
+    ggplot(aes(y = CoverageAvgDist, x = Distance, col = `Proportion Pairs`)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     scale_x_continuous(breaks = unique(rect_results$Distance[rect_results$Scheme == 'Inhib'])) +
-    ggtitle('Maximin Distance vs Path Lengh for Inhibitory Plus Close Pairs Designs')
+    ggtitle('Average Distance vs Path Lengh for Inhibitory Plus Close Pairs Designs')
   )
   dev.off()
 
@@ -464,67 +479,67 @@ for(thisdataset in rect_datasets$DataID){
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
     left_join(serp_design) %>%
-    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     mutate(Zigzags = factor(serp_num)) %>%
-    ggplot(aes(y = CoverageMaxDist, x = Distance, col = Zigzags)) +
+    ggplot(aes(y = CoverageAvgDist, x = Distance, col = Zigzags)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     scale_x_continuous(breaks = unique(rect_results$Distance[rect_results$Scheme == 'Serp'])) +
-    ggtitle('Maximin Distance vs Path Lengh for Serpentine Transect Designs')
+    ggtitle('Average Distance vs Path Lengh for Serpentine Transect Designs')
   )
   dev.off()
 
   png(paste0('../graphics/MSPE-Coverage-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = MSPE, x = CoverageMaxDist, col = Scheme)) +
+    ggplot(aes(y = MSPE, x = CoverageAvgDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
     facet_wrap(~factor(paste(Effort, 'Effort'), levels = paste(levels(Effort), 'Effort'))) +
-    ggtitle('MSPE vs Maximin Distance to Path')
+    ggtitle('MSPE vs Average Distance to Path')
   )
   dev.off()
 
   png(paste0('../graphics/MSPE-Coverage-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = MSPE, x = CoverageMaxDist, col = Scheme)) +
+    ggplot(aes(y = MSPE, x = CoverageAvgDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle('MSPE vs Maximin Distance to Path')
+    ggtitle('MSPE vs Average Distance to Path')
   )
   dev.off()
 
   png(paste0('../graphics/APV-Coverage-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = APV, x = CoverageMaxDist, col = Scheme)) +
+    ggplot(aes(y = APV, x = CoverageAvgDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
     facet_wrap(~factor(paste(Effort, 'Effort'), levels = paste(levels(Effort), 'Effort'))) +
-    ggtitle('APV vs Maximin Distance to Path')
+    ggtitle('APV vs Average Distance to Path')
   )
   dev.off()
 
   png(paste0('../graphics/APV-Coverage-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
   print(
     rect_results %>%
-    left_join(allplans %>% select(PlanID, CoverageMaxDist)) %>%
+    left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = APV, x = CoverageMaxDist, col = Scheme)) +
+    ggplot(aes(y = APV, x = CoverageAvgDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
     scale_x_log10() +
     scale_y_log10() +
-    ggtitle('APV vs Maximin Distance to Path')
+    ggtitle('APV vs Average Distance to Path')
   )
   dev.off()
 
