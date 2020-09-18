@@ -25,12 +25,13 @@ lambda_at_nodes <- readRDS('../data/lambda_at_nodes.rds')
 log_lambda <- log(lambda_at_nodes)
 intercept <- apply(log_lambda, 2, weighted.mean, rect_R_nodes_area, na.rm = TRUE)
 allplans <- readRDS('../data/rect_plans.rds') %>%
+  rename(Length = Distance) %>%
   mutate(
     Segments = sapply(Lengths, length),
     Effort = factor(case_when(
-      Distance < 12000 ~ 'Low',
-      Distance < 25000 ~ 'Medium',
-      Distance < 45000 ~ 'High',
+      Length < 12000 ~ 'Low',
+      Length < 25000 ~ 'Medium',
+      Length < 45000 ~ 'High',
       TRUE ~ 'Very High'
     ), levels = c('Low', 'Medium', 'High',  'Very High'))
   )
@@ -69,9 +70,9 @@ for(i in seq_along(plotplans)){
 
 # Read the model fitting results and prepare for plotting.
 rect_results <- readRDS('../data/rect_results.rds') %>%
-  left_join(allplans %>% select(Scheme, Subscheme, Effort, PlanID, Distance, Segments)) %>%
+  left_join(allplans %>% select(Scheme, Subscheme, Effort, PlanID, Length, Segments)) %>%
   group_by(DataID, Subscheme) %>%
-  mutate(AvgDistance = mean(Distance, na.rm = TRUE)) %>%
+  mutate(AvgLength = mean(Length, na.rm = TRUE)) %>%
   ungroup %>%
   mutate(
     `MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'),
@@ -110,7 +111,7 @@ stopCluster(cl)
 
 # Summarize the results.
 rect_summary <- rect_results %>%
-  left_join(allplans %>% select(Scheme, Subscheme, PlanID, Distance)) %>%
+  left_join(allplans %>% select(Scheme, Subscheme, PlanID, Length)) %>%
   group_by(DataID, Subscheme) %>%
   summarize(
     Scheme = unique(Scheme),
@@ -171,8 +172,8 @@ rect_summary <- rect_results %>%
     MaxInt = max(IntMeanError, na.rm = TRUE),
     IQRInt = IQR(IntMeanError, na.rm = TRUE),
     RangeInt = max(IntMeanError, na.rm = TRUE) - min(IntMeanError, na.rm = TRUE),
-    AvgDistance = mean(Distance),
-    SDDistance = sd(Distance),
+    AvgLength = mean(Length),
+    SDLength = sd(Length),
     AvgArea = mean(Area),
     SDArea = sd(Area),
     AvgProp = mean(SurveyProp),
@@ -310,11 +311,11 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = IntMeanError, x = Distance, col = Variant)) +
-    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    ggplot(aes(y = IntMeanError, x = Length, col = Variant)) +
+    geom_line(aes(x = AvgLength), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
-    ggtitle('Error in Posterior Mean vs Distance Surveyed')
+    ggtitle('Error in Posterior Mean vs Total Path Length')
   )
   dev.off()
 
@@ -322,10 +323,10 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = IntMeanError, x = Distance, col = Scheme)) +
-    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    ggplot(aes(y = IntMeanError, x = Length, col = Scheme)) +
+    geom_line(aes(x = AvgLength), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
-    ggtitle('Error in Posterior Mean vs Distance Surveyed')
+    ggtitle('Error in Posterior Mean vs Length Surveyed')
   )
   dev.off()
 
@@ -438,11 +439,11 @@ for(thisdataset in rect_datasets$DataID){
     rect_results %>%
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = CoverageAvgDist, x = Distance, col = Variant)) +
-    geom_line(aes(x = AvgDistance, group = interaction(Scheme, Variant)), stat = 'summary', fun = median) +
+    ggplot(aes(y = CoverageAvgDist, x = Length, col = Variant)) +
+    geom_line(aes(x = AvgLength, group = interaction(Scheme, Variant)), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
-    ggtitle('Averave Distance to Path vs Total Distance Surveyed')
+    ggtitle('Averave Distance to Path vs Total Path Length')
   )
   dev.off()
 
@@ -452,10 +453,10 @@ for(thisdataset in rect_datasets$DataID){
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     mutate(Variant = ifelse(is.na(Variant), Scheme, Variant)) %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = CoverageAvgDist, x = Distance, col = Scheme)) +
-    geom_line(aes(x = AvgDistance, group = Variant), stat = 'summary', fun = median) +
+    ggplot(aes(y = CoverageAvgDist, x = Length, col = Scheme)) +
+    geom_line(aes(x = AvgLength, group = Variant), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
-    ggtitle('Average Distance to Path vs Total Distance Surveyed')
+    ggtitle('Average Distance to Path vs Total Length Surveyed')
   )
   dev.off()
 
@@ -466,10 +467,10 @@ for(thisdataset in rect_datasets$DataID){
     left_join(inhib_design) %>%
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     mutate(`Proportion Pairs` = paste0(100 * prop_pairs, '%')) %>%
-    ggplot(aes(y = CoverageAvgDist, x = Distance, col = `Proportion Pairs`)) +
+    ggplot(aes(y = CoverageAvgDist, x = Length, col = `Proportion Pairs`)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
-    scale_x_continuous(breaks = unique(rect_results$Distance[rect_results$Scheme == 'Inhib'])) +
+    scale_x_continuous(breaks = unique(rect_results$Length[rect_results$Scheme == 'Inhib'])) +
     ggtitle('Average Distance vs Path Lengh for Inhibitory Plus Close Pairs Designs')
   )
   dev.off()
@@ -481,10 +482,10 @@ for(thisdataset in rect_datasets$DataID){
     left_join(serp_design) %>%
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
     mutate(Zigzags = factor(serp_num)) %>%
-    ggplot(aes(y = CoverageAvgDist, x = Distance, col = Zigzags)) +
+    ggplot(aes(y = CoverageAvgDist, x = Length, col = Zigzags)) +
     geom_line(stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
-    scale_x_continuous(breaks = unique(rect_results$Distance[rect_results$Scheme == 'Serp'])) +
+    scale_x_continuous(breaks = unique(rect_results$Length[rect_results$Scheme == 'Serp'])) +
     ggtitle('Average Distance vs Path Lengh for Serpentine Transect Designs')
   )
   dev.off()
@@ -496,7 +497,6 @@ for(thisdataset in rect_datasets$DataID){
     filter(DataID == thisdataset) %>%
     ggplot(aes(y = MSPE, x = CoverageAvgDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
-    scale_x_log10() +
     scale_y_log10() +
     facet_wrap(~factor(paste(Effort, 'Effort'), levels = paste(levels(Effort), 'Effort'))) +
     ggtitle('MSPE vs Average Distance to Path')
@@ -510,7 +510,6 @@ for(thisdataset in rect_datasets$DataID){
     filter(DataID == thisdataset) %>%
     ggplot(aes(y = MSPE, x = CoverageAvgDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
-    scale_x_log10() +
     scale_y_log10() +
     ggtitle('MSPE vs Average Distance to Path')
   )
@@ -523,7 +522,6 @@ for(thisdataset in rect_datasets$DataID){
     filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = CoverageAvgDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
-    scale_x_log10() +
     scale_y_log10() +
     facet_wrap(~factor(paste(Effort, 'Effort'), levels = paste(levels(Effort), 'Effort'))) +
     ggtitle('APV vs Average Distance to Path')
@@ -537,7 +535,6 @@ for(thisdataset in rect_datasets$DataID){
     filter(DataID == thisdataset) %>%
     ggplot(aes(y = APV, x = CoverageAvgDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
-    scale_x_log10() +
     scale_y_log10() +
     ggtitle('APV vs Average Distance to Path')
   )
@@ -547,11 +544,11 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = APV, x = Distance, col = Scheme)) +
-    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    ggplot(aes(y = APV, x = Length, col = Scheme)) +
+    geom_line(aes(x = AvgLength), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     scale_y_log10() +
-    ggtitle('APV vs Distance Surveyed')
+    ggtitle('APV vs Total Path Length')
   )
   dev.off()
 
@@ -572,11 +569,11 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = MSPE, x = Distance, col = Scheme)) +
-    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    ggplot(aes(y = MSPE, x = Length, col = Scheme)) +
+    geom_line(aes(x = AvgLength), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     scale_y_log10() +
-    ggtitle('MSPE vs Distance Surveyed')
+    ggtitle('MSPE vs Total Path Length')
   )
   dev.off()
 
@@ -597,12 +594,12 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = APV, x = Distance, col = Variant)) +
-    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    ggplot(aes(y = APV, x = Length, col = Variant)) +
+    geom_line(aes(x = AvgLength), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle('APV vs Distance Surveyed')
+    ggtitle('APV vs Total Path Length')
   )
   dev.off()
 
@@ -623,12 +620,12 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = MedPV, x = Distance, col = Variant)) +
-    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    ggplot(aes(y = MedPV, x = Length, col = Variant)) +
+    geom_line(aes(x = AvgLength), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle('Median Prediction Variance vs Distance Surveyed')
+    ggtitle('Median Prediction Variance vs Total Path Length')
   )
   dev.off()
 
@@ -649,12 +646,12 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = MaxPV, x = Distance, col = Variant)) +
-    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    ggplot(aes(y = MaxPV, x = Length, col = Variant)) +
+    geom_line(aes(x = AvgLength), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle('Maximum Prediction Variance vs Distance Surveyed')
+    ggtitle('Maximum Prediction Variance vs Total Path Length')
   )
   dev.off()
 
@@ -675,12 +672,12 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = MSPE, x = Distance, col = Variant)) +
-    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    ggplot(aes(y = MSPE, x = Length, col = Variant)) +
+    geom_line(aes(x = AvgLength), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle('MSPE vs Distance Surveyed')
+    ggtitle('MSPE vs Total Path Length')
   )
   dev.off()
 
@@ -701,12 +698,12 @@ for(thisdataset in rect_datasets$DataID){
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
-    ggplot(aes(y = MedAPE, x = Distance, col = Variant)) +
-    geom_line(aes(x = AvgDistance), stat = 'summary', fun = median) +
+    ggplot(aes(y = MedAPE, x = Length, col = Variant)) +
+    geom_line(aes(x = AvgLength), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
     scale_y_log10() +
-    ggtitle('Median Absolute Prediction Error vs Distance Surveyed')
+    ggtitle('Median Absolute Prediction Error vs Total Path Length')
   )
   dev.off()
 

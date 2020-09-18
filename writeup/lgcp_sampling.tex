@@ -204,16 +204,45 @@ the size of the study region and not connected into a path.
 %segment length
 %\end{itemize}
 
-% Andy's words:
+\subsection{Evaluation Criteria}
 With an eye toward practical considerations of data collection, we present
-criteria to compare sampling strategies that impact LGCP estimates. We compare
+criteria to compare sampling strategies that impact LGCP posterior. We compare
 plans with (approximately) fixed path lengths, most of which avoid sharp turns.
 Data collection equipment (e.g. metal detectors) may have limited mobility,
-requiring minimizing the number or angle of turns. The model-based criteria
-that we evaluate are the mean squared prediction error (MSPE) of the latent
-Gaussian, process, the average prediction variance (APV), and the estimation
-error in the posterior mean of the intercept.
+requiring minimizing the number or angle of turns.
 
+One important characteristic in addition the total path length is the concept
+of spatial coverage, or how well the design represents the study site in the
+sense that all points in the region are close to observed locations. We measure
+this by the average distance between points in the site and points on the path.
+We define the distance between a point and the path as the distance between that
+point and the nearest point on the path, then take the average over all points
+in the study region. This can be roughly understood as the radius of a typical
+unsurveyed void.
+
+The model-based criteria that we evaluate are the error in the posterior mean:
+\begin{equation*}
+\mathrm{E}[\mu|\mathbf{X}_{\mathcal{S}}]
+- \int_{\mathcal{R}}\log[\lambda(u)] \mathrm{d}u / |\mathcal{R}|,
+\end{equation*}
+the mean squared prediction error (MSPE) of the log intensity surface:
+\begin{equation*}
+\mathrm{E}[(\mu + \mathbf{e}(u) - \log[\lambda(u))^{2}|\mathbf{X}_{\mathcal{S}}],
+\end{equation*}
+and the average prediction variance (APV) of the latent Gaussian process:
+\begin{equation*}
+\mathrm{Var}[\mathbf{e}(u)|\mathbf{X}_{\mathcal{S}}].
+\end{equation*}
+In the above notation, \(\lambda\) is the true realized intensity function,
+which is known in the simulations.
+
+The first criterion captures accuracy in the overall scale of the intensity
+surface. Large-magnitude errors in the mean imply that that model will predict
+overall too many or two few events. The other criteria reflect two important
+characteristics of a useful spatial prediction. First, deviation from the true
+surface should be low, and is indicated by low MSPE. Second, the model's own
+assessment of prediction uncertainty will be used in practice to build trust in
+the inferences, so APV should be low. 
 
 \subsection{Sampling design schemes}
 \label{methodschemes}
@@ -441,8 +470,10 @@ accurately predict the log-intensity function.
 
 \begin{table}
 \caption{Design schemes used in the simulation study. The table presents the
-design parameters, distance travelled along the path, and percent of the study
-area surveyed under each of four survey effort levels.\\
+design parameters, distance travelled along the path, percent of the study area
+surveyed, and average distance to the path under each of four survey effort
+levels. The average distance to the path varies due from design to design, and
+is presented as average (SD).\\
 * Variable area due to overlapping segments, reported as average (SD).\\
 ** Variable distance surveyed, reported as average (SD).}
 \label{designtable}
@@ -470,7 +501,7 @@ SRS
 &
 70 transects
 \\
-\hfill\emph{Distance:}
+\hfill\emph{Length:}
 &
 7000 units
 &
@@ -490,6 +521,16 @@ SRS
 &
 17.2\% (0.459\%)*
 \\
+\hfill\emph{Avg. Dist. to Path:}
+&
+73.7 (16.4)
+&
+29.7 (6.01)
+&
+15.0 (1.99)
+&
+10.8 (1.44)
+\\
 \hline
 Systematic
 &
@@ -501,7 +542,7 @@ Systematic
 &
 70 transects
 \\
-\hfill\emph{Distance:}
+\hfill\emph{Length:}
 &
 7000 units
 &
@@ -520,6 +561,16 @@ Systematic
 13.4\%
 &
 18.7\%
+\\
+\hfill\emph{Avg. Dist. to Path:}
+&
+38.4 (0.866)
+&
+15.2 (0.181)
+&
+7.56 (0.0307)
+&
+5.40 (0.0164)
 \\
 \hline
 Inhibitory,
@@ -542,7 +593,7 @@ Inhibitory,
 &
 7 paired
 \\
-\hfill\emph{Distance:}
+\hfill\emph{Length:}
 &
 7000 units
 &
@@ -561,6 +612,16 @@ Inhibitory,
 12.8\% (0.314\%)*
 &
 17.5\% (0.427\%)*
+\\
+\hfill\emph{Avg. Dist. to Path:}
+&
+50.3 (5.35)
+&
+20.8 (1.82)
+&
+10.6 (1.24)
+&
+7.64 (0.576)
 \\
 \hline
 Inhibitory,
@@ -583,7 +644,7 @@ Inhibitory,
 &
 14 paired
 \\
-\hfill\emph{Distance:}
+\hfill\emph{Length:}
 &
 7000 units
 &
@@ -602,6 +663,16 @@ Inhibitory,
 12.8\% (0.303\%)*
 &
 17.6\% (0.368\%)*
+\\
+\hfill\emph{Avg. Dist. to Path:}
+&
+53.5 (8.37)
+&
+22.0 (2.97)
+&
+11.4 (1.70)
+&
+8.26 (0.826)
 \\
 \hline
 Serpentine,
@@ -624,7 +695,7 @@ Serpentine,
 &
 7.84 unit offset
 \\
-\hfill\emph{Distance:}
+\hfill\emph{Length:}
 &
 7000 units
 &
@@ -643,6 +714,16 @@ Serpentine,
 13.4\%
 &
 18.7\%
+\\
+\hfill\emph{Avg. Dist. to Path:}
+&
+43.2 (1.83)
+&
+16.0 (0.215)
+&
+7.79 (0.0508)
+&
+5.51 (0.0309)
 \\
 \hline
 Serpentine,
@@ -665,7 +746,7 @@ Serpentine,
 &
 4.48 unit offset
 \\
-\hfill\emph{Distance:}
+\hfill\emph{Length:}
 &
 7000 units
 &
@@ -685,6 +766,16 @@ Serpentine,
 &
 18.7\%
 \\
+\hfill\emph{Avg. Dist. to Path:}
+&
+44.5 (2.03)
+&
+15.9 (0.169)
+&
+7.76 (0.0328)
+&
+5.50 (0.0271)
+\\
 \hline
 LHS-TSP
 &
@@ -696,7 +787,7 @@ LHS-TSP
 &
 2400 bins
 \\
-\hfill\emph{Distance:}
+\hfill\emph{Length:}
 &
 7177 (189) units**
 &
@@ -716,6 +807,16 @@ LHS-TSP
 &
 18.2\% (0.127\%)**
 \\
+\hfill\emph{Avg. Dist. to Path:}
+&
+43.5 (1.44)
+&
+17.4 (0.186)
+&
+8.63 (0.0683)
+&
+6.08 (0.0562)
+\\
 \hline
 Hilbert Curve
 &
@@ -727,7 +828,7 @@ Hilbert Curve
 &
 6th Order
 \\
-\hfill\emph{Distance:}
+\hfill\emph{Length:}
 &
 8581 units
 &
@@ -746,6 +847,16 @@ Hilbert Curve
 13.3\%
 &
 26.47\%
+\\
+\hfill\emph{Avg. Dist. to Path:}
+&
+37.3 (1.95)
+&
+17.9 (0.480)
+&
+8.77 (0.113)
+&
+4.37 (0.0382)
 \\
 \hline
 \end{tabular}
@@ -939,13 +1050,8 @@ extremely large values in the southeast corner (notice the color scale). The
 hotspot is driven by two nodes on the boundary with very large prediction
 values. Another, less extreme, edge effect is present in the northeast corner.
 
-There are two important characteristics of a useful spatial prediction. First,
-deviation from the true surface should be low, and is indicated by low
-mean squared prediction error (MSPE). Second, the model's own assessment of
-prediction uncertainty will be used in practice to build trust in the
-inferences, so average prediction variance (APV) should be low. The next
-sections compare the schemes in terms of MSPE and APV applied to one realized
-LGCP dataset and one realized LGCP with Clusters dataset.
+The next sections compare the schemes in terms of model-based criteria applied
+to one realized LGCP dataset and one realized LGCP with Clusters dataset.
 
 \begin{figure}
 
@@ -1119,12 +1225,10 @@ GP posterior mean of \(-8.71\) over most of the site, rendering the prediction
 mostly useless.
 
 The problem with this example is easily explained in terms of the average
-distance between the path and arbitrary points in the study site. We define
-the distance between a point and the path as the distance between that point
-and the nearest point on the path, then take the average over all points in
-the study area. This example design has an averge distance from the path of
-486 units; the designs used in the simulation study all had average distances
-to the path under 130 (with most under 50).
+distance between the path and arbitrary points in the study site. This example
+design has an averge distance from the path of 486 units; the designs used in
+the simulation study all had average distances to the path under 130 (with most
+under 50).
 % Move explanation of maximin distance to methods then add to table.
 % On second thought, the story might really be about the average.
 
@@ -1165,7 +1269,7 @@ SD is shown for each finite element node.}
 
 \caption{MSPE plotted against the maximum distance from any point in the site
 to its the nearest point on the path. As survey effort increases, the cloud of
-points drifts down (lower MSPE) and to the left (lower minimax distance to the
+points drifts down (lower MSPE) and to the left (lower average distance to the
 path).}
 \label{covg}
 \end{figure}
