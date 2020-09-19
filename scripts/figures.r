@@ -165,6 +165,8 @@ rect_summary <- rect_results %>%
     MaxMedPV = max(MedPV, na.rm = TRUE),
     IQRMedPV = IQR(MedPV, na.rm = TRUE),
     RangeMedPV = max(MedPV, na.rm = TRUE) - min(MedPV, na.rm = TRUE),
+    AvgInt = mean(IntMeanError, na.rm = TRUE),
+    SDInt = sd(IntMeanError, na.rm = TRUE),
     MinInt = min(IntMeanError, na.rm = TRUE),
     Q1Int = quantile(IntMeanError, 0.25, na.rm = TRUE),
     MedInt = median(IntMeanError, na.rm = TRUE),
