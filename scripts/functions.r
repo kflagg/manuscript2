@@ -728,6 +728,8 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
       Fit = list(NULL),
       IntMean = NA_real_,
       IntSD = NA_real_,
+      Int025 = NA_real_,
+      Int975 = NA_real_,
       RangeMean = NA_real_,
       RangeSD = NA_real_,
       SigMean = NA_real_,
@@ -736,7 +738,10 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
       PredictionSD = list(NULL),
       MSPE = NA_real_,
       APV = NA_real_,
-      MaxPV = NA_real_
+      MedPV = NA_real_,
+      MaxPV = NA_real_,
+      Area = NA_real_,
+      SurveyProp = NA_real_
     ))
   }
 
@@ -751,6 +756,8 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
     Fit = list(if(save_fit) result),
     IntMean = result$summary.fixed['intercept', 'mean'],
     IntSD = result$summary.fixed['intercept', 'sd'],
+    Int025 = result$summary.fixed['intercept', '0.025quant'],
+    Int975 = result$summary.fixed['intercept', '0.975quant'],
     RangeMean = result$summary.hyperpar['Range for idx', 'mean'],
     RangeSD = result$summary.hyperpar['Range for idx', 'sd'],
     SigMean = result$summary.hyperpar['Stdev for idx', 'mean'],
@@ -759,8 +766,10 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
     PredictionSD = list(if(save_pred) result$summary.random[[1]]$sd),
     MSPE = mean((log(attr(obs_ppp, 'Lambda')) - gpmap)^2),
     APV = sum(mesh_weights * result$summary.random[[1]]$sd^2) / sum(mesh_weights),
+    MedPV = weighted.median(PredictionSD[[1]], rect_R_nodes_area),
     MaxPV = max(result$summary.random[[1]]$sd^2),
-    Area = area(Window(obs_ppp))
+    Area = area(Window(obs_ppp)),
+    SurveyProp = area(Window(obs_ppp)) / area(rect_R)
   ))
 }
 

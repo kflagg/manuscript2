@@ -76,10 +76,10 @@ rect_results <- readRDS('../data/rect_results.rds') %>%
   ungroup %>%
   mutate(
     `MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'),
-    SurveyProp = Area / area(rect_R),
+#    SurveyProp = Area / area(rect_R),
     IntMeanError = NA_real_,
     MedAPE = NA_real_,
-    MedPV = NA_real_,
+#    MedPV = NA_real_,
     Variant = case_when(
       Subscheme %in% c('Inhib1', 'Inhib2', 'Inhib3', 'Inhib4') ~ '10% pairs',
       Subscheme %in% c('Inhib5', 'Inhib6', 'Inhib7', 'Inhib8') ~ '20% pairs',
@@ -102,9 +102,9 @@ rect_results$MedAPE <- parSapply(cl, seq_len(nrow(rect_results)), function(r){
 })
 
 badpreds <- which(parSapply(cl, parLapply(cl, rect_results$Prediction, is.na), any))
-rect_results$MedPV[-badpreds] <- parSapply(cl,
-  rect_results$PredictionSD[-badpreds], weighted.median, rect_R_nodes_area
-)^2
+#rect_results$MedPV[-badpreds] <- parSapply(cl,
+#  rect_results$PredictionSD[-badpreds], weighted.median, rect_R_nodes_area
+#)^2
 
 stopCluster(cl)
 
@@ -187,7 +187,7 @@ rect_summary <- rect_results %>%
 
 
 # Plot MSPE, APV, and error in posterior mean intercept for everything
-png(paste0('../graphics/HighMSPE-profile.png'), width = 9, height = 6, units = 'in', res = 600)
+png(paste0('../graphics/HighMSPE-profile.png'), width = 9, height = 5, units = 'in', res = 600)
 print(
   rect_summary %>%
   mutate(
@@ -207,7 +207,7 @@ print(
 )
 dev.off()
 
-png(paste0('../graphics/MSPE-profile.png'), width = 9, height = 6, units = 'in', res = 600)
+png(paste0('../graphics/MSPE-profile.png'), width = 9, height = 5, units = 'in', res = 600)
 print(
   rect_results %>%
   mutate(
@@ -226,7 +226,7 @@ print(
 )
 dev.off()
 
-png(paste0('../graphics/APV-profile.png'), width = 9, height = 6, units = 'in', res = 600)
+png(paste0('../graphics/APV-profile.png'), width = 9, height = 5, units = 'in', res = 600)
 print(
   rect_results %>%
   mutate(
@@ -245,7 +245,7 @@ print(
 )
 dev.off()
 
-png(paste0('../graphics/IntError-profile.png'), width = 9, height = 6, units = 'in', res = 600)
+png(paste0('../graphics/IntError-profile.png'), width = 9, height = 5, units = 'in', res = 600)
 print(
   rect_results %>%
   mutate(
@@ -281,7 +281,7 @@ for(thisdataset in rect_datasets$DataID){
   points(rect_R_mesh_loc[,], pch = 20)
   dev.off()
 
-  png(paste0('../graphics/HighMSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/HighMSPE-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -309,7 +309,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Int-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Int-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -321,7 +321,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Int-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Int-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -332,7 +332,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Int-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Int-effort-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -344,7 +344,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Int-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Int-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -356,7 +356,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MaxPV-MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MaxPV-MSPE-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -368,7 +368,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-MSPE-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -380,7 +380,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-Segments-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-Segments-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, Segments)) %>%
@@ -394,7 +394,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-Segments-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-Segments-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, Segments)) %>%
@@ -408,7 +408,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-Segments-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-Segments-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, Segments)) %>%
@@ -422,7 +422,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-Segments-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-Segments-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, Segments)) %>%
@@ -436,7 +436,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Coverage-Distance-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Coverage-Distance-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
@@ -449,7 +449,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Coverage-Distance-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Coverage-Distance-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
@@ -462,7 +462,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Coverage-Distance-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Coverage-Distance-Inhib-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
@@ -477,7 +477,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/Coverage-Distance-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/Coverage-Distance-Serp-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
@@ -492,7 +492,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-Coverage-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-Coverage-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
@@ -505,7 +505,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-Coverage-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-Coverage-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
@@ -517,7 +517,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-Coverage-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-Coverage-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
@@ -530,7 +530,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-Coverage-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-Coverage-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     left_join(allplans %>% select(PlanID, CoverageAvgDist)) %>%
@@ -542,7 +542,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -554,7 +554,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -567,7 +567,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -579,7 +579,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-effort-notpaneled-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -592,7 +592,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -605,7 +605,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-effort-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -618,7 +618,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MedPV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MedPV-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -631,7 +631,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MedPV-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MedPV-effort-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -644,7 +644,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MaxPV-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MaxPV-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -657,7 +657,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MaxPV-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MaxPV-effort-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -670,7 +670,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -683,7 +683,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-effort-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -696,7 +696,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MedAPE-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MedAPE-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -709,7 +709,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MedAPE-effort-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MedAPE-effort-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset) %>%
@@ -722,7 +722,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-Inhib-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
@@ -738,7 +738,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-Inhib-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-Inhib-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Inhib') %>%
@@ -754,7 +754,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/APV-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/APV-Serp-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
@@ -772,7 +772,7 @@ for(thisdataset in rect_datasets$DataID){
   )
   dev.off()
 
-  png(paste0('../graphics/MSPE-Serp-', thisdataset, '.png'), width = 9, height = 6, units = 'in', res = 600)
+  png(paste0('../graphics/MSPE-Serp-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
   print(
     rect_results %>%
     filter(DataID == thisdataset, Scheme == 'Serp') %>%
