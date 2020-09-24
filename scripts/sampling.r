@@ -242,7 +242,7 @@ invisible(clusterEvalQ(cl, {
   library(tibble)
   library(dplyr)
 }))
-clusterExport(cl, c('sample_ppp', 'model_fit', 'rect_R_spde', 'rect_R_formula', 'rect_dual_tess', 'rect_R_proj', 'rect_R_mesh', 'rect_R', 'allplans', 'fit_design', 'rect_datasets', 'rect_prior_fixed'))
+clusterExport(cl, c('sample_ppp', 'model_fit', 'rect_R_spde', 'rect_R_formula', 'rect_dual_tess', 'rect_R_proj', 'rect_R_mesh', 'rect_R_nodes_area', 'rect_R', 'allplans', 'fit_design', 'rect_datasets', 'rect_prior_fixed'))
 
 # Fit models.
 rect_results <- bind_rows(parLapply(cl, seq_len(nrow(fit_design)), function(r){

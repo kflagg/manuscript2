@@ -55,12 +55,12 @@
 
 \begin{abstract}
 
-\paragraph{Goal of this paper (placeholder abstract---add some results when
-available)} Evaluate a wide variety of path designs in terms design-based
-heuristics and model-based criteria for spatial prediction using Bayesian LGCP
-models. Identify promising path designs. Illuminate any relationships among
-design characteristics and predictive criteria that will be helpful for
-constrained optimization.
+\paragraph{Goal of this paper (placeholder abstract---add some results and the
+coverage statistic)} Evaluate a wide variety of path designs in terms
+design-based heuristics and model-based criteria for spatial prediction using
+Bayesian LGCP models. Identify promising path designs. Illuminate any
+relationships among design characteristics and predictive criteria that will be
+helpful for constrained optimization.
 
 \end{abstract}
 
@@ -86,23 +86,24 @@ practice~\citep{rueetal, lindgrenetal, illianetal, simpsonetal}. These advances
 make it possible to fit LGCP models easily, without time-consuming Monte Carlo
 methods. In some applications, the entire point pattern is not fully observed
 due to variable sampling effort. This is referred to as a degraded point
-pattern~\citep{chakrabortyetal} and it is relatively simple to accommodate
+pattern~\citep{chakrabortyetal}. It is relatively simple to accommodate
 variable sampling effort in these models using modern Bayesian computing
 tools~\citep{yuanetal}. However, the literature on optimal sampling for spatial
 point process models is in its infancy~\citep{liuvanhatalo}.
 
 Point pattern data are routinely collected in species distribution studies and
 ordnance response projects. The data consist of the locations of events in some
-spatial region. These applications may use quadrat sampling or line-transect
-sampling, with transect sampling being more common. When the objective is to
-map where events occur in space, various spatial mapping procedures have been
-used. Traditionally these have involved aggregating the data to grid cell
-counts or computing moving averages. Aggregation has the downside of
-introducing arbitrary structure into the data by the choice of grid scheme
-or averaging window, and requires unnecessary computation
-effort~\citep{simpsonetal}. Software is now available to fit spatial point
-process models to data acquired via distance sampling and simultaneously
-estimate the detection function~\citep{dspat,baser}.
+spatial region. In many cases it is too costly to observe the entire study,
+region so a sampling procedure is employed. These applications may use quadrat
+sampling or line-transect sampling, with transect sampling being more common.
+Software is now available to fit spatial point process models to data acquired
+via distance sampling and simultaneously estimate the detection
+function~\citep{dspat,baser}. Various spatial mapping procedures have been used
+to map where events occur in space. However, these have traditionally involved
+aggregating the data to grid cell counts or computing moving averages.
+Aggregation has the downside of introducing arbitrary structure into the data
+by the choice of grid scheme or averaging window, and requires unnecessary
+computation effort~\citep{simpsonetal}.
 % Recent example of aggregation: https://link-springer-com.proxybz.lib.montana.edu/content/pdf/10.1007/s13253-020-00386-3.pdf
 
 In ecological settings, sampling plans are often designed around the goal of
@@ -115,9 +116,9 @@ ideas about the characteristics of a good point design apply to paths, creating
 an optimal path design is not as simple as connecting the points of a point
 design with line segments. There are many ways to connect points into a path,
 so optimal design criteria must apply to the whole path and not only to the
-waypoints. In this paper, we present a variety of sampling path designs and
-assess their optimality for mapping intensity using LGCP models via a
-simulation study.
+waypoints. In this paper, we develop a space-filling criterion for path
+designs, present a variety of sampling path designs, and assess their
+optimality for mapping intensity using LGCP models via a simulation study.
 
 
 \subsection{Log-Gaussian Cox process}
@@ -126,9 +127,9 @@ The log-Gaussian Cox process is an inhomogeneous Poisson process where the
 logarithm of the intensity function is a Gaussian process \citep{moelleretal}.
 The LGCP provides a flexible model for mapping event intensity over space using
 few parameters. Efficient Bayesian computation tools are available using INLA
-to approximate the posterior marginal distributions \cite{rueetal}, a finite
-element approach to represent the Gaussian process \cite{lindgrenetal}, and
-pseudodata to approximate the point process likelihood \cite{simpsonetal}.
+to approximate the posterior marginal distributions \citep{rueetal}, a finite
+element approach to represent the Gaussian process \citep{lindgrenetal}, and
+pseudodata to approximate the point process likelihood \citep{simpsonetal}.
 % Add some example applications.
 
 
@@ -235,12 +236,12 @@ because they provide good spatial coverage in the sense that any point in the
 study site has an a priori known maximum distance from the path. For point
 designs, systematic designs are optimal for prediction, simple random samples
 are optimal for estimation, and inhibitory with close pairs designs are
-becoming a popular compromise. We adapt all of these to the parallel line
-transect setting. We use line transects running north-south, with three methods
-of choosing the horizontal coordinate: simple random sample (SRS), systematic
-with a random starting point and even spacing, and inhibitory plus close pairs.
-Figure~\ref{plancomparison} (left column) shows an example of each scheme with
-25 transects.
+becoming a popular compromise~\citep{chipetaetal2017}. We adapt all of these to
+the parallel line transect setting. We use line transects running north-south,
+with three methods of choosing the horizontal coordinate: simple random sample
+(SRS), systematic with a random starting point and even spacing, and inhibitory
+plus close pairs. Figure~\ref{plancomparison} (left column) shows an example of
+each scheme with 25 transects.
 
 %We should note that we will be using an isotropic covariance function in
 %the model. If an anisotropic model is used, parallel transects may need to be
@@ -333,12 +334,11 @@ coverage properties. We use the LHS design as waypoints for a path. Because
 longer distance typically brings increased costs, we treat this as a traveling
 salesperson problem (TSP) and use the shortest path through the waypoints as
 our design. This LHS-TSP scheme produces paths that have many sharp corners but
-leaves few large voids (example in Figure~\ref{plancomparison}, bottom left). A
-downside of this design scheme is that the length cannot be specified directly,
-and only certain distances are possible depending on the number of bins used.
-
-Waypoints are generated by the \texttt{lhs} R package~\cite{lhs}
-and connected into a the shortest path by the \texttt{TSP} package~\citep{tsp}.
+leaves few large voids (example in Figure~\ref{plancomparison}, bottom left).
+Waypoints are generated by the \texttt{lhs} R package~\cite{lhs} and connected
+into a the shortest path by the \texttt{TSP} package~\citep{tsp}. A downside of
+this design scheme is that the length cannot be specified directly, and only
+certain distances are possible depending on the number of bins used.
 
 
 \subsubsection{Space-filling curves}

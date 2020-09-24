@@ -156,15 +156,15 @@ rect_summary <- rect_results %>%
     MaxMedAPE = max(MedAPE, na.rm = TRUE),
     IQRMedAPE = IQR(MedAPE, na.rm = TRUE),
     RangeMedAPE = max(MedAPE, na.rm = TRUE) - min(MedAPE, na.rm = TRUE),
-    AvgMedPV = mean(MedPV, na.rm = TRUE),
-    SDMedPV = sd(MedPV, na.rm = TRUE),
-    MinMedPV = min(MedPV, na.rm = TRUE),
-    Q1MedPV = quantile(MedPV, 0.25, na.rm = TRUE),
-    MedMedPV = median(MedPV, na.rm = TRUE),
-    Q3MedPV = quantile(MedPV, 0.75, na.rm = TRUE),
-    MaxMedPV = max(MedPV, na.rm = TRUE),
-    IQRMedPV = IQR(MedPV, na.rm = TRUE),
-    RangeMedPV = max(MedPV, na.rm = TRUE) - min(MedPV, na.rm = TRUE),
+#    AvgMedPV = mean(MedPV, na.rm = TRUE),
+#    SDMedPV = sd(MedPV, na.rm = TRUE),
+#    MinMedPV = min(MedPV, na.rm = TRUE),
+#    Q1MedPV = quantile(MedPV, 0.25, na.rm = TRUE),
+#    MedMedPV = median(MedPV, na.rm = TRUE),
+#    Q3MedPV = quantile(MedPV, 0.75, na.rm = TRUE),
+#    MaxMedPV = max(MedPV, na.rm = TRUE),
+#    IQRMedPV = IQR(MedPV, na.rm = TRUE),
+#    RangeMedPV = max(MedPV, na.rm = TRUE) - min(MedPV, na.rm = TRUE),
     AvgInt = mean(IntMeanError, na.rm = TRUE),
     SDInt = sd(IntMeanError, na.rm = TRUE),
     MinInt = min(IntMeanError, na.rm = TRUE),
@@ -202,6 +202,7 @@ print(
   geom_line(alpha = 0.4) +
   facet_wrap(~Effort) +
   scale_y_continuous(labels = scales::percent_format()) +
+  scale_color_discrete(guide = guide_legend(override.aes = list(alpha = 1))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   ggtitle('Percent of Simulations with MSPE above 100')
 )
@@ -220,6 +221,7 @@ print(
   ggplot(aes(y = MSPE, x = Dataset, col = Scheme, group = PlanID)) +
   geom_line(alpha = 0.1) +
   scale_y_log10() +
+  scale_color_discrete(guide = guide_legend(override.aes = list(alpha = 1))) +
   facet_wrap(~Effort) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   ggtitle('MSPE by Survey Plan')
@@ -239,6 +241,7 @@ print(
   ggplot(aes(y = APV, x = Dataset, col = Scheme, group = PlanID)) +
   geom_line(alpha = 0.1) +
   scale_y_log10() +
+  scale_color_discrete(guide = guide_legend(override.aes = list(alpha = 1))) +
   facet_wrap(~Effort) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   ggtitle('APV by Survey Plan')
@@ -257,6 +260,7 @@ print(
   ) %>%
   ggplot(aes(y = IntMeanError, x = Dataset, col = Scheme, group = PlanID)) +
   geom_line(alpha = 0.1) +
+  scale_color_discrete(guide = guide_legend(override.aes = list(alpha = 1))) +
   facet_wrap(~Effort) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   ggtitle('Error in Posterior Mean by Survey Plan')

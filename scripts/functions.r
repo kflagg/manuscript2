@@ -760,13 +760,21 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
     Int975 = result$summary.fixed['intercept', '0.975quant'],
     RangeMean = result$summary.hyperpar['Range for idx', 'mean'],
     RangeSD = result$summary.hyperpar['Range for idx', 'sd'],
+    Range025 = result$summary.fixed['Range for idx', '0.025quant'],
+    Range975 = result$summary.fixed['Range for idx', '0.975quant'],
     SigMean = result$summary.hyperpar['Stdev for idx', 'mean'],
     SigSD = result$summary.hyperpar['Stdev for idx', 'sd'],
+    Sig025 = result$summary.fixed['Stdev for idx', '0.025quant'],
+    Sig975 = result$summary.fixed['Stdev for idx', '0.975quant'],
     Prediction = list(if(save_pred) result$summary.random[[1]]$mean),
     PredictionSD = list(if(save_pred) result$summary.random[[1]]$sd),
     MSPE = mean((log(attr(obs_ppp, 'Lambda')) - gpmap)^2),
     APV = sum(mesh_weights * result$summary.random[[1]]$sd^2) / sum(mesh_weights),
-    MedPV = weighted.median(PredictionSD[[1]], rect_R_nodes_area),
+    MedPV = if(any(!is.na(PredictionSD))){
+      weighted.median(PredictionSD[[1]], rect_R_nodes_area, na.rm = TRUE)
+    }else{
+      NA_real_
+    },
     MaxPV = max(result$summary.random[[1]]$sd^2),
     Area = area(Window(obs_ppp)),
     SurveyProp = area(Window(obs_ppp)) / area(rect_R)
