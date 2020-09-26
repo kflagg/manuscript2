@@ -774,10 +774,10 @@ model_fit <- function(model_formula, obs_ppp, rect_R_mesh, dual_tess, rect_R_pro
     PredictionSD = list(if(save_pred) result$summary.random[[1]]$sd),
     MSPE = mean((log(attr(obs_ppp, 'Lambda')) - gpmap)^2),
     APV = sum(mesh_weights * result$summary.random[[1]]$sd^2) / sum(mesh_weights),
-    MedPV = if(any(!is.na(PredictionSD))){
-      weighted.median(PredictionSD[[1]], rect_R_nodes_area, na.rm = TRUE)
-    }else{
+    MedPV = if(any(is.na(result$summary.random[[1]]$sd))){
       NA_real_
+    }else{
+      weighted.median(result$summary.random[[1]]$sd^2, rect_R_nodes_area, na.rm = TRUE)
     },
     MaxPV = max(result$summary.random[[1]]$sd^2),
     Area = area(Window(obs_ppp)),

@@ -76,10 +76,9 @@ rect_results <- readRDS('../data/rect_results.rds') %>%
   ungroup %>%
   mutate(
     `MSPE Cluster` = ifelse(MSPE > 100, 'High', 'Low'),
-#    SurveyProp = Area / area(rect_R),
+    CaptureInt = NA_real_,
     IntMeanError = NA_real_,
     MedAPE = NA_real_,
-#    MedPV = NA_real_,
     Variant = case_when(
       Subscheme %in% c('Inhib1', 'Inhib2', 'Inhib3', 'Inhib4') ~ '10% pairs',
       Subscheme %in% c('Inhib5', 'Inhib6', 'Inhib7', 'Inhib8') ~ '20% pairs',
@@ -89,7 +88,17 @@ rect_results <- readRDS('../data/rect_results.rds') %>%
     )
   )
 
+invisible(clusterEvalQ(cl, library(dplyr)))
 clusterExport(cl, c('rect_results', 'log_lambda', 'intercept', 'rect_R_nodes_area'))
+rect_results$CaptureInt <- parSapply(cl, seq_len(nrow(rect_results)), function(r){
+  return(case_when(
+    is.na(rect_results$IntMean[r]) ~ NA_character_,
+    rect_results$Int025[r] > intercept[rect_results$DataID[r]] ~ 'High',
+    rect_results$Int975[r] < intercept[rect_results$DataID[r]] ~ 'Low',
+    TRUE ~ 'Captured'
+  ))
+})
+
 rect_results$IntMeanError <- parSapply(cl, seq_len(nrow(rect_results)), function(r){
   return(intercept[rect_results$DataID[r]] - rect_results$IntMean[r])
 })
@@ -100,11 +109,6 @@ rect_results$MedAPE <- parSapply(cl, seq_len(nrow(rect_results)), function(r){
   return(weighted.median(abs(thesepreds - log_lambda[,rect_results$DataID[r]]),
                          rect_R_nodes_area, na.rm = TRUE))
 })
-
-badpreds <- which(parSapply(cl, parLapply(cl, rect_results$Prediction, is.na), any))
-#rect_results$MedPV[-badpreds] <- parSapply(cl,
-#  rect_results$PredictionSD[-badpreds], weighted.median, rect_R_nodes_area
-#)^2
 
 stopCluster(cl)
 
@@ -156,15 +160,16 @@ rect_summary <- rect_results %>%
     MaxMedAPE = max(MedAPE, na.rm = TRUE),
     IQRMedAPE = IQR(MedAPE, na.rm = TRUE),
     RangeMedAPE = max(MedAPE, na.rm = TRUE) - min(MedAPE, na.rm = TRUE),
-#    AvgMedPV = mean(MedPV, na.rm = TRUE),
-#    SDMedPV = sd(MedPV, na.rm = TRUE),
-#    MinMedPV = min(MedPV, na.rm = TRUE),
-#    Q1MedPV = quantile(MedPV, 0.25, na.rm = TRUE),
-#    MedMedPV = median(MedPV, na.rm = TRUE),
-#    Q3MedPV = quantile(MedPV, 0.75, na.rm = TRUE),
-#    MaxMedPV = max(MedPV, na.rm = TRUE),
-#    IQRMedPV = IQR(MedPV, na.rm = TRUE),
-#    RangeMedPV = max(MedPV, na.rm = TRUE) - min(MedPV, na.rm = TRUE),
+    AvgMedPV = mean(MedPV, na.rm = TRUE),
+    SDMedPV = sd(MedPV, na.rm = TRUE),
+    MinMedPV = min(MedPV, na.rm = TRUE),
+    Q1MedPV = quantile(MedPV, 0.25, na.rm = TRUE),
+    MedMedPV = median(MedPV, na.rm = TRUE),
+    Q3MedPV = quantile(MedPV, 0.75, na.rm = TRUE),
+    MaxMedPV = max(MedPV, na.rm = TRUE),
+    IQRMedPV = IQR(MedPV, na.rm = TRUE),
+    RangeMedPV = max(MedPV, na.rm = TRUE) - min(MedPV, na.rm = TRUE),
+    CaptureInt = mean(CaptureInt == 'Captured', na.rm = TRUE),
     AvgInt = mean(IntMeanError, na.rm = TRUE),
     SDInt = sd(IntMeanError, na.rm = TRUE),
     MinInt = min(IntMeanError, na.rm = TRUE),
@@ -187,6 +192,27 @@ rect_summary <- rect_results %>%
 
 
 # Plot MSPE, APV, and error in posterior mean intercept for everything
+png(paste0('../graphics/IntCapture-profile.png'), width = 9, height = 5, units = 'in', res = 600)
+print(
+  rect_summary %>%
+  mutate(
+    Variant = ifelse(is.na(Variant), '', Variant),
+    Effort = factor(Effort, levels = levels(Effort),
+                    labels = paste(levels(Effort), 'Effort')),
+    Dataset = DataID %>%
+      gsub(pattern = '0+', replacement = ' ') %>%
+      gsub(pattern = 'Cluster', replacement = 'LGCP with Clusters')
+  ) %>%
+  ggplot(aes(y = CaptureInt, x = Dataset, col = Scheme, group = interaction(Scheme, Variant))) +
+  geom_line(alpha = 0.4) +
+  facet_wrap(~Effort) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_color_discrete(guide = guide_legend(override.aes = list(alpha = 1))) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle('Percent of Simulations with Mean Captured by 95% Interval')
+)
+dev.off()
+
 png(paste0('../graphics/HighMSPE-profile.png'), width = 9, height = 5, units = 'in', res = 600)
 print(
   rect_summary %>%
@@ -307,9 +333,37 @@ for(thisdataset in rect_datasets$DataID){
       'Not converged'
     ), drop = FALSE) +
     facet_wrap(~Scheme) +
-    theme(legend.position = 'top') +
+    #theme(legend.position = 'top') +
     ylab('Percent') +
     ggtitle('High and Low MSPE')
+  )
+  dev.off()
+
+  png(paste0('../graphics/IntCapture-', thisdataset, '.png'), width = 9, height = 5, units = 'in', res = 600)
+  print(
+    rect_results %>%
+    filter(DataID == thisdataset) %>%
+    mutate(`Result` = factor(
+    ifelse(is.na(CaptureInt), 'Not converged', CaptureInt),
+    levels = c(
+      'Not converged',
+      'High',
+      'Captured',
+      'Low'
+    ))) %>%
+    ggplot(aes(x = Effort, fill = Result)) +
+    geom_bar(position = 'fill') +
+    scale_y_continuous(labels = scales::percent_format()) +
+    scale_fill_manual(values = c('#f8766d', '#00bfc4', '#c77cff', '#808080'), breaks = c(
+      'Low',
+      'Captured',
+      'High',
+      'Not converged'
+    ), drop = FALSE) +
+    facet_wrap(~Scheme) +
+    #theme(legend.position = 'top') +
+    ylab('Percent') +
+    ggtitle('Summary of 95% Central Intervals for the Mean')
   )
   dev.off()
 
