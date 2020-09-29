@@ -294,6 +294,179 @@ print(
 dev.off()
 
 
+# Plot the minimum- and median-MSPE surface for each scheme.
+thisdataset <- 'LGCP000004'
+min_results <- rect_results %>%
+  filter(DataID == thisdataset) %>%
+  group_by(Subscheme) %>%
+  top_n(1, -MSPE) %>%
+  ungroup
+for(thisplan in min_results$PlanID){
+  pdf(paste0('../graphics/lambda-minMSPE-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- min_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
+    t %>%
+    im(xrange = rect_R$x, yrange = rect_R$y) %>%
+    plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
+                        min_results %>%
+                        filter(DataID == thisdataset, PlanID == thisplan) %>%
+                        `[`(1, 'MSPE')
+                        ), ribsep = 0.05, ribargs = list(las = 1))
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+  allplans %>%
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = '#ffffff40', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
+
+  pdf(paste0('../graphics/lambdaSD-minMSPE-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- min_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
+       values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
+       main = sprintf('Prediction SD of the GP\n(APV = %.2f)',
+                      min_results %>%
+                      filter(DataID == thisdataset, PlanID == thisplan) %>%
+                      `[`(1, 'APV')
+                      ), ribsep = 0.05)
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+  allplans %>%
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = '#ffffff40', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
+}
+
+med_results <- rect_results %>%
+  filter(DataID == thisdataset) %>%
+  group_by(Subscheme) %>%
+  mutate(Rank = rank(MSPE, ties.method = 'min')) %>%
+  filter(Rank < (n() + 1) / 2) %>%
+  top_n(1, Rank) %>%
+  ungroup
+for(thisplan in med_results$PlanID){
+  pdf(paste0('../graphics/lambda-medMSPE-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- med_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
+    t %>%
+    im(xrange = rect_R$x, yrange = rect_R$y) %>%
+    plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
+                        med_results %>%
+                        filter(DataID == thisdataset, PlanID == thisplan) %>%
+                        `[`(1, 'MSPE')
+                        ), ribsep = 0.05, ribargs = list(las = 1))
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+  allplans %>%
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = '#ffffff40', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
+
+  pdf(paste0('../graphics/lambdaSD-medMSPE-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- med_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
+       values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
+       main = sprintf('Prediction SD of the GP\n(APV = %.2f)',
+                      med_results %>%
+                      filter(DataID == thisdataset, PlanID == thisplan) %>%
+                      `[`(1, 'APV')
+                      ), ribsep = 0.05)
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+  allplans %>%
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = '#ffffff40', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
+}
+
+max_results <- rect_results %>%
+  filter(DataID == thisdataset) %>%
+  group_by(Subscheme, `MSPE Cluster`) %>%
+  top_n(1, MSPE) %>%
+  ungroup
+for(thisplan in max_results$PlanID){
+  pdf(paste0('../graphics/lambda-maxMSPE-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- max_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
+    t %>%
+    im(xrange = rect_R$x, yrange = rect_R$y) %>%
+    plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
+                        max_results %>%
+                        filter(DataID == thisdataset, PlanID == thisplan) %>%
+                        `[`(1, 'MSPE')
+                        ), ribsep = 0.05, ribargs = list(las = 1))
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+  allplans %>%
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = '#ffffff40', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
+
+  pdf(paste0('../graphics/lambdaSD-maxMSPE-', thisplan, '-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 0, 2, 2))
+  thisresult <- max_results %>%
+    filter(DataID == thisdataset, PlanID == thisplan)
+  plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
+       values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
+       main = sprintf('Prediction SD of the GP\n(APV = %.2f)',
+                      max_results %>%
+                      filter(DataID == thisdataset, PlanID == thisplan) %>%
+                      `[`(1, 'APV')
+                      ), ribsep = 0.05)
+  plot(rect_R_mesh_tess, border = '#00000010', add = TRUE)
+  allplans %>%
+    filter(PlanID == thisplan) %>%
+    `$`('Plan') %>%
+    `[[`(1) %>%
+    plot(col = '#ffffff40', add = TRUE)
+  sample_ppp(
+    rect_datasets %>% filter(DataID == thisdataset) %>% `$`('Data') %>% `[[`(1),
+    allplans %>% filter(PlanID == thisplan) %>% `$`('Plan') %>% `[[`(1)
+  ) %>%
+    points(col = '#ffffff80', bg = '#ffffff40', pch = 21, cex = 0.5)
+  dev.off()
+}
+
+
 # Plot APV and MSPE. Focus on Cluster000004 and LGCP000004 in the paper.
 for(thisdataset in rect_datasets$DataID){
   pdf(paste0('../graphics/mesh-', thisdataset, '.pdf'), width = 9, height = 4)
