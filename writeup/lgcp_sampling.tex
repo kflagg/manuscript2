@@ -1117,6 +1117,37 @@ LGCP and one realization of a LGCP with Clusters.}
 \label{histmsperesults}
 \end{figure}
 
+\subsection{Dealing with computational problems}
+
+\begin{figure}
+\includegraphics[width=5in]{../graphics/finermesh-LGCP000004.pdf}
+\caption{Illustration of a finer mesh than the one used in the full simulation.
+The mesh nodes are used in a numerical integration scheme where they are
+weighted by the area of their dual cells (outlined in grey).}
+\label{meshfiner}
+\end{figure}
+
+\begin{figure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambda-Finer-LGCP000004.pdf}
+\caption{Predicted log-intensity}
+\label{lambdafinerlgcp}
+\end{subfigure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambdaSD-Finer-LGCP000004.pdf}
+\caption{Prediction SD}
+\label{sdfinerlgcp}
+\end{subfigure}
+
+\caption{Predicted GP surface and prediction SD using data observed via a
+serpentine transect plan. The prediction has an apparent edge effect in the
+southeastern corner. The SD is high across much of the site. This example is
+a medium-effort plan applied to a LGCP dataset.}
+\label{finer}
+\end{figure}
+
 
 \subsection{LGCP simulation results}
 
@@ -1350,16 +1381,35 @@ path).}
 
 Even a poor-performing design could be used as a starting point for sequential
 design. As a simple illustration, we augment the design from
-Figure~\ref{serp000148} with some additional sampling effort in the eastern
-part of the site, where the edge effects were seen in the prediction surface.
-The total distance surveyed increases from 17500 to 20180 units, while the
+Figure~\ref{hilb000053lgcp} with some additional sampling effort in the western
+part of the site, where the original design left a large void.
+The total distance surveyed increases from 8581 to 12261 units, while the
 predicted log-intensity surface is much more accurate (Figure~\ref{aug}).
-MSPE decreases from 1600.57 to 2.48 and APV improves from 67.20 to 11.02.
+MSPE decreases from 9.98 to 1.44 and APV improves from 38.16 to 9.55.
 Across the site, the prediction standard deviation is lower than before, and
-is now highest around the edge of the western half. If we were to continue
-adding segments to the path, giving some attention to the western portion of
-the site could further improve the prediction.
+is now highest around in the middle. If we were to continue adding segments to
+the path, giving some attention to the central portion of the site could further
+improve the prediction.
 
+\begin{figure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambda-maxMSPE-Hilbert000053-LGCP000004}
+\caption{Predicted log-intensity}
+\label{lambdahilb000053lgcp}
+\end{subfigure}
+
+\begin{subfigure}{5in}
+\includegraphics[width=5in]{../graphics/lambdaSD-maxMSPE-Hilbert000053-LGCP000004.pdf}
+\caption{Prediction SD}
+\label{sdhilb000053lgcp}
+\end{subfigure}
+
+\caption{Predicted log-intensity function and prediction standard deviation
+using data observed via a Hilbert design. The SD is shown for each finite
+element node. This example is a medium-effort plan applied to a LGCP dataset.}
+\label{hilb000053lgcp}
+\end{figure}
 
 \begin{figure}
 
@@ -1376,8 +1426,8 @@ the site could further improve the prediction.
 \end{subfigure}
 
 \caption{Predicted log-intensity function and prediction standard deviation
-using data observed via a serpentine transect design augmented post-hoc. The
-SD is shown for each finite element node.}
+using data observed via a Hilber design augmented post-hoc. The SD is shown for
+each finite element node.}
 \label{aug}
 \end{figure}
 
@@ -1661,6 +1711,152 @@ enough'' to use a simple design.
 
 \includegraphics[width=2.5in]{../graphics/lambda-medMSPE-Sys000302-LGCP000004.pdf}
 \includegraphics[width=2.5in]{../graphics/lambdaSD-medMSPE-Sys000302-LGCP000004.pdf}
+
+\subsection{Max-MSPE surfaces}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Hilbert000053-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Hilbert000053-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Hilbert000077-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Hilbert000077-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Hilbert000112-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Hilbert000112-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Hilbert000222-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Hilbert000222-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Hilbert000285-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Hilbert000285-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Hilbert000348-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Hilbert000348-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000017-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000017-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000039-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000039-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000143-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000143-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000179-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000179-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000207-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000207-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000324-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000324-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000324-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000324-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000454-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000454-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000473-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000473-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000559-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000559-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000586-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000586-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000675-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000675-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Inhib000718-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Inhib000718-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-LHS-TSP000069-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-LHS-TSP000069-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-LHS-TSP000087-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-LHS-TSP000087-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-LHS-TSP000159-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-LHS-TSP000159-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-LHS-TSP000197-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-LHS-TSP000197-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-LHS-TSP000263-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-LHS-TSP000263-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-LHS-TSP000351-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-LHS-TSP000351-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000040-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000040-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000069-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000069-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000141-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000141-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000148-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000148-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000285-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000285-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000332-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000332-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000485-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000485-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000508-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000508-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000692-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000692-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Serp000712-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Serp000712-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-SRS000035-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-SRS000035-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-SRS000050-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-SRS000050-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-SRS000132-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-SRS000132-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-SRS000212-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-SRS000212-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-SRS000219-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-SRS000219-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-SRS000339-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-SRS000339-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-SRS000396-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-SRS000396-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Sys000034-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Sys000034-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Sys000054-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Sys000054-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Sys000170-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Sys000170-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Sys000197-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Sys000197-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Sys000253-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Sys000253-LGCP000004.pdf}
+
+\includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Sys000332-LGCP000004.pdf}
+\includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Sys000332-LGCP000004.pdf}
 
 
 \section{Tables summarizing results}

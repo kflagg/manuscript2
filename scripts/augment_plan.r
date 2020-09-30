@@ -16,11 +16,11 @@ allplans <- readRDS('../data/rect_plans.rds')
 
 # Parellel transects at one end.
 original <- allplans %>%
-  filter(PlanID == 'Serp000148') %>%
+  filter(PlanID == 'Hilbert000053') %>%
   `$`('Plan') %>%
   `[[`(1)
 set.seed(64251)
-aug <- serp(owin(c(1300, 1500), c(0, 700)), 1, -198, 11, XSECT_RADIUS)
+aug <- serp(owin(c(0, 300), c(0, 700)), 1, 298, 11, XSECT_RADIUS)
 aug_serp <- linnet(
   as.ppp(rbind(
     as.data.frame(vertices(original)),

@@ -424,6 +424,22 @@ finer_results <- bind_rows(lapply(seq_len(nrow(rect_datasets)), function(r){
 
 
 for(thisdataset in rect_datasets$DataID){
+  # Plot the mesh.
+  pdf(paste0('../graphics/finermesh-', thisdataset, '.pdf'), width = 9, height = 4)
+  par(mar = c(0, 1, 2, 1))
+  rect_datasets %>%
+    filter(DataID == thisdataset) %>%
+    `$`('Data') %>%
+    `[[`(1) %>%
+    attr('Lambda') %>%
+    log %>%
+    plot(main = 'Finer Mesh over Realized Log-Intensity', ribbon = FALSE)
+  plot(rect_dual_tess, add = TRUE, border = '#808080', do.col = TRUE,
+       values = rep(1, rect_dual_tess$n), col = '#ffffff40')
+  plot(rect_R_mesh_net, add = TRUE, col = '#00000080')
+  points(rect_R_mesh_loc[,], pch = 20)
+  dev.off()
+
   pdf(paste0('../graphics/lambda-Finer-', thisdataset, '.pdf'), width = 9, height = 4)
   par(mar = c(0, 0, 2, 2))
   thisresult <- finer_results %>%
