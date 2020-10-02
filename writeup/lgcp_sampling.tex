@@ -997,7 +997,10 @@ area of their dual cells (outlined in grey).}
 
 In describing the results, we focus on one LGCP dataset and one LGCP with
 Clusters dataset (Figure~\ref{fulldata}). The results are similar for all
-datasets (see the online supplement.)
+datasets (see the online supplement). These two datasets were chosen for
+illustration because the simulations using them exhibited a wide variety of
+outcomes. This included a mix of very good and very poor prediction
+performance.
 
 \begin{figure}
 
@@ -1063,16 +1066,23 @@ trends, and having the least uncertainty near observed events. Results varied
 in accuracy at the most extreme peaks and valleys of the itensity function and
 in overall SD across the study region.
 
-However, a small number of model fits suffered from apparent edge effects.
+However, a small number of model fits failed to converge, and others suffered
+from apparent edge effects.
 % Usually, but not always, on the boundary. Sometimes on a peninsula.
 For example, Figure~\ref{serp000148} shows the prediction surface resulting
 from a serpentine transect plan. The predicted log-intensity has a hotspot of
 extremely large values in the southeast corner (notice the color scale). The
 hotspot is driven by two nodes on the boundary with very large prediction
 values. Another, less extreme, edge effect is present in the northeast corner.
+When computational problems occur, they may be fixed by refining the mesh at
+additional computational cost. We were not able to use a finer mesh for all
+simulations due to computational limitations, but we point out which schemes
+are robust to these problems.
 
-The next sections compare the schemes in terms of model-based criteria applied
-to one realized LGCP dataset and one realized LGCP with Clusters dataset.
+Section~\ref{compissues} illustrates refitting the model using a refined mesh.
+The sections after that compare the schemes in terms of model-based criteria
+applied to one realized LGCP dataset and one realized LGCP with Clusters
+dataset, and then discuss the results in the context of spatial coverage.
 
 \begin{figure}
 
@@ -1107,7 +1117,7 @@ a medium-effort plan applied to a LGCP dataset.}
 
 \begin{subfigure}{4.5in}
 \includegraphics[width=4.5in]{../graphics/HighMSPE-Cluster000004.png}
-\caption{MSPE distribtuion for one LGCP with Clusters dataset}
+\caption{MSPE distribution for one LGCP with Clusters dataset}
 \label{highmspecluster}
 \end{subfigure}
 
@@ -1117,7 +1127,9 @@ LGCP and one realization of a LGCP with Clusters.}
 \label{histmsperesults}
 \end{figure}
 
+
 \subsection{Dealing with computational problems}
+\label{compissues}
 
 \begin{figure}
 \includegraphics[width=5in]{../graphics/finermesh-LGCP000004.pdf}
@@ -1377,59 +1389,59 @@ path).}
 % Neither has a relationship with APV.
 
 
-\subsection{Augmenting a poor-performing design}
+%\subsection{Augmenting a poor-performing design}
 
-Even a poor-performing design could be used as a starting point for sequential
-design. As a simple illustration, we augment the design from
-Figure~\ref{hilb000053lgcp} with some additional sampling effort in the western
-part of the site, where the original design left a large void.
-The total distance surveyed increases from 8581 to 12261 units, while the
-predicted log-intensity surface is much more accurate (Figure~\ref{aug}).
-MSPE decreases from 9.98 to 1.44 and APV improves from 38.16 to 9.55.
-Across the site, the prediction standard deviation is lower than before, and
-is now highest around in the middle. If we were to continue adding segments to
-the path, giving some attention to the central portion of the site could further
-improve the prediction.
+%Even a poor-performing design could be used as a starting point for sequential
+%design. As a simple illustration, we augment the design from
+%Figure~\ref{hilb000053lgcp} with some additional sampling effort in the western
+%part of the site, where the original design left a large void.
+%The total distance surveyed increases from 8581 to 12261 units, while the
+%predicted log-intensity surface is much more accurate (Figure~\ref{aug}).
+%MSPE decreases from 9.98 to 1.44 and APV improves from 38.16 to 9.55.
+%Across the site, the prediction standard deviation is lower than before, and
+%is now highest around in the middle. If we were to continue adding segments to
+%the path, giving some attention to the central portion of the site could further
+%improve the prediction.
 
-\begin{figure}
+%\begin{figure}
 
-\begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambda-maxMSPE-Hilbert000053-LGCP000004}
-\caption{Predicted log-intensity}
-\label{lambdahilb000053lgcp}
-\end{subfigure}
+%\begin{subfigure}{5in}
+%\includegraphics[width=5in]{../graphics/lambda-maxMSPE-Hilbert000053-LGCP000004}
+%\caption{Predicted log-intensity}
+%\label{lambdahilb000053lgcp}
+%\end{subfigure}
 
-\begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambdaSD-maxMSPE-Hilbert000053-LGCP000004.pdf}
-\caption{Prediction SD}
-\label{sdhilb000053lgcp}
-\end{subfigure}
+%\begin{subfigure}{5in}
+%\includegraphics[width=5in]{../graphics/lambdaSD-maxMSPE-Hilbert000053-LGCP000004.pdf}
+%\caption{Prediction SD}
+%\label{sdhilb000053lgcp}
+%\end{subfigure}
 
-\caption{Predicted log-intensity function and prediction standard deviation
-using data observed via a Hilbert design. The SD is shown for each finite
-element node. This example is a medium-effort plan applied to a LGCP dataset.}
-\label{hilb000053lgcp}
-\end{figure}
+%\caption{Predicted log-intensity function and prediction standard deviation
+%using data observed via a Hilbert design. The SD is shown for each finite
+%element node. This example is a medium-effort plan applied to a LGCP dataset.}
+%\label{hilb000053lgcp}
+%\end{figure}
 
-\begin{figure}
+%\begin{figure}
 
-\begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambda-Aug-LGCP000004.pdf}
-\caption{Predicted log-intensity}
-\label{lambdaaug}
-\end{subfigure}
+%\begin{subfigure}{5in}
+%\includegraphics[width=5in]{../graphics/lambda-Aug-LGCP000004.pdf}
+%\caption{Predicted log-intensity}
+%\label{lambdaaug}
+%\end{subfigure}
 
-\begin{subfigure}{5in}
-\includegraphics[width=5in]{../graphics/lambdaSD-Aug-LGCP000004.pdf}
-\caption{Prediction SD}
-\label{sdaug}
-\end{subfigure}
+%\begin{subfigure}{5in}
+%\includegraphics[width=5in]{../graphics/lambdaSD-Aug-LGCP000004.pdf}
+%\caption{Prediction SD}
+%\label{sdaug}
+%\end{subfigure}
 
-\caption{Predicted log-intensity function and prediction standard deviation
-using data observed via a Hilber design augmented post-hoc. The SD is shown for
-each finite element node.}
-\label{aug}
-\end{figure}
+%\caption{Predicted log-intensity function and prediction standard deviation
+%using data observed via a Hilber design augmented post-hoc. The SD is shown for
+%each finite element node.}
+%\label{aug}
+%\end{figure}
 
 
 \section{Discussion}
@@ -1861,6 +1873,108 @@ enough'' to use a simple design.
 
 \section{Tables summarizing results}
 
+\subsection{LGCP dataset}
+
+{\tiny
+\begin{tabular}{|l|c|c|c|cc|cc|}
+\hline
+& & Not & & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
+Scheme & Effort & Converged &
+MSPE \(>\) 100 & Median & IQR & Median & IQR \\
+\hline
+SRS &   Low & 0\% & 21\% & 3.02 & 3.71  & 25.2 & 42.2  \\
+&    Medium & 0\% &  7\% & 1.90 & 0.593 & 16.2 & 10.6  \\
+&      High & 0\% &  5\% & 1.79 & 0.442 & 15.2 &  7.17 \\
+& Very High & 0\% &  1\% & 1.61 & 0.399 & 15.5 &  4.93 \\
+\hline
+Systematic & Low & 0\% & 34\% & 3.29 & 2260  & 36.8 & 61.4 \\
+&         Medium & 0\% &  6\% & 1.75 & 0.370 & 18.4 & 10.2 \\
+&           High & 0\% &  0\% & 1.65 & 0.216 & 18.0 & 11.4 \\
+&      Very High & 0\% &  0\% & 1.62 & 0.158 & 17.3 &  5.27 \\
+\hline
+Inhibitory,      &    Low & 0\% & 32\% & 3.02 & 2094  & 26.9 & 60.6  \\
+10\% Close Pairs & Medium & 0\% &  5\% & 1.96 & 0.570 & 16.7 & 10.7  \\
+&                    High & 0\% &  0\% & 1.73 & 0.367 & 16.7 &  5.70 \\
+&               Very High & 0\% &  0\% & 1.60 & 0.345 & 16.6 &  5.89 \\
+\hline
+Inhibitory,      &    Low & 1\% & 28\% & 3.57 & 1290  & 32.2 & 46.5  \\
+20\% Close Pairs & Medium & 0\% &  9\% & 1.96 & 0.543 & 16.4 &  8.29 \\
+&                    High & 0\% &  0\% & 1.68 & 0.382 & 17.5 &  5.98 \\
+&               Very High & 0\% &  0\% & 1.59 & 0.289 & 17.2 &  5.07 \\
+\hline
+Serpentine, &  Low & 0\% & 11\% & 2.37 & 1.33  & 27.9 & 35.6  \\
+5 zigzags & Medium & 0\% &  3\% & 1.88 & 0.350 & 13.9 &  9.26 \\
+&             High & 0\% &  0\% & 1.64 & 0.268 & 14.6 &  9.27 \\
+&        Very High & 0\% &  0\% & 1.55 & 0.123 & 16.9 &  2.87 \\
+\hline
+Serpentine &   Low & 0\% & 15\% & 2.61 & 2.07  & 29.2 & 33.3  \\
+8 zigzags & Medium & 0\% &  0\% & 1.88 & 0.408 & 18.3 &  8.15 \\
+&             High & 0\% &  0\% & 1.64 & 0.245 & 17.6 &  6.25 \\
+&        Very High & 0\% &  0\% & 1.53 & 0.272 & 16.4 &  5.41 \\
+\hline
+LHS-TSP & Low & 2\% & 31\% & 2.90 & 1777  & 22.9 & 57.5  \\
+&      Medium & 0\% & 15\% & 1.92 & 0.730 & 14.8 & 14.4  \\
+&        High & 0\% &  0\% & 1.64 & 0.335 & 15.8 &  6.80 \\
+&   Very High & 0\% &  0\% & 1.53 & 0.298 & 16.2 &  5.61 \\
+\hline
+Hilbert & Low & 0\% & 17\% & 2.54 & 1.44  & 25.6 & 44.2  \\
+&      Medium & 0\% &  7\% & 2.10 & 0.748 & 16.7 &  7.96 \\
+&        High & 0\% &  1\% & 1.67 & 0.438 & 14.3 &  5.54 \\
+&   Very High & 0\% &  0\% & 1.46 & 0.388 & 15.6 &  4.57 \\
+\hline
+\end{tabular}
+}
+
+\subsection{LGCP with Clusters dataset}
+
+{\tiny
+\begin{tabular}{|l|c|c|c|cc|cc|}
+\hline
+& & Not & & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
+Scheme & Effort & Converged &
+MSPE \(>\) 100 & Median & IQR & Median & IQR \\
+\hline
+SRS &   Low & 0\% & 6\% & 1.22  & 0.339 & 5.02 & 5.72 \\
+&    Medium & 0\% & 2\% & 0.902 & 0.219 & 4.32 & 3.89 \\
+&      High & 0\% & 1\% & 0.717 & 0.216 & 4.45 & 3.28 \\
+& Very High & 0\% & 0\% & 0.619 & 0.223 & 4.81 & 2.97 \\
+\hline
+Systematic &   Low & 0\% & 3\% & 1.08  & 0.338  & 4.50 & 4.67 \\
+&           Medium & 0\% & 0\% & 0.812 & 0.199  & 4.27 & 2.85 \\
+&             High & 0\% & 0\% & 0.671 & 0.189  & 5.01 & 2.02 \\
+&        Very High & 0\% & 0\% & 0.596 & 0.0846 & 5.33 & 1.39 \\
+\hline
+Inhibitory, &         Low & 1\% & 6\% & 1.20  & 0.326 & 6.93 & 6.78 \\
+10\% Close Pairs & Medium & 0\% & 0\% & 0.887 & 0.245 & 4.92 & 3.33 \\
+&                    High & 0\% & 0\% & 0.694 & 0.167 & 4.64 & 2.27 \\
+&               Very High & 0\% & 0\% & 0.599 & 0.144 & 4.47 & 2.21 \\
+\hline
+Inhibitory &          Low & 0\% & 2\% & 1.23  & 0.287 & 6.42 & 3.59 \\
+20\% Close Pairs & Medium & 0\% & 0\% & 0.832 & 0.222 & 4.19 & 3.82 \\
+&                    High & 0\% & 0\% & 0.701 & 0.253 & 4.53 & 3.57 \\
+&               Very High & 0\% & 0\% & 0.630 & 0.204 & 5.08 & 2.91 \\
+\hline
+Serpentine, & Low  & 0\% & 5\% & 1.22  & 0.364  & 6.35 & 8.95 \\
+5 zigzags & Medium & 0\% & 0\% & 0.808 & 0.259  & 4.32 & 4.28 \\
+&             High & 0\% & 0\% & 0.597 & 0.137  & 4.23 & 1.73 \\
+&        Very High & 0\% & 0\% & 0.530 & 0.0924 & 4.32 & 2.50 \\
+Serpentine, &  Low & 0\% & 5\% & 1.11  & 0.342  & 6.10 & 5.77 \\
+8 zigzags & Medium & 0\% & 0\% & 0.795 & 0.163  & 5.14 & 3.19 \\
+&             High & 0\% & 0\% & 0.643 & 0.235  & 4.61 & 2.75 \\
+&        Very High & 0\% & 0\% & 0.564 & 0.0621 & 5.48 & 1.65 \\
+\hline
+LHS-TSP & Low & 0\% & 14\% & 1.21  & 0.374 & 5.73 & 8.92 \\
+&      Medium & 0\% &  0\% & 0.858 & 0.281 & 5.09 & 3.81 \\
+&        High & 0\% &  0\% & 0.658 & 0.160 & 4.75 & 3.12 \\
+&   Very High & 0\% &  0\% & 0.635 & 0.198 & 5.79 & 2.96 \\
+\hline
+Hilbert & Low & 0\% & 8\% & 1.14  & 0.451 & 5.57 & 6.15 \\
+&      Medium & 0\% & 0\% & 0.871 & 0.358 & 5.02 & 5.03 \\
+&        High & 0\% & 0\% & 0.669 & 0.152 & 4.86 & 2.64 \\
+&   Very High & 0\% & 0\% & 0.542 & 0.138 & 5.95 & 2.82 \\
+\hline
+\end{tabular}
+}
 
 \section{Notation and terminology}
 
