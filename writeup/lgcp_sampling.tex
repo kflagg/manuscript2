@@ -41,7 +41,7 @@
 
 \begin{frontmatter}
 
-\title{Spatial log-Gaussian Cox process models and sampling paths: towards optimal design}
+\title{Spatial log-Gaussian Cox process models and sampling paths: computation and optimal design}
 
 %% Group authors per affiliation:
 \author[msuaddr]{Kenneth Flagg\corref{mycorrespondingauthor}}
@@ -116,20 +116,24 @@ ideas about the characteristics of a good point design apply to paths, creating
 an optimal path design is not as simple as connecting the points of a point
 design with line segments. There are many ways to connect points into a path,
 so optimal design criteria must apply to the whole path and not only to the
-waypoints. In this paper, we develop a space-filling criterion for path
-designs, present a variety of sampling path designs, and assess their
-optimality for mapping intensity using LGCP models via a simulation study.
+waypoints.
+
+In this paper, we develop a space-filling criterion for path designs, present
+a variety of sampling path designs, and assess their utility for spatial
+prediction using LGCP model fitting in terms of robustness to computational
+issues and model-based optimality for prediction.
 
 
 \subsection{Log-Gaussian Cox process}
 
-The log-Gaussian Cox process is an inhomogeneous Poisson process where the
-logarithm of the intensity function is a Gaussian process \citep{moelleretal}.
-The LGCP provides a flexible model for mapping event intensity over space using
-few parameters. Efficient Bayesian computation tools are available using INLA
-to approximate the posterior marginal distributions \citep{rueetal}, a finite
-element approach to represent the Gaussian process \citep{lindgrenetal}, and
-pseudodata to approximate the point process likelihood \citep{simpsonetal}.
+The log-Gaussian Cox process (LGCP) is an inhomogeneous Poisson process where
+the logarithm of the intensity function is a Gaussian process
+\citep{moelleretal}. The LGCP model provides a flexible model for mapping event
+intensity over space using few parameters. Efficient Bayesian computation tools
+are available using INLA to approximate the posterior marginal distributions
+\citep{rueetal}, a finite element approach to represent the Gaussian process
+\citep{lindgrenetal}, and pseudodata to approximate the point process
+likelihood \citep{simpsonetal}.
 % Add some example applications.
 
 
@@ -137,7 +141,7 @@ pseudodata to approximate the point process likelihood \citep{simpsonetal}.
 
 Most classical sampling and design work has been done for points, or for small
 quadrats approximated as points, rather than for paths. In two-dimensional
-(geostatistical) model-based design, regularity is optimal for spatial
+(geostatistical) model-based design, regular spacing is optimal for spatial
 prediction but randomness and a variety of interpoint distances are best for
 parameter estimation~\citep{diggle}. Inhibitory plus close pairs designs are a
 good compromise~\citep{chipetaetal2017}. Design-based approaches exist to
@@ -147,9 +151,9 @@ characteristics~\citep{mckayetal,husslageetal}. Minimax and maximin distance
 are popular criteria for ensuring deign points represent the entirety of a
 large (or high-dimensional) design space~\citep{johnson}. These criteria
 are calculated from the distances between design points and arbitrary
-points in the design space, explicitely ensuring coverage by minimizing the
+points in the design space, explicitly ensuring coverage by minimizing the
 maximum distance between the design space and the design (minimax) or
-maximizing the minimum destance between pairs of design points (maximin).
+maximizing the minimum distance between pairs of design points (maximin).
 
 
 \subsection{Space-filling curves}
@@ -184,13 +188,15 @@ line-transects) as their sampling units. The transects were short relative to
 the size of the study region and not connected into a path.
 
 
-%\subsection{Multi-objective optimization}
+\subsection{Goals of this study}
 
-%summarize \citet{lark} and related
+%illuminate the current state of practical computing
 
-%we can use a large suite of criteria to explore the relationships among them
+%open discussion of path design in general
 
-% (Don't need for this paper.)
+%identify design schemes with promise for field use
+
+%simulation study based up geomagnetic surveys for unexploded ordnance
 
 
 \section{Materials and methods}
@@ -213,12 +219,13 @@ the size of the study region and not connected into a path.
 %\end{itemize}
 
 With an eye toward practical considerations of data collection, we present
-criteria to compare sampling strategies that impact LGCP posterior. We compare
-plans with (approximately) fixed path lengths, most of which avoid sharp turns.
-Data collection equipment (e.g. metal detectors) may have limited mobility,
-requiring minimizing the number or angle of turns. This section describes the
-designs in detail, then introduces notation and design critera, and finally
-summaries the computational model-fitting approach.
+criteria to compare sampling strategies that impact LGCP model fitting and
+posterior inferences. We compare plans with (approximately) fixed path lengths,
+most of which avoid sharp turns. Data collection equipment (e.g. vehicle-towed
+metal detectors) may have limited mobility, requiring minimizing the number or
+angle of turns. This section describes the designs in detail, then introduces
+notation and design criteria, and finally summarizes the computational
+model-fitting approach.
 
 
 \subsection{Sampling design schemes}
@@ -227,9 +234,9 @@ summaries the computational model-fitting approach.
 In this section, we present three variations of parallel line transect designs
 and three schemes that produce more complex designs. To clarify terminology, a
 \emph{path} or \emph{design} is a realized set of one or more connected
-components that has length but not area. The paths considered in this work are
+components with length but not area. The paths considered in this work are
 constructed as sequences of line segments. A \emph{design scheme}, or simply
-\emph{scheme}, is procedure for generating designs with some shared
+\emph{scheme}, is a procedure for generating designs with some shared
 characteristics. Figure~\ref{plancomparison} illustrates a selection of designs
 from these schemes.
 
@@ -242,12 +249,13 @@ because they provide good spatial coverage in the sense that any point in the
 study site has an a priori known maximum distance from the path. For point
 designs, systematic designs are optimal for prediction, simple random samples
 are optimal for estimation, and inhibitory with close pairs designs are
-becoming a popular compromise~\citep{chipetaetal2017}. We adapt all of these to
-the parallel line transect setting. We use line transects running north-south,
-with three methods of choosing the horizontal coordinate: simple random sample
-(SRS), systematic with a random starting point and even spacing, and inhibitory
-plus close pairs. Figure~\ref{plancomparison} (left column) shows an example of
-each scheme with 25 transects.
+becoming a popular compromise~\citep{chipetaetal2017}. We adapt all three of
+these to the parallel line transect setting. We use line transects running
+north-south, with three methods of choosing the horizontal coordinate: simple
+random sample (SRS), systematic with a random starting point and fixed spacing,
+and inhibitory plus close pairs. Figure~\ref{plancomparison} (left column)
+shows an example of each scheme with 25 transects. Additional examples appear
+in Appendix~\ref{moreplots}.
 
 %We should note that we will be using an isotropic covariance function in
 %the model. If an anisotropic model is used, parallel transects may need to be
@@ -342,7 +350,7 @@ salesperson problem (TSP) and use the shortest path through the waypoints as
 our design. This LHS-TSP scheme produces paths that have many sharp corners but
 leaves few large voids (example in Figure~\ref{plancomparison}, bottom left).
 Waypoints are generated by the \texttt{lhs} R package~\citep{lhs} and connected
-into a the shortest path by the \texttt{TSP} package~\citep{tsp}. A downside of
+into a shortest path by the \texttt{TSP} package~\citep{tsp}. A downside of
 this design scheme is that the length cannot be specified directly, and only
 certain distances are possible depending on the number of bins used.
 
@@ -355,7 +363,7 @@ angles. The only parameter of this design scheme is the order, or number of
 iterations used in refining the curve. Each iteration increases the length and
 complexity of the design. This is produces a deterministic design, so a random
 offset is added to vary which points are observed. The Hilbert curve is
-generated by \texttt{HilbertVis} R package~\citep{hilbertvis}.
+generated by the \texttt{HilbertVis} R package~\citep{hilbertvis}.
 
 %\paragraph{Particle movement model}
 %Models the way data are actually collected. Waypoints generated sequentially by
@@ -372,15 +380,27 @@ generated by \texttt{HilbertVis} R package~\citep{hilbertvis}.
 %stopping early but don't actually do it here)}
 
 
+\subsubsection{Spatial coverage criterion}
+
+One critically important characteristic of a spatial design is the concept of
+spatial coverage, or how well the design represents the study site in the sense
+that all points in the region are close to observed locations. The criterion we
+propose to measure this is the average distance to the path. We define the
+distance between a point and the path as the distance between that point and
+the nearest point on the path, then take the average over all points in the
+study region. This can be roughly understood as the radius of a typical
+unsurveyed void.
+
+
 \subsection{LGCP model and notation}
 
 The full point process is denoted \(\mathbf{X}\) and operates over the entire
 study site \(\mathcal{R}\). The full realized point pattern is denoted
-\(\mathbf{x}\) and is a countable subset of \(\mathbf{R}\). However, only a
-subregion of \(\mathcal{R}\) is surveyed. This subregion is \(\mathcal{S}\),
-the set of all points within a specified radius of the survey path. The
-observed point pattern is defined as \(\mathbf{x}_{\mathcal{S}} =
-\mathbf{x} \cap \mathcal{S}\).
+\(\mathbf{x}\) and is a finite (countable) subset of \(\mathbf{R}\). However,
+only a subregion of \(\mathcal{R}\) is surveyed. This subregion is
+\(\mathcal{S}\), the set of all points within a specified radius of the survey
+path. The observed point pattern is defined as
+\(\mathbf{x}_{\mathcal{S}} = \mathbf{x} \cap \mathcal{S}\).
 
 In the LGCP model, \(\mathbf{X}\) is a Poisson process with intensity
 function \(\lambda(u)\), \(u \in \mathcal{R}\). This intensity function is
@@ -395,20 +415,16 @@ covariance function with smoothness parameter \(\nu\), spatial scale \(\rho\),
 and variance \(\sigma^{2}\).
 
 
-\subsubsection{Evaluation criteria}
+\subsubsection{Model-based criteria}
 
-Another important characteristic is the concept of spatial coverage, or how
-well the design represents the study site in the sense that all points in the
-region are close to observed locations. We measure this by the average distance
-between points in the site and points on the path. We define the distance
-between a point and the path as the distance between that point and the nearest
-point on the path, then take the average over all points in the study region.
-This can be roughly understood as the radius of a typical unsurveyed void.
+For model-based comparisons, we compare the posterior distribution of the
+intercept \(\mu\) to the realized mean of the simulated GP, and evaluate two
+spatial prediction criteria. For the intercept, we simply record whether the
+95\% central interval captures the realized mean. This is aggregated into the
+capture rate for scheme.
 
-For model-based comparisions, we compare the posterior distribution of the
-intercept \(\mu\) to the simulated true mean of the GP, and evaluate two
-spatial prediction criteria. The spatial prediction criteria that we evaluate
-are the mean squared prediction error (MSPE) of the log intensity surface,
+The spatial prediction criteria that we evaluate are the mean squared
+prediction error (MSPE) of the log intensity surface,
 \begin{equation}
 \mathrm{E}[(\mu + \mathbf{e}(u) - \log[\lambda(u))^{2}|\mathbf{x}_{\mathcal{S}}],
 \end{equation}
@@ -419,13 +435,13 @@ and the average prediction variance (APV) of the latent Gaussian process,
 In the above notation, \(\lambda\) is the true realized intensity function,
 which is known in the simulations.
 
-The first criterion captures accuracy in the overall scale of the intensity
-surface. Large-magnitude errors in the mean imply that that model will predict
-overall too many or two few events. The other criteria reflect two important
+The capture rate of the mean describes accuracy in the overall scale of the
+intensity surface. Inaccuracy in the mean implies that that model will predict
+overall too many or too few events. The other criteria reflect two important
 characteristics of a useful spatial prediction. First, deviation from the true
 surface should be low, and is indicated by low MSPE. Second, the model's own
 assessment of prediction uncertainty will be used in practice to build trust in
-the inferences, so low APV is desireble. 
+the inferences, so low APV is desirable. 
 
 
 \subsubsection{Model fitting}
@@ -434,18 +450,27 @@ We fit the spatial LGCP model using nested integrated Laplace approximations
 and the R-INLA package~\citep{rueetal,rinla}. The Gaussian process is
 approximated using a finite element approach \citep{lindgrenetal}. The point
 pattern is modeled by pseudodata placed at the events and the finite element
-nodes~\citep{simpsonetal}. This procedure allows fast and accurate
-approximation of the posterior distribution.%~\citep{flagghoegh}.
+nodes~\citep{simpsonetal}. When using an adequate finite element mesh, this
+procedure allows fast and accurate approximation of the posterior
+distribution.%~\citep{flagghoegh}.
 
 
 \section{Simulation study}
 
-We simulate 100 designs from each of six schemes. All events within a 2 unit
-radius of the path are observed. The whole experiment is repeated for 5
-realizations from each of two data generating models.
+We compare the design schemes by applying multiple designs from each scheme
+to the same simulated datasets. There are two data-generating models and five
+datasets generated from each, for a total of ten datasets
+(Section \ref{simsite}). We will focus on two illustrative datasets when
+presenting the results. We use 8 schemes at four levels of survey effort, and
+100 designs generated from each scheme at each effort level
+(Section \ref{simschemes}). All events within a 2 unit radius of the path are
+observed. The same model is fit to each observed point pattern
+(Section \ref{simmodel}).
+
 
 
 \subsection{Study site}
+\label{simsite}
 
 \begin{figure}
 
@@ -476,7 +501,7 @@ due to large variability in the GP. Figure \ref{lambdalgcp} shows an example
 realization from this process.
 
 Second, a two-stage cluster process and a LGCP are superposed. The cluster
-process (a Neyman-Scott or, more specifically, a Thomas process) is constructed
+process (a Neyman-Scott or, more specifically, Thomas process) is constructed
 as follows. The number of clusters is Poisson-distributed with mean 3. The
 number of events per cluster is Poisson-distributed with mean 200. The cluster
 centers are distributed uniformly over \(\mathcal{R}\). Events come from a
@@ -499,6 +524,7 @@ accurately predict the log-intensity function.
 
 
 \subsection{Path design schemes}
+\label{simschemes}
 
 \begin{table}
 \caption{Design schemes used in the simulation study. The table presents the
@@ -512,384 +538,51 @@ is presented as average (SD).\\
 \tiny
 \begin{tabular}{|l|c|c|c|c|}
 \hline
-Scheme
-&
-Low Effort
-&
-Medium Effort
-&
-High Effort
-&
-Very High Effort
-\\
+Scheme & Low Effort & Medium Effort & High Effort & Very High Effort \\
 \hline
-SRS
-&
-10 transects
-&
-25 transects
-&
-50 transects
-&
-70 transects
-\\
-\hfill\emph{Length:}
-&
-7000 units
-&
-17500 units
-&
-35000 units
-&
-49000 units
-\\
-\hfill\emph{\% Surveyed:}
-&
-2.65\% (0.0618\%)*
-&
-6.46\% (0.202\%)*
-&
-12.5\% (0.331\%)*
-&
-17.2\% (0.459\%)*
-\\
-\hfill\emph{Avg. Dist. to Path:}
-&
-73.7 (16.4)
-&
-29.7 (6.01)
-&
-15.0 (1.99)
-&
-10.8 (1.44)
-\\
+SRS & 10 transects & 25 transects & 50 transects & 70 transects \\
+\hfill\emph{Length:} & 7000 units & 17500 units & 35000 units & 49000 units \\
+\hfill\emph{\% Surveyed:} & 2.65\% (0.0618\%)* & 6.46\% (0.202\%)* & 12.5\% (0.331\%)* & 17.2\% (0.459\%)* \\
+\hfill\emph{Avg. Dist. to Path:} & 73.7 (16.4) & 29.7 (6.01) & 15.0 (1.99) & 10.8 (1.44) \\
 \hline
-Systematic
-&
-10 transects
-&
-25 transects
-&
-50 transects
-&
-70 transects
-\\
-\hfill\emph{Length:}
-&
-7000 units
-&
-17500 units
-&
-35000 units
-&
-49000 units
-\\
-\hfill\emph{\% Surveyed:}
-&
-2.68\%
-&
-6.70\%
-&
-13.4\%
-&
-18.7\%
-\\
-\hfill\emph{Avg. Dist. to Path:}
-&
-38.4 (0.866)
-&
-15.2 (0.181)
-&
-7.56 (0.0307)
-&
-5.40 (0.0164)
-\\
+Systematic & 10 transects & 25 transects & 50 transects & 70 transects \\
+\hfill\emph{Length:} & 7000 units & 17500 units & 35000 units & 49000 units \\
+\hfill\emph{\% Surveyed:} & 2.68\% & 6.70\% & 13.4\% & 18.7\% \\
+\hfill\emph{Avg. Dist. to Path:} & 38.4 (0.866) & 15.2 (0.181) & 7.56 (0.0307) & 5.40 (0.0164) \\
 \hline
-Inhibitory,
-&
-9 transects
-&
-23 transects
-&
-45 transects
-&
-63 transects
-\\
-10\% Close Pairs
-&
-1 paired
-&
-2 paired
-&
-5 paired
-&
-7 paired
-\\
-\hfill\emph{Length:}
-&
-7000 units
-&
-17500 units
-&
-35000 units
-&
-49000 units
-\\
-\hfill\emph{\% Surveyed:}
-&
-2.66\% (0.0582\%)*
-&
-6.53\% (0.172\%)*
-&
-12.8\% (0.314\%)*
-&
-17.5\% (0.427\%)*
-\\
-\hfill\emph{Avg. Dist. to Path:}
-&
-50.3 (5.35)
-&
-20.8 (1.82)
-&
-10.6 (1.24)
-&
-7.64 (0.576)
-\\
+Inhibitory, & 9 transects & 23 transects & 45 transects & 63 transects \\
+10\% Close Pairs & 1 paired & 2 paired & 5 paired & 7 paired \\
+\hfill\emph{Length:} & 7000 units & 17500 units & 35000 units & 49000 units \\
+\hfill\emph{\% Surveyed:} & 2.66\% (0.0582\%)* & 6.53\% (0.172\%)* & 12.8\% (0.314\%)* & 17.5\% (0.427\%)* \\
+\hfill\emph{Avg. Dist. to Path:} & 50.3 (5.35) & 20.8 (1.82) & 10.6 (1.24) & 7.64 (0.576) \\
 \hline
-Inhibitory,
-&
-8 transects
-&
-20 transects
-&
-40 transects
-&
-56 transects
-\\
-20\% Close Pairs
-&
-2 paired
-&
-5 paired
-&
-10 paired
-&
-14 paired
-\\
-\hfill\emph{Length:}
-&
-7000 units
-&
-17500 units
-&
-35000 units
-&
-49000 units
-\\
-\hfill\emph{\% Surveyed:}
-&
-2.67\% (0.0444\%)*
-&
-6.56\% (0.157\%)*
-&
-12.8\% (0.303\%)*
-&
-17.6\% (0.368\%)*
-\\
-\hfill\emph{Avg. Dist. to Path:}
-&
-53.5 (8.37)
-&
-22.0 (2.97)
-&
-11.4 (1.70)
-&
-8.26 (0.826)
-\\
+Inhibitory, & 8 transects & 20 transects & 40 transects & 56 transects \\
+20\% Close Pairs & 2 paired & 5 paired & 10 paired & 14 paired \\
+\hfill\emph{Length:} & 7000 units & 17500 units & 35000 units & 49000 units \\
+\hfill\emph{\% Surveyed:} & 2.67\% (0.0444\%)* & 6.56\% (0.157\%)* & 12.8\% (0.303\%)* & 17.6\% (0.368\%)* \\
+\hfill\emph{Avg. Dist. to Path:} & 53.5 (8.37) & 22.0 (2.97) & 11.4 (1.70) & 8.26 (0.826) \\
 \hline
-Serpentine,
-&
-7 transects
-&
-22 transects
-&
-47 transects
-&
-67 transects
-\\
-5 Zigzags
-&
-75 unit offset
-&
-23.9 unit offset
-&
-11.2 unit offset
-&
-7.84 unit offset
-\\
-\hfill\emph{Length:}
-&
-7000 units
-&
-17500 units
-&
-35000 units
-&
-49000 units
-\\
-\hfill\emph{\% Surveyed:}
-&
-2.67\%
-&
-6.68\%
-&
-13.4\%
-&
-18.7\%
-\\
-\hfill\emph{Avg. Dist. to Path:}
-&
-43.2 (1.83)
-&
-16.0 (0.215)
-&
-7.79 (0.0508)
-&
-5.51 (0.0309)
-\\
+Serpentine, & 7 transects & 22 transects & 47 transects & 67 transects \\
+5 Zigzags & 75 unit offset & 23.9 unit offset & 11.2 unit offset & 7.84 unit offset \\
+\hfill\emph{Length:} & 7000 units & 17500 units & 35000 units & 49000 units \\
+\hfill\emph{\% Surveyed:} & 2.67\% & 6.68\% & 13.4\% & 18.7\% \\
+\hfill\emph{Avg. Dist. to Path:} & 43.2 (1.83) & 16.0 (0.215) & 7.79 (0.0508) & 5.51 (0.0309) \\
 \hline
-Serpentine,
-&
-7 transects
-&
-22 transects
-&
-47 transects
-&
-67 transects
-\\
-8 Zigzags
-&
-42.9 unit offset
-&
-13.6 unit offset
-&
-6.38 unit offset
-&
-4.48 unit offset
-\\
-\hfill\emph{Length:}
-&
-7000 units
-&
-17500 units
-&
-35000 units
-&
-49000 units
-\\
-\hfill\emph{\% Surveyed:}
-&
-2.67\%
-&
-6.67\%
-&
-13.3\%
-&
-18.7\%
-\\
-\hfill\emph{Avg. Dist. to Path:}
-&
-44.5 (2.03)
-&
-15.9 (0.169)
-&
-7.76 (0.0328)
-&
-5.50 (0.0271)
-\\
+Serpentine, & 7 transects & 22 transects & 47 transects & 67 transects \\
+8 Zigzags & 42.9 unit offset & 13.6 unit offset & 6.38 unit offset & 4.48 unit offset \\
+\hfill\emph{Length:} & 7000 units & 17500 units & 35000 units & 49000 units \\
+\hfill\emph{\% Surveyed:} & 2.67\% & 6.67\% & 13.3\% & 18.7\% \\
+\hfill\emph{Avg. Dist. to Path:} & 44.5 (2.03) & 15.9 (0.169) & 7.76 (0.0328) & 5.50 (0.0271) \\
 \hline
-LHS-TSP
-&
-50 bins
-&
-300 bins
-&
-1200 bins
-&
-2400 bins
-\\
-\hfill\emph{Length:}
-&
-7177 (189) units**
-&
-17191 (168) units**
-&
-34196 (225) units**
-&
-48433 (342) units**
-\\
-\hfill\emph{\% Surveyed:}
-&
-2.73\% (0.0722\%)**
-&
-6.51\% (0.0632\%)**
-&
-12.9\% (0.0835\%)**
-&
-18.2\% (0.127\%)**
-\\
-\hfill\emph{Avg. Dist. to Path:}
-&
-43.5 (1.44)
-&
-17.4 (0.186)
-&
-8.63 (0.0683)
-&
-6.08 (0.0562)
-\\
+LHS-TSP & 50 bins & 300 bins & 1200 bins & 2400 bins \\
+\hfill\emph{Length:} & 7177 (189) units** & 17191 (168) units** & 34196 (225) units** & 48433 (342) units** \\
+\hfill\emph{\% Surveyed:} & 2.73\% (0.0722\%)** & 6.51\% (0.0632\%)** & 12.9\% (0.0835\%)** & 18.2\% (0.127\%)** \\
+\hfill\emph{Avg. Dist. to Path:} & 43.5 (1.44) & 17.4 (0.186) & 8.63 (0.0683) & 6.08 (0.0562) \\
 \hline
-Hilbert Curve
-&
-3rd Order
-&
-4th Order
-&
-5th Order
-&
-6th Order
-\\
-\hfill\emph{Length:}
-&
-8581 units
-&
-17442 units
-&
-35025 units
-&
-70121 units
-\\
-\hfill\emph{\% Surveyed:}
-&
-3.27\%
-&
-6.634\%
-&
-13.3\%
-&
-26.47\%
-\\
-\hfill\emph{Avg. Dist. to Path:}
-&
-37.3 (1.95)
-&
-17.9 (0.480)
-&
-8.77 (0.113)
-&
-4.37 (0.0382)
-\\
+Hilbert Curve & 3rd Order & 4th Order & 5th Order & 6th Order \\
+\hfill\emph{Length:} & 8581 units & 17442 units & 35025 units & 70121 units \\
+\hfill\emph{\% Surveyed:} & 3.27\% & 6.634\% & 13.3\% & 26.47\% \\
+\hfill\emph{Avg. Dist. to Path:} & 37.3 (1.95) & 17.9 (0.480) & 8.77 (0.113) & 4.37 (0.0382) \\
 \hline
 \end{tabular}
 \end{table}
@@ -903,58 +596,61 @@ the path are unobservable.
 
 The design parameters for each scheme are varied to create four different
 levels of survey effort: low, medium, high, and very high. Within each effort
-level, the total lengh or distance traveled is comparable across all schemes.
+level, the total length or distance traveled is comparable across all schemes.
 The inhibitory plus close pairs scheme and the serpentine scheme are further
 varied to employ different numbers of pairs and different numbers of zigzags,
 respectively. Table \ref{designtable} provides an overview of the different
 settings.
 
-The parallel transect schemes have 10, 25, 50, or 70 line transects running
-north-south. We expect the simple random sample scheme to produce high
-prediction variance and large prediction error in big gaps between transects.
-The systematic sample scheme uses a uniformly-distributed starting point and
-constant spacing between adjacent transects. We expect systematic transects to
-provide low bias and moderate prediction variance. However, this scheme can
-miss structures at certain sizes because no transects are close to each other
-in the east-west direction.
+The parallel line transect schemes have transects running north-south, with
+the effort level determining the number of transects. We expect the simple
+random sample scheme to produce high prediction variance and large prediction
+error in big gaps between transects. The systematic sample scheme uses a
+uniformly-distributed starting point and constant spacing between adjacent
+transects. We expect systematic transects to provide accurate inferences for
+the intensity surface and moderate prediction variance.% However, this scheme
+%can miss structures at certain sizes because no transects are close to each
+%other in the east-west direction.
 
 For the inhibitory plus close pairs line transect scheme, we vary the numbers of
-paired and unpaired transects. The total number of transects is 10, 25, 50, or
-70, with 10\% and 20\% of the transects (rounded to the nearest integer) as
-redundant members of a pair. The remaining primary transects are placed
-according to a one-dimensional Strauss process \citep{strauss,kellyripley}. The
-Strauss attraction parameter is set at \(\gamma = 0.05\) and the radius for
-counting pairs is 1500 units divided by the total number of transects. Then
-each redundant transect is randomly paired to a primary transect, and placed
-within the pair radius of the primary transect according to a uniform
-distribution. We expect this scheme to have intermediate performance between
-the simple random sample and the systematic line transect schemes.
+paired and unpaired transects. The total number of transects is the same as in
+the SRS and systematic designs, but 10\% and 20\% of the transects (rounded to
+the nearest integer) are designated as redundant members of a pair. The
+remaining primary transects are placed according to a one-dimensional Strauss
+process \citep{strauss,kellyripley}. The Strauss attraction parameter is set
+at \(\gamma = 0.05\) and the radius for counting pairs is 1500 units divided
+by the total number of transects. Then each redundant transect is randomly
+paired to a primary transect, and placed within the pair radius of the primary
+transect according to a uniform distribution. We expect this scheme to have
+intermediate performance between the simple random sample and the systematic
+line transect schemes.
 
-The serpentine transect scheme has 7, 22, 47, or 67 transects running
-north-south with constant east-west spacing and a random starting point for the
-first transect. The number of zigzags (north-south segments) is 5 or 8 per
-transect, and the pedicular offest is set so the the total east-west
-distance equals the length of three north-south line transects. Thus, the
-serpentine designs traverse the same length as the line transect designs. These
-designs should result in smaller prediction errors and lower variance farther
-from the path, compared to line-transect designs.
+The serpentine transect scheme has transects running north-south with constant
+east-west spacing and a random starting point for the first transect. The
+number of zigzags (north-south segments) is 5 or 8 per transect. The designs
+are constructed to have the same length as the line-transect designs: there are
+three fewer serpentine transects, and the perpendicular offset is set so the
+total east-west distance equals the length of three north-south line transects.
+These designs should result in smaller prediction errors and lower variance
+farther from the path, compared to line-transect designs.
 
-Our Latin hypercube sampling/traveling salesperson (LHS-TSP) scheme uses 50,
-300, 1200, or 2400 bins to generate the waypoints. Preliminary experimentation
-found that these bin numbers produced total lengths similar to the
-line-transect schemes. The LHS-TSP scheme is expected to result in small
-prediction errors and low prediction variance per unit distance traveled.
-However, the designs will have many sharp corners and may leave some large
-voids.
+Our Latin hypercube sampling/traveling salesperson (LHS-TSP) scheme uses a
+different number of bins for each effort level (see Table \ref{designtable}).
+Preliminary experimentation found that these bin numbers produced total lengths
+similar to the transect schemes. The LHS-TSP scheme is expected to result
+in small prediction errors and low prediction variance per unit distance
+traveled. However, the designs will have many sharp corners and may leave some
+large voids.
 
 The Hilbert curve scheme uses a random starting point and a Hilbert curve of
 order 3, 4, 5, or 6. The path length is a deterministic function of the order
 and differs greatly among curves of different orders. These orders yield
-lengths similar to the lenths of the transect designs. Hilbert designs should
+lengths similar to the lengths of the transect designs. Hilbert designs should
 provide low prediction variance, but have lots of short segments.
 
 
 \subsection{Model specification}
+\label{simmodel}
 
 The same Bayesian LGCP model is fit to each observed dataset. The observed
 point pattern \(\mathbf{x}\) is a realization of \(\mathbf{X}\), a Poisson
@@ -977,6 +673,10 @@ the area of their dual cells (grey outlines) and used for numerical integration
 of the likelihood \citep{lindgrenetal}. This mesh is adequately fine to model
 the large-scale trends in the surface while keeping the computing time well
 under a minute for each model fit.
+% Finer meshes fit to the best-performing design don't result in more detailed
+% surfaces. This mesh can represent the surface with as much detail as these
+% designs can contain. Add some comments on how we have to keep it fixed for
+% the simulations but users should so sensitivity analysis.
 
 \begin{figure}
 \includegraphics[width=5in]{../graphics/mesh-LGCP000004.pdf}
@@ -1034,7 +734,7 @@ near observed events. SD increases farther from observed events, including
 in places where the surveyed area was observed to contain no events.
 
 This same survey plan also did well for the LGCP with Clusters dataset, with
-the model accurately capturing the large-scale details of the intensitiy
+the model accurately capturing the large-scale details of the intensity
 function, including two of the circular hotspots corresponding to clusters
 (Figure \ref{lambdasrs000187clust}). However, it also smoothed the surface
 quite a bit, notably merging the two overlapping clusters into a single oblong
@@ -1063,7 +763,7 @@ LGCP with Clusters dataset.}
 
 Most plans yielded similar prediction surfaces, capturing the large-scale
 trends, and having the least uncertainty near observed events. Results varied
-in accuracy at the most extreme peaks and valleys of the itensity function and
+in accuracy at the most extreme peaks and valleys of the intensity function and
 in overall SD across the study region.
 
 However, a small number of model fits failed to converge, and others suffered
@@ -1170,7 +870,7 @@ schemes tend to result in slightly underestimating the mean, but most
 the SRS and Hilbert schemes being observed to miss the true mean at the
 hight effort level. For each scheme at each effort level, the median
 error in the posterior mean was between 0 and \(-1\). At any given effort
-level, there is little difference among the distrubution of errors across
+level, there is little difference among the distribution of errors across
 schemes. However, at low and medium effort, all of these distributions
 have long right tails with severe overestimates (accompanied by wide
 posterior intervals).
@@ -1180,7 +880,7 @@ Both MSPE and APV had right-skewed distributions. Thus we use logarithmic
 scales for plots and summarize them using the median and interquartile range
 (IQR). Median MSPE decreases with increasing path distance, leveling off
 around between the medium and high effort levels (Figure~\ref{mspelgcp}).
-Variability (IQR) of MSPE also descreases as effort increases. Prediction
+Variability (IQR) of MSPE also decreases as effort increases. Prediction
 surfaces with edge effects form a cluster of large, outlying MSPE values. At
 all levels of effort, systematic designs had the least variability in MSPE.
 The lowest-MSPE prediction surfaces result from the longest Hilbert designs,
@@ -1188,7 +888,7 @@ but the distributions of MSPE are similar for all schemes at the high and very
 effort levels. Overall, the differences among the different schemes with
 respect to median MSPE are much less than the variability in MSPE within each
 effort level. The results are largely the same for APV (Figure \ref{apvlgcp}).
-% More specifically, this last sentance means there was "more" variation across
+% More specifically, this last sentence means there was "more" variation across
 % realizations than with variations. No scheme was best or least variable for
 % all realizations.
 
@@ -1282,7 +982,7 @@ interval. Only the SRS scheme is observed to miss the mean at medium or high
 effort. The median errors for the scheme and effort combinations range
 between \(-0.13\) and 0.16. IQR decreases slightly with higher effort. At low
 effort, all schemes have long-tailed distributions containing some extreme
-errors; noteably the serpentine and SRS schemes have left-tailed distributions
+errors; notably the serpentine and SRS schemes have left-tailed distributions
 while the others are right-tailed.
 
 MSPE and APV again had right-skewed distributions. Median MSPE decreases as
@@ -1333,7 +1033,7 @@ the prediction mostly useless.
 
 The problem with this example is easily explained in terms of the average
 distance between the path and arbitrary points in the study site. This example
-design has an averge distance from the path of 486 units; the designs used in
+design has an average distance from the path of 486 units; the designs used in
 the simulation study all had average distances to the path under 130 (with most
 under 50). In the simulation study, there was little association between
 MSPE and average distance to the path for paths of comparable length, but the
@@ -1479,14 +1179,14 @@ incorporate turn angles into a loss function or use multi-objective
 optimization~\citep{lark}.
 
 % Of the schemes considered here, only the transect schemes allow the
-% flexibility to set a desired path length and create a design of that legnth.
+% flexibility to set a desired path length and create a design of that length.
 
 
 \subsection{Computing}
 
 Bayesian computing (especially INLA) has brought LGCP models into the realm of
 practicality. However, this is not yet a fully ``push button, get results''
-procedure; in a handful of our simulations, the gradient descesnt step of INLA
+procedure; in a handful of our simulations, the gradient descent step of INLA
 failed to converge with the default settings. In many other simulations, the
 posterior predictions appear numerically unstable at nodes on the boundary.
 
@@ -1515,7 +1215,8 @@ enough'' to use a simple design.
 
 
 \appendix
-\section{Profiles of designs across all dataset}
+\section{Profiles of designs across all datasets}
+\label{profplots}
 
 \includegraphics[width=4.5in]{../graphics/HighMSPE-profile.png}
 
@@ -1527,6 +1228,7 @@ enough'' to use a simple design.
 
 
 \section{Additional plots of posterior predictions}
+\label{moreplots}
 
 \subsection{Minimum-MSPE surfaces}
 
@@ -1871,186 +1573,194 @@ enough'' to use a simple design.
 \includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Sys000332-LGCP000004.pdf}
 
 
+\pagebreak
 \section{Tables summarizing results}
 
-\subsection{LGCP dataset}
+%\subsection{LGCP dataset}
 
-{\tiny
-\begin{tabular}{|l|c|c|c|cc|cc|}
+\begin{table}[h!]\tiny
+\caption{Summary of model fitting and spatial prediction for each design
+applied to a single LGCP dataset.}
+\label{lgcptable}
+\begin{tabular}{|l|c|c|c|c|cc|cc|}
 \hline
-& & Not & & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
-Scheme & Effort & Converged &
-MSPE \(>\) 100 & Median & IQR & Median & IQR \\
+& & Not & & Mean & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
+Scheme & Effort & Converged & MSPE \(>\) 100 & Captured &
+Median & IQR & Median & IQR \\
 \hline
-SRS &   Low & 0\% & 21\% & 3.02 & 3.71  & 25.2 & 42.2  \\
-&    Medium & 0\% &  7\% & 1.90 & 0.593 & 16.2 & 10.6  \\
-&      High & 0\% &  5\% & 1.79 & 0.442 & 15.2 &  7.17 \\
-& Very High & 0\% &  1\% & 1.61 & 0.399 & 15.5 &  4.93 \\
+SRS &   Low & 0\% & 21\% &  85\% & 3.02 & 3.71  & 25.2 & 42.2  \\
+&    Medium & 0\% &  7\% &  95\% & 1.90 & 0.593 & 16.2 & 10.6  \\
+&      High & 0\% &  5\% &  97\% & 1.79 & 0.442 & 15.2 &  7.17 \\
+& Very High & 0\% &  1\% & 100\% & 1.61 & 0.399 & 15.5 &  4.93 \\
 \hline
-Systematic & Low & 0\% & 34\% & 3.29 & 2260  & 36.8 & 61.4 \\
-&         Medium & 0\% &  6\% & 1.75 & 0.370 & 18.4 & 10.2 \\
-&           High & 0\% &  0\% & 1.65 & 0.216 & 18.0 & 11.4 \\
-&      Very High & 0\% &  0\% & 1.62 & 0.158 & 17.3 &  5.27 \\
+Systematic & Low & 0\% & 34\% &  76\% & 3.29 & 2260  & 36.8 & 61.4 \\
+&         Medium & 0\% &  6\% &  94\% & 1.75 & 0.370 & 18.4 & 10.2 \\
+&           High & 0\% &  0\% & 100\% & 1.65 & 0.216 & 18.0 & 11.4 \\
+&      Very High & 0\% &  0\% & 100\% & 1.62 & 0.158 & 17.3 &  5.27 \\
 \hline
-Inhibitory,      &    Low & 0\% & 32\% & 3.02 & 2094  & 26.9 & 60.6  \\
-10\% Close Pairs & Medium & 0\% &  5\% & 1.96 & 0.570 & 16.7 & 10.7  \\
-&                    High & 0\% &  0\% & 1.73 & 0.367 & 16.7 &  5.70 \\
-&               Very High & 0\% &  0\% & 1.60 & 0.345 & 16.6 &  5.89 \\
+Inhibitory,      &    Low & 0\% & 32\% &  77\% & 3.02 & 2094  & 26.9 & 60.6  \\
+10\% Close Pairs & Medium & 0\% &  5\% &  95\% & 1.96 & 0.570 & 16.7 & 10.7  \\
+&                    High & 0\% &  0\% & 100\% & 1.73 & 0.367 & 16.7 &  5.70 \\
+&               Very High & 0\% &  0\% & 100\% & 1.60 & 0.345 & 16.6 &  5.89 \\
 \hline
-Inhibitory,      &    Low & 1\% & 28\% & 3.57 & 1290  & 32.2 & 46.5  \\
-20\% Close Pairs & Medium & 0\% &  9\% & 1.96 & 0.543 & 16.4 &  8.29 \\
-&                    High & 0\% &  0\% & 1.68 & 0.382 & 17.5 &  5.98 \\
-&               Very High & 0\% &  0\% & 1.59 & 0.289 & 17.2 &  5.07 \\
+Inhibitory,      &    Low & 1\% & 28\% &  80\% & 3.57 & 1290  & 32.2 & 46.5  \\
+20\% Close Pairs & Medium & 0\% &  9\% &  92\% & 1.96 & 0.543 & 16.4 &  8.29 \\
+&                    High & 0\% &  0\% & 100\% & 1.68 & 0.382 & 17.5 &  5.98 \\
+&               Very High & 0\% &  0\% & 100\% & 1.59 & 0.289 & 17.2 &  5.07 \\
 \hline
-Serpentine, &  Low & 0\% & 11\% & 2.37 & 1.33  & 27.9 & 35.6  \\
-5 zigzags & Medium & 0\% &  3\% & 1.88 & 0.350 & 13.9 &  9.26 \\
-&             High & 0\% &  0\% & 1.64 & 0.268 & 14.6 &  9.27 \\
-&        Very High & 0\% &  0\% & 1.55 & 0.123 & 16.9 &  2.87 \\
+Serpentine, &  Low & 0\% & 11\% &  92\% & 2.37 & 1.33  & 27.9 & 35.6  \\
+5 zigzags & Medium & 0\% &  3\% &  97\% & 1.88 & 0.350 & 13.9 &  9.26 \\
+&             High & 0\% &  0\% & 100\% & 1.64 & 0.268 & 14.6 &  9.27 \\
+&        Very High & 0\% &  0\% & 100\% & 1.55 & 0.123 & 16.9 &  2.87 \\
 \hline
-Serpentine &   Low & 0\% & 15\% & 2.61 & 2.07  & 29.2 & 33.3  \\
-8 zigzags & Medium & 0\% &  0\% & 1.88 & 0.408 & 18.3 &  8.15 \\
-&             High & 0\% &  0\% & 1.64 & 0.245 & 17.6 &  6.25 \\
-&        Very High & 0\% &  0\% & 1.53 & 0.272 & 16.4 &  5.41 \\
+Serpentine &   Low & 0\% & 15\% &  87\% & 2.61 & 2.07  & 29.2 & 33.3  \\
+8 zigzags & Medium & 0\% &  0\% & 100\% & 1.88 & 0.408 & 18.3 &  8.15 \\
+&             High & 0\% &  0\% & 100\% & 1.64 & 0.245 & 17.6 &  6.25 \\
+&        Very High & 0\% &  0\% & 100\% & 1.53 & 0.272 & 16.4 &  5.41 \\
 \hline
-LHS-TSP & Low & 2\% & 31\% & 2.90 & 1777  & 22.9 & 57.5  \\
-&      Medium & 0\% & 15\% & 1.92 & 0.730 & 14.8 & 14.4  \\
-&        High & 0\% &  0\% & 1.64 & 0.335 & 15.8 &  6.80 \\
-&   Very High & 0\% &  0\% & 1.53 & 0.298 & 16.2 &  5.61 \\
+LHS-TSP & Low & 2\% & 31\% &  71\% & 2.90 & 1777  & 22.9 & 57.5  \\
+&      Medium & 0\% & 15\% &  88\% & 1.92 & 0.730 & 14.8 & 14.4  \\
+&        High & 0\% &  0\% & 100\% & 1.64 & 0.335 & 15.8 &  6.80 \\
+&   Very High & 0\% &  0\% & 100\% & 1.53 & 0.298 & 16.2 &  5.61 \\
 \hline
-Hilbert & Low & 0\% & 17\% & 2.54 & 1.44  & 25.6 & 44.2  \\
-&      Medium & 0\% &  7\% & 2.10 & 0.748 & 16.7 &  7.96 \\
-&        High & 0\% &  1\% & 1.67 & 0.438 & 14.3 &  5.54 \\
-&   Very High & 0\% &  0\% & 1.46 & 0.388 & 15.6 &  4.57 \\
-\hline
-\end{tabular}
-}
-
-\subsection{LGCP with Clusters dataset}
-
-{\tiny
-\begin{tabular}{|l|c|c|c|cc|cc|}
-\hline
-& & Not & & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
-Scheme & Effort & Converged &
-MSPE \(>\) 100 & Median & IQR & Median & IQR \\
-\hline
-SRS &   Low & 0\% & 6\% & 1.22  & 0.339 & 5.02 & 5.72 \\
-&    Medium & 0\% & 2\% & 0.902 & 0.219 & 4.32 & 3.89 \\
-&      High & 0\% & 1\% & 0.717 & 0.216 & 4.45 & 3.28 \\
-& Very High & 0\% & 0\% & 0.619 & 0.223 & 4.81 & 2.97 \\
-\hline
-Systematic &   Low & 0\% & 3\% & 1.08  & 0.338  & 4.50 & 4.67 \\
-&           Medium & 0\% & 0\% & 0.812 & 0.199  & 4.27 & 2.85 \\
-&             High & 0\% & 0\% & 0.671 & 0.189  & 5.01 & 2.02 \\
-&        Very High & 0\% & 0\% & 0.596 & 0.0846 & 5.33 & 1.39 \\
-\hline
-Inhibitory, &         Low & 1\% & 6\% & 1.20  & 0.326 & 6.93 & 6.78 \\
-10\% Close Pairs & Medium & 0\% & 0\% & 0.887 & 0.245 & 4.92 & 3.33 \\
-&                    High & 0\% & 0\% & 0.694 & 0.167 & 4.64 & 2.27 \\
-&               Very High & 0\% & 0\% & 0.599 & 0.144 & 4.47 & 2.21 \\
-\hline
-Inhibitory &          Low & 0\% & 2\% & 1.23  & 0.287 & 6.42 & 3.59 \\
-20\% Close Pairs & Medium & 0\% & 0\% & 0.832 & 0.222 & 4.19 & 3.82 \\
-&                    High & 0\% & 0\% & 0.701 & 0.253 & 4.53 & 3.57 \\
-&               Very High & 0\% & 0\% & 0.630 & 0.204 & 5.08 & 2.91 \\
-\hline
-Serpentine, & Low  & 0\% & 5\% & 1.22  & 0.364  & 6.35 & 8.95 \\
-5 zigzags & Medium & 0\% & 0\% & 0.808 & 0.259  & 4.32 & 4.28 \\
-&             High & 0\% & 0\% & 0.597 & 0.137  & 4.23 & 1.73 \\
-&        Very High & 0\% & 0\% & 0.530 & 0.0924 & 4.32 & 2.50 \\
-Serpentine, &  Low & 0\% & 5\% & 1.11  & 0.342  & 6.10 & 5.77 \\
-8 zigzags & Medium & 0\% & 0\% & 0.795 & 0.163  & 5.14 & 3.19 \\
-&             High & 0\% & 0\% & 0.643 & 0.235  & 4.61 & 2.75 \\
-&        Very High & 0\% & 0\% & 0.564 & 0.0621 & 5.48 & 1.65 \\
-\hline
-LHS-TSP & Low & 0\% & 14\% & 1.21  & 0.374 & 5.73 & 8.92 \\
-&      Medium & 0\% &  0\% & 0.858 & 0.281 & 5.09 & 3.81 \\
-&        High & 0\% &  0\% & 0.658 & 0.160 & 4.75 & 3.12 \\
-&   Very High & 0\% &  0\% & 0.635 & 0.198 & 5.79 & 2.96 \\
-\hline
-Hilbert & Low & 0\% & 8\% & 1.14  & 0.451 & 5.57 & 6.15 \\
-&      Medium & 0\% & 0\% & 0.871 & 0.358 & 5.02 & 5.03 \\
-&        High & 0\% & 0\% & 0.669 & 0.152 & 4.86 & 2.64 \\
-&   Very High & 0\% & 0\% & 0.542 & 0.138 & 5.95 & 2.82 \\
+Hilbert & Low & 0\% & 17\% &  86\% & 2.54 & 1.44  & 25.6 & 44.2  \\
+&      Medium & 0\% &  7\% &  95\% & 2.10 & 0.748 & 16.7 &  7.96 \\
+&        High & 0\% &  1\% &  99\% & 1.67 & 0.438 & 14.3 &  5.54 \\
+&   Very High & 0\% &  0\% & 100\% & 1.46 & 0.388 & 15.6 &  4.57 \\
 \hline
 \end{tabular}
-}
+\end{table}
 
-\section{Notation and terminology}
+%\subsection{LGCP with Clusters dataset}
 
-\begin{itemize}
+\begin{table}[h!]\tiny
+\caption{Summary of model fitting and spatial prediction for each design
+applied to a single LGCP with Clusters dataset.}
+\label{clusttable}
+\begin{tabular}{|l|c|c|c|c|cc|cc|}
+\hline
+& & Not & & Mean & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
+Scheme & Effort & Converged & MSPE \(>\) 100 & Captured &
+Median & IQR & Median & IQR \\
+\hline
+SRS &   Low & 0\% & 6\% &  98\% & 1.22  & 0.339 & 5.02 & 5.72 \\
+&    Medium & 0\% & 2\% &  99\% & 0.902 & 0.219 & 4.32 & 3.89 \\
+&      High & 0\% & 1\% &  99\% & 0.717 & 0.216 & 4.45 & 3.28 \\
+& Very High & 0\% & 0\% & 100\% & 0.619 & 0.223 & 4.81 & 2.97 \\
+\hline
+Systematic &   Low & 0\% & 3\% &  98\% & 1.08  & 0.338  & 4.50 & 4.67 \\
+&           Medium & 0\% & 0\% & 100\% & 0.812 & 0.199  & 4.27 & 2.85 \\
+&             High & 0\% & 0\% & 100\% & 0.671 & 0.189  & 5.01 & 2.02 \\
+&        Very High & 0\% & 0\% & 100\% & 0.596 & 0.0846 & 5.33 & 1.39 \\
+\hline
+Inhibitory, &         Low & 1\% & 6\% &  97\% & 1.20  & 0.326 & 6.93 & 6.78 \\
+10\% Close Pairs & Medium & 0\% & 0\% & 100\% & 0.887 & 0.245 & 4.92 & 3.33 \\
+&                    High & 0\% & 0\% & 100\% & 0.694 & 0.167 & 4.64 & 2.27 \\
+&               Very High & 0\% & 0\% & 100\% & 0.599 & 0.144 & 4.47 & 2.21 \\
+\hline
+Inhibitory &          Low & 0\% & 2\% & 100\% & 1.23  & 0.287 & 6.42 & 3.59 \\
+20\% Close Pairs & Medium & 0\% & 0\% & 100\% & 0.832 & 0.222 & 4.19 & 3.82 \\
+&                    High & 0\% & 0\% & 100\% & 0.701 & 0.253 & 4.53 & 3.57 \\
+&               Very High & 0\% & 0\% & 100\% & 0.630 & 0.204 & 5.08 & 2.91 \\
+\hline
+Serpentine, & Low  & 0\% & 5\% &  96\% & 1.22  & 0.364  & 6.35 & 8.95 \\
+5 zigzags & Medium & 0\% & 0\% & 100\% & 0.808 & 0.259  & 4.32 & 4.28 \\
+&             High & 0\% & 0\% & 100\% & 0.597 & 0.137  & 4.23 & 1.73 \\
+&        Very High & 0\% & 0\% & 100\% & 0.530 & 0.0924 & 4.32 & 2.50 \\
+Serpentine, &  Low & 0\% & 5\% &  97\% & 1.11  & 0.342  & 6.10 & 5.77 \\
+8 zigzags & Medium & 0\% & 0\% & 100\% & 0.795 & 0.163  & 5.14 & 3.19 \\
+&             High & 0\% & 0\% & 100\% & 0.643 & 0.235  & 4.61 & 2.75 \\
+&        Very High & 0\% & 0\% & 100\% & 0.564 & 0.0621 & 5.48 & 1.65 \\
+\hline
+LHS-TSP & Low & 0\% & 14\% &  91\% & 1.21  & 0.374 & 5.73 & 8.92 \\
+&      Medium & 0\% &  0\% & 100\% & 0.858 & 0.281 & 5.09 & 3.81 \\
+&        High & 0\% &  0\% & 100\% & 0.658 & 0.160 & 4.75 & 3.12 \\
+&   Very High & 0\% &  0\% & 100\% & 0.635 & 0.198 & 5.79 & 2.96 \\
+\hline
+Hilbert & Low & 0\% & 8\% &  94\% & 1.14  & 0.451 & 5.57 & 6.15 \\
+&      Medium & 0\% & 0\% & 100\% & 0.871 & 0.358 & 5.02 & 5.03 \\
+&        High & 0\% & 0\% & 100\% & 0.669 & 0.152 & 4.86 & 2.64 \\
+&   Very High & 0\% & 0\% & 100\% & 0.542 & 0.138 & 5.95 & 2.82 \\
+\hline
+\end{tabular}
+\end{table}
 
-\item process defined on \(\mathcal{D} \subset \mathbb{R}^{d}\), domain of the
-intensity function, in this manuscript \(d = 2\)
+%\section{Notation and terminology}
 
-\item observation window \(\mathcal{S} \subset \mathcal{D}\)
+%\begin{itemize}
 
-\item define three regions:
-\begin{itemize}
-\item the domain \(\mathcal{D}\) over which the process mathematically operates
-\item the study region \(\mathcal{R}\) over which inferences are desired
-\item the observed/sampled observation window \(\mathcal{S}\)
-\end{itemize}
+%\item process defined on \(\mathcal{D} \subset \mathbb{R}^{d}\), domain of the
+%intensity function, in this manuscript \(d = 2\)
 
-\item general relationship is \(\mathcal{S} \subset \mathcal{R}
-\subset \mathcal{D} \subset \mathbb{R}^{d}\) where all of the subset symbols
-taken to mean ``subset or equal''
+%\item observation window \(\mathcal{S} \subset \mathcal{D}\)
 
-\item \(\mathcal{D}\) can be bounded or unbounded (often equal to
-\(\mathbb{R}^{d}\)), $\mathcal{S}$ practically always bounded, \(\mathcal{R}\)
-bounded or unbounded depending on application and inferential goals
+%\item define three regions:
+%\begin{itemize}
+%\item the domain \(\mathcal{D}\) over which the process mathematically operates
+%\item the study region \(\mathcal{R}\) over which inferences are desired
+%\item the observed/sampled observation window \(\mathcal{S}\)
+%\end{itemize}
 
-\item the ``fully surveyed'' (censused) situation is
-\(\mathcal{S} = \mathcal{R}\)
+%\item general relationship is \(\mathcal{S} \subset \mathcal{R}
+%\subset \mathcal{D} \subset \mathbb{R}^{d}\) where all of the subset symbols
+%taken to mean ``subset or equal''
 
-\item survey path \(\mathcal{P}\) is a one-dimensional subset of
-\(\mathcal{R}\)
-\begin{itemize}
-\item set of one or more sequences of waypoints connected by line segments
-\item \(\mathcal{S}\) is the set of all points within a fixed (and assumed
-known) radius of \(\mathcal{P}\)
-\end{itemize}
+%\item \(\mathcal{D}\) can be bounded or unbounded (often equal to
+%\(\mathbb{R}^{d}\)), $\mathcal{S}$ practically always bounded, \(\mathcal{R}\)
+%bounded or unbounded depending on application and inferential goals
 
-\item \(\mathbf{X}\) point process on \(\mathcal{R}\), \(\mathbf{x} = \{x_{1},
-\dots, x_{n}\}\) realized point pattern
-\begin{itemize}
-\item \(\mathbf{X}_{\mathcal{S}} = \mathbf{X} \cap \mathcal{S}\) the
- restriction of \(\mathbf{X}\) to \(\mathcal{S}\), \(\mathbf{x} = \mathbf{X}
-\cap \mathcal{S}\) the realized observeable point pattern
-\end{itemize}
+%\item the ``fully surveyed'' (censused) situation is
+%\(\mathcal{S} = \mathcal{R}\)
 
-\item point \(x \in \mathbf{x}\) called an event
+%\item survey path \(\mathcal{P}\) is a one-dimensional subset of
+%\(\mathcal{R}\)
+%\begin{itemize}
+%\item set of one or more sequences of waypoints connected by line segments
+%\item \(\mathcal{S}\) is the set of all points within a fixed (and assumed
+%known) radius of \(\mathcal{P}\)
+%\end{itemize}
 
-\item intensity function \(\lambda(u)\)
+%\item \(\mathbf{X}\) point process on \(\mathcal{R}\), \(\mathbf{x} = \{x_{1},
+%\dots, x_{n}\}\) realized point pattern
+%\begin{itemize}
+%\item \(\mathbf{X}_{\mathcal{S}} = \mathbf{X} \cap \mathcal{S}\) the
+% restriction of \(\mathbf{X}\) to \(\mathcal{S}\), \(\mathbf{x} = \mathbf{X}
+%\cap \mathcal{S}\) the realized observeable point pattern
+%\end{itemize}
 
-\item types of ``points'' in space:
-\begin{itemize}
-\item \(x\) event in the point pattern
-\item \(s\) numerical integration node
-\item \(u\) arbitrary location in \(\mathcal{D}\) used to index intensity
-function and predictors
-\end{itemize}
+%\item point \(x \in \mathbf{x}\) called an event
 
-\item \(z(u)\) a column vector of covariates/predictors at \(u\) (not used in
-this manuscript)
+%\item intensity function \(\lambda(u)\)
 
-\item ``point'' refers to a \(u\) unless clearly stated otherwise
+%\item types of ``points'' in space:
+%\begin{itemize}
+%\item \(x\) event in the point pattern
+%\item \(s\) numerical integration node
+%\item \(u\) arbitrary location in \(\mathcal{D}\) used to index intensity
+%function and predictors
+%\end{itemize}
 
-\item bold for sets and spatial processes, normal italics for spatial vectors
+%\item \(z(u)\) a column vector of covariates/predictors at \(u\) (not used in
+%this manuscript)
 
-\item \(y\) and variations will be used for objects derived from the point
-pattern, e.g. marks, pseudodata
+%\item ``point'' refers to a \(u\) unless clearly stated otherwise
 
-\item distance sampling fits into the framework with expansion of notation
-to include a (nontrivial) detection function and differentiate between the
-observed and observable point patterns
+%\item bold for sets and spatial processes, normal italics for spatial vectors
 
-\end{itemize}
+%\item \(y\) and variations will be used for objects derived from the point
+%pattern, e.g. marks, pseudodata
+
+%\item distance sampling fits into the framework with expansion of notation
+%to include a (nontrivial) detection function and differentiate between the
+%observed and observable point patterns
+
+%\end{itemize}
 
 
 %\section{Extension of Nearest Neighbor Distance to Paths}
 
 
+\clearpage
 \section*{References}
 
 \bibliography{lgcp_sampling.bib}

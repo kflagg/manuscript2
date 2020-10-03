@@ -409,7 +409,7 @@ rect_datasets <- readRDS('../data/rect_data.rds')
 allplans <- readRDS('../data/rect_plans.rds')
 
 
-# Parellel transects at one end.
+# Parallel transects at one end.
 ex_plan <- allplans %>%
   filter(PlanID == 'Serp000148') %>%
   `$`('Plan') %>%

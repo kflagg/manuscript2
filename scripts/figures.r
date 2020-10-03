@@ -169,7 +169,7 @@ rect_summary <- rect_results %>%
     MaxMedPV = max(MedPV, na.rm = TRUE),
     IQRMedPV = IQR(MedPV, na.rm = TRUE),
     RangeMedPV = max(MedPV, na.rm = TRUE) - min(MedPV, na.rm = TRUE),
-    CaptureInt = mean(CaptureInt == 'Captured', na.rm = TRUE),
+    CaptureInt = mean((!is.na(CaptureInt)) & CaptureInt == 'Captured'),
     AvgInt = mean(IntMeanError, na.rm = TRUE),
     SDInt = sd(IntMeanError, na.rm = TRUE),
     MinInt = min(IntMeanError, na.rm = TRUE),
