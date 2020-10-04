@@ -41,7 +41,7 @@
 
 \begin{frontmatter}
 
-\title{Spatial log-Gaussian Cox process models and sampling paths: computation and optimal design}
+\title{Spatial log-Gaussian Cox process models and sampling paths: Computation and optimal design}
 
 %% Group authors per affiliation:
 \author[msuaddr]{Kenneth Flagg\corref{mycorrespondingauthor}}
@@ -141,12 +141,14 @@ likelihood \citep{simpsonetal}.
 
 Most classical sampling and design work has been done for points, or for small
 quadrats approximated as points, rather than for paths. In two-dimensional
-(geostatistical) model-based design, regular spacing is optimal for spatial
+geostatistical model-based design, regular spacing is optimal for spatial
 prediction but randomness and a variety of interpoint distances are best for
 parameter estimation~\citep{diggle}. Inhibitory plus close pairs designs are a
-good compromise~\citep{chipetaetal2017}. Design-based approaches exist to
-spread points through high-dimensional design spaces~\citep{borkowskipiepel},
-and Latin hypercube sampling has space-filling
+good compromise when estimation and prediction are both
+important~\citep{chipetaetal2017}.
+
+Design-based approaches exist to spread points through high-dimensional design
+spaces~\citep{borkowskipiepel}, and Latin hypercube sampling has space-filling
 characteristics~\citep{mckayetal,husslageetal}. Minimax and maximin distance
 are popular criteria for ensuring deign points represent the entirety of a
 large (or high-dimensional) design space~\citep{johnson}. These criteria
@@ -158,11 +160,14 @@ maximizing the minimum distance between pairs of design points (maximin).
 
 \subsection{Space-filling curves}
 
-Another relevant area of research is in deterministic space-filling curves.
-These have used in the design of dense or stretchable
+A relevant area of mathematical research is in deterministic space-filling
+curves. These have used in the design of dense or stretchable
 circuits~\citep{ogorzalek,mazhang} and high-dimensional data visualization
-in bioinformatics~\citep{hilbertvis}. The Hilbert curve is simple to construct
-and the Peano curve is very flexible for filling irregular
+in bioinformatics~\citep{hilbertvis}. They are appealing as path designs
+because, given enough length, the path will visit every part of the study site.
+
+Example space-filling curves include the Hilbert curve, which is simple to
+construct, and the Peano curve, which is very flexible for filling irregular
 shapes~\citep{fanetal}. Space-filling curves are one-dimensional paths
 constructed iteratively; as the number of iterations goes to infinity, the
 limiting path has nonzero area and actually fills the space~\citep{sagan}. For
@@ -183,20 +188,25 @@ size and intensity. However, it does not employ criteria to optimize spatial
 prediction.
 
 \citet{liuvanhatalo} provided one of the first explicit discussions of design
-in the context of spatial LGCP models. They used narrow quadrats (swaths along
-line-transects) as their sampling units. The transects were short relative to
-the size of the study region and not connected into a path.
+in the context of spatial LGCP models. The study used narrow quadrats (swaths
+along line-transects) as the sampling units. The transects were short relative
+to the size of the study region and not connected into a path, so they were
+treated as disconnected points for the purposes of design construction.
 
 
-\subsection{Goals of this study}
+\subsection{Goals of this paper}
 
-%illuminate the current state of practical computing
+We have two broad goals for this paper. First, we will illuminate the current
+state of practical computing for LGCP models fit to degraded point patterns
+observed via survey sampling. Second, we open discussion of path design for
+LGCP models by identifying design schemes with promise for field use.
 
-%open discussion of path design in general
-
-%identify design schemes with promise for field use
-
-%simulation study based up geomagnetic surveys for unexploded ordnance
+We accomplish these goals via a simulation study, using many designs each
+applied to the same simulated datasets. The simulated data collection procedure
+is based upon geomagnetic surveys for unexploded ordnance, where metal
+detectors traverse a path and detect events under their footprint, i.e. within
+a (fixed and assumed known) width centered on the path. The paths are long
+enough that they cannot be approximated by discrete design points.
 
 
 \section{Materials and methods}
@@ -447,7 +457,8 @@ the inferences, so low APV is desirable.
 \subsubsection{Model fitting}
 
 We fit the spatial LGCP model using nested integrated Laplace approximations
-and the R-INLA package~\citep{rueetal,rinla}. The Gaussian process is
+and the R-INLA package~\citep{rueetal,rinla}. We used the \texttt{inla()}
+function with its default optimizer parameters. The Gaussian process is
 approximated using a finite element approach \citep{lindgrenetal}. The point
 pattern is modeled by pseudodata placed at the events and the finite element
 nodes~\citep{simpsonetal}. When using an adequate finite element mesh, this
@@ -666,11 +677,28 @@ The covariance parameters \(\sigma\) and \(\rho\) have a PC prior with
 \(\mathrm{Pr}(\sigma > 3) = 0.1\) and \(\mathrm{Pr}(\rho < 100) = 0.1\)
 \citep{fuglstadetal,simpsonpc}.
 
+
+\subsection{Finite element mesh}
+\label{simmesh}
+
 The Gaussian process prediction surface is approximated on the finite element
-mesh shown in Figure~\ref{meshfull}. The GP is predicted at the nodes (points)
-and is linearly interpolated elsewhere. The nodes are weighted according to
-the area of their dual cells (grey outlines) and used for numerical integration
-of the likelihood \citep{lindgrenetal}. This mesh is adequately fine to model
+mesh shown in Figure~\ref{meshfull}. The GP is predicted at the 298 nodes
+(black dots on the plot) and is linearly interpolated elsewhere. The nodes are
+weighted according to the area of their dual cells (grey outlines) and used
+for numerical integration of the likelihood \citep{lindgrenetal}.
+
+The choice of mesh is important because a mesh that is too coarse cannot
+represent small-scale structures and thus will incur large approximation
+errors. On the other hand, the mesh has implications for computation because
+the nodes and the observed events correspond to pseudodata points. In our
+sparsely-observed point pattern setting, the number of mesh nodes will be
+large relative to the number of observed events, making the mesh the primary
+driver of computational complexity in fitting the model.
+
+A good approach in practice is to refit the model with several meshes and
+refine the mesh until the prediction surface has converged. However, for a
+simulation study we must choose one mesh that will perform reasonably well for
+a wide variety of observations. This mesh is adequately fine to model
 the large-scale trends in the surface while keeping the computing time well
 under a minute for each model fit.
 % Finer meshes fit to the best-performing design don't result in more detailed
@@ -693,11 +721,11 @@ area of their dual cells (outlined in grey).}
 
 \section{Results}
 
-\subsection{Initial Observations}
+%\subsection{Initial Observations}
 
 In describing the results, we focus on one LGCP dataset and one LGCP with
 Clusters dataset (Figure~\ref{fulldata}). The results are similar for all
-datasets (see the online supplement). These two datasets were chosen for
+datasets (see figures in \ref{profplots}). These two datasets were chosen for
 illustration because the simulations using them exhibited a wide variety of
 outcomes. This included a mix of very good and very poor prediction
 performance.
@@ -774,10 +802,11 @@ from a serpentine transect plan. The predicted log-intensity has a hotspot of
 extremely large values in the southeast corner (notice the color scale). The
 hotspot is driven by two nodes on the boundary with very large prediction
 values. Another, less extreme, edge effect is present in the northeast corner.
+The surface also contains many circular peaks centered on observed events.
 When computational problems occur, they may be fixed by refining the mesh at
 additional computational cost. We were not able to use a finer mesh for all
 simulations due to computational limitations, but we point out which schemes
-are robust to these problems.
+are robust to these problems (see Tables \ref{lgcptable} and \ref{clusttable}).
 
 Section~\ref{compissues} illustrates refitting the model using a refined mesh.
 The sections after that compare the schemes in terms of model-based criteria
@@ -831,6 +860,28 @@ LGCP and one realization of a LGCP with Clusters.}
 \subsection{Dealing with computational problems}
 \label{compissues}
 
+A notable proportion of simulation runs resulted in surfaces with edge effects
+similar to Figure \ref{serp000148}, especially at lower levels of sampling
+effort. This is most likely a symptom of the mesh not being able to represent
+the posterior surface implied by the observed data. In practice, data analysts
+should fit the model with several different meshes to assess adequacy of the
+approximation.
+
+We constructed a finer mesh with 1102 nodes (Figure \ref{meshfiner}), then
+refit the model to the point pattern from Figure \ref{serp000148}. The
+resulting log-intensity surface appears in Figure \ref{finer}. The surface is
+free of edge effects or extreme values, has an MSPE of 2.31 (down from 1605),
+and looks generally like well-performing surfaces from other simulation runs
+using the same dataset (e.g. Figure \ref{srs000187lgcp}, more examples in the
+appendix).
+
+This refined mesh has nearly four times as many nodes and the mesh used for
+the full set of simulations, and consequently fitting the model takes several
+times longer. The time requirement precluded us from rerunning the full
+simulation study with this mesh, but the simulations using the coarse mesh
+provide helpful insight into which schemes are more likely to require more
+computation effort.
+
 \begin{figure}
 \includegraphics[width=5in]{../graphics/finermesh-LGCP000004.pdf}
 \caption{Illustration of a finer mesh than the one used in the full simulation.
@@ -863,18 +914,18 @@ a medium-effort plan applied to a LGCP dataset.}
 
 \subsection{LGCP simulation results}
 
-Considered across all survey plans applied to one LGCP dataset, all design
-schemes tend to result in slightly underestimating the mean, but most
-95\% posterior intervals still capture the true mean value (Figure
+Considered across all survey plans applied to one LGCP dataset, most
+95\% posterior intervals capture the true mean value, but those that did not
+were more likely to underestimate than overestimate the mean (Figure
 \ref{intlgcp}). The capture rate increases with survey effort, with only
 the SRS and Hilbert schemes being observed to miss the true mean at the
-hight effort level. For each scheme at each effort level, the median
-error in the posterior mean was between 0 and \(-1\). At any given effort
-level, there is little difference among the distribution of errors across
-schemes. However, at low and medium effort, all of these distributions
-have long right tails with severe overestimates (accompanied by wide
-posterior intervals).
-% Better presentation: proportion of 95\% central intervals that contain 0.
+hight effort level.
+%For each scheme at each effort level, the median
+%error in the posterior mean was between 0 and \(-1\). At any given effort
+%level, there is little difference among the distribution of errors across
+%schemes. However, at low and medium effort, all of these distributions
+%have long right tails with severe overestimates (accompanied by wide
+%posterior intervals).
 
 Both MSPE and APV had right-skewed distributions. Thus we use logarithmic
 scales for plots and summarize them using the median and interquartile range
@@ -979,11 +1030,12 @@ For the LGCP with Clusters dataset, all schemes tended to do well at
 estimating the mean (Figure \ref{intclust}). At low effort, all schemes
 occasionally fail to capture the true mean in a 95\% central posterior
 interval. Only the SRS scheme is observed to miss the mean at medium or high
-effort. The median errors for the scheme and effort combinations range
-between \(-0.13\) and 0.16. IQR decreases slightly with higher effort. At low
-effort, all schemes have long-tailed distributions containing some extreme
-errors; notably the serpentine and SRS schemes have left-tailed distributions
-while the others are right-tailed.
+effort.
+%The median errors for the scheme and effort combinations range
+%between \(-0.13\) and 0.16. IQR decreases slightly with higher effort. At low
+%effort, all schemes have long-tailed distributions containing some extreme
+%errors; notably the serpentine and SRS schemes have left-tailed distributions
+%while the others are right-tailed.
 
 MSPE and APV again had right-skewed distributions. Median MSPE decreases as
 effort increases (Figure~\ref{mspeclust}). Variability in MSPE is roughly
@@ -1163,7 +1215,7 @@ there may be events just out of detection range. Intuitively, observing no
 events tells us the intensity should be ``low'' but says little about how low,
 especially when intensity is modeled on a logarithmic scale.
 
-This has consequences for adaptive or sequential sampling. A greedy algorithm
+This has consequences for adaptive or sequential design. A greedy algorithm
 based entirely on minimizing variance may excessively sample regions of low
 intensity, behavior that is unhelpful if the goal is to map hotspots of high
 intensity. We recommend including design-based considerations of spatial
@@ -1172,7 +1224,7 @@ coverage in future studies on multi-stage design.
 Additional considerations of applying path design to real-world studies include
 practical issues of data collection. Generally the path will be smoothed,
 without the perfectly-straight segments and instantaneous direction changes of
-of our simulated data collection. Equipment may have limitations which render
+our simulated data collection. Equipment may have limitations which render
 impossible the sharp corners of LHS-TSP designs or the repetitious short
 segments and right angles of Hilbert curves. Future optimal design work could
 incorporate turn angles into a loss function or use multi-objective
@@ -1195,7 +1247,8 @@ element mesh. A finer mesh than the one used in these simulations would have
 more flexibility to model steep changes in the GP surface. We hypothesize that
 this would make convergence problems and edge effects less likely. The downside
 of a finer mesh is increased computing time because each mesh node becomes a
-pseudodata point that must be processed by the model-fitting software.
+pseudodata point that must be processed by the model-fitting software. The
+choice of mesh is non-trivial and worthy of further study.
 
 
 \subsection{Conclusions}
@@ -1211,9 +1264,10 @@ and employing a simple design. We recommend the Hilbert or serpentine designs
 if path length is heavily constrained, but systematic line transects are fine
 if the path can be long. A simulation using available prior information for a
 specific study will be helpful in assessing if a given length is ``long
-enough'' to use a simple design.
+enough'' to use a line-transect design.
 
 
+\pagebreak
 \appendix
 \section{Profiles of designs across all datasets}
 \label{profplots}
@@ -1227,10 +1281,125 @@ enough'' to use a simple design.
 \includegraphics[width=4.5in]{../graphics/APV-profile.png}
 
 
+\pagebreak
+\section{Tables summarizing results}
+
+%\subsection{LGCP dataset}
+
+\begin{table}[h!]\tiny
+\caption{Summary of model fitting and spatial prediction for each design
+applied to a single LGCP dataset.}
+\label{lgcptable}
+\begin{tabular}{|l|c|c|c|c|cc|cc|}
+\hline
+& & Not & & Mean & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
+Scheme & Effort & Converged & MSPE \(>\) 100 & Captured &
+Median & IQR & Median & IQR \\
+\hline
+SRS &   Low & 0\% & 21\% &  85\% & 3.02 & 3.71  & 25.2 & 42.2  \\
+&    Medium & 0\% &  7\% &  95\% & 1.90 & 0.593 & 16.2 & 10.6  \\
+&      High & 0\% &  5\% &  97\% & 1.79 & 0.442 & 15.2 &  7.17 \\
+& Very High & 0\% &  1\% & 100\% & 1.61 & 0.399 & 15.5 &  4.93 \\
+\hline
+Systematic & Low & 0\% & 34\% &  76\% & 3.29 & 2260  & 36.8 & 61.4 \\
+&         Medium & 0\% &  6\% &  94\% & 1.75 & 0.370 & 18.4 & 10.2 \\
+&           High & 0\% &  0\% & 100\% & 1.65 & 0.216 & 18.0 & 11.4 \\
+&      Very High & 0\% &  0\% & 100\% & 1.62 & 0.158 & 17.3 &  5.27 \\
+\hline
+Inhibitory,      &    Low & 0\% & 32\% &  77\% & 3.02 & 2094  & 26.9 & 60.6  \\
+10\% Close Pairs & Medium & 0\% &  5\% &  95\% & 1.96 & 0.570 & 16.7 & 10.7  \\
+&                    High & 0\% &  0\% & 100\% & 1.73 & 0.367 & 16.7 &  5.70 \\
+&               Very High & 0\% &  0\% & 100\% & 1.60 & 0.345 & 16.6 &  5.89 \\
+\hline
+Inhibitory,      &    Low & 1\% & 28\% &  80\% & 3.57 & 1290  & 32.2 & 46.5  \\
+20\% Close Pairs & Medium & 0\% &  9\% &  92\% & 1.96 & 0.543 & 16.4 &  8.29 \\
+&                    High & 0\% &  0\% & 100\% & 1.68 & 0.382 & 17.5 &  5.98 \\
+&               Very High & 0\% &  0\% & 100\% & 1.59 & 0.289 & 17.2 &  5.07 \\
+\hline
+Serpentine, &  Low & 0\% & 11\% &  92\% & 2.37 & 1.33  & 27.9 & 35.6  \\
+5 zigzags & Medium & 0\% &  3\% &  97\% & 1.88 & 0.350 & 13.9 &  9.26 \\
+&             High & 0\% &  0\% & 100\% & 1.64 & 0.268 & 14.6 &  9.27 \\
+&        Very High & 0\% &  0\% & 100\% & 1.55 & 0.123 & 16.9 &  2.87 \\
+\hline
+Serpentine &   Low & 0\% & 15\% &  87\% & 2.61 & 2.07  & 29.2 & 33.3  \\
+8 zigzags & Medium & 0\% &  0\% & 100\% & 1.88 & 0.408 & 18.3 &  8.15 \\
+&             High & 0\% &  0\% & 100\% & 1.64 & 0.245 & 17.6 &  6.25 \\
+&        Very High & 0\% &  0\% & 100\% & 1.53 & 0.272 & 16.4 &  5.41 \\
+\hline
+LHS-TSP & Low & 2\% & 31\% &  71\% & 2.90 & 1777  & 22.9 & 57.5  \\
+&      Medium & 0\% & 15\% &  88\% & 1.92 & 0.730 & 14.8 & 14.4  \\
+&        High & 0\% &  0\% & 100\% & 1.64 & 0.335 & 15.8 &  6.80 \\
+&   Very High & 0\% &  0\% & 100\% & 1.53 & 0.298 & 16.2 &  5.61 \\
+\hline
+Hilbert & Low & 0\% & 17\% &  86\% & 2.54 & 1.44  & 25.6 & 44.2  \\
+&      Medium & 0\% &  7\% &  95\% & 2.10 & 0.748 & 16.7 &  7.96 \\
+&        High & 0\% &  1\% &  99\% & 1.67 & 0.438 & 14.3 &  5.54 \\
+&   Very High & 0\% &  0\% & 100\% & 1.46 & 0.388 & 15.6 &  4.57 \\
+\hline
+\end{tabular}
+\end{table}
+
+%\subsection{LGCP with Clusters dataset}
+
+\begin{table}[h!]\tiny
+\caption{Summary of model fitting and spatial prediction for each design
+applied to a single LGCP with Clusters dataset.}
+\label{clusttable}
+\begin{tabular}{|l|c|c|c|c|cc|cc|}
+\hline
+& & Not & & Mean & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
+Scheme & Effort & Converged & MSPE \(>\) 100 & Captured &
+Median & IQR & Median & IQR \\
+\hline
+SRS &   Low & 0\% & 6\% &  98\% & 1.22  & 0.339 & 5.02 & 5.72 \\
+&    Medium & 0\% & 2\% &  99\% & 0.902 & 0.219 & 4.32 & 3.89 \\
+&      High & 0\% & 1\% &  99\% & 0.717 & 0.216 & 4.45 & 3.28 \\
+& Very High & 0\% & 0\% & 100\% & 0.619 & 0.223 & 4.81 & 2.97 \\
+\hline
+Systematic &   Low & 0\% & 3\% &  98\% & 1.08  & 0.338  & 4.50 & 4.67 \\
+&           Medium & 0\% & 0\% & 100\% & 0.812 & 0.199  & 4.27 & 2.85 \\
+&             High & 0\% & 0\% & 100\% & 0.671 & 0.189  & 5.01 & 2.02 \\
+&        Very High & 0\% & 0\% & 100\% & 0.596 & 0.0846 & 5.33 & 1.39 \\
+\hline
+Inhibitory, &         Low & 1\% & 6\% &  97\% & 1.20  & 0.326 & 6.93 & 6.78 \\
+10\% Close Pairs & Medium & 0\% & 0\% & 100\% & 0.887 & 0.245 & 4.92 & 3.33 \\
+&                    High & 0\% & 0\% & 100\% & 0.694 & 0.167 & 4.64 & 2.27 \\
+&               Very High & 0\% & 0\% & 100\% & 0.599 & 0.144 & 4.47 & 2.21 \\
+\hline
+Inhibitory &          Low & 0\% & 2\% & 100\% & 1.23  & 0.287 & 6.42 & 3.59 \\
+20\% Close Pairs & Medium & 0\% & 0\% & 100\% & 0.832 & 0.222 & 4.19 & 3.82 \\
+&                    High & 0\% & 0\% & 100\% & 0.701 & 0.253 & 4.53 & 3.57 \\
+&               Very High & 0\% & 0\% & 100\% & 0.630 & 0.204 & 5.08 & 2.91 \\
+\hline
+Serpentine, & Low  & 0\% & 5\% &  96\% & 1.22  & 0.364  & 6.35 & 8.95 \\
+5 zigzags & Medium & 0\% & 0\% & 100\% & 0.808 & 0.259  & 4.32 & 4.28 \\
+&             High & 0\% & 0\% & 100\% & 0.597 & 0.137  & 4.23 & 1.73 \\
+&        Very High & 0\% & 0\% & 100\% & 0.530 & 0.0924 & 4.32 & 2.50 \\
+\hline
+Serpentine, &  Low & 0\% & 5\% &  97\% & 1.11  & 0.342  & 6.10 & 5.77 \\
+8 zigzags & Medium & 0\% & 0\% & 100\% & 0.795 & 0.163  & 5.14 & 3.19 \\
+&             High & 0\% & 0\% & 100\% & 0.643 & 0.235  & 4.61 & 2.75 \\
+&        Very High & 0\% & 0\% & 100\% & 0.564 & 0.0621 & 5.48 & 1.65 \\
+\hline
+LHS-TSP & Low & 0\% & 14\% &  91\% & 1.21  & 0.374 & 5.73 & 8.92 \\
+&      Medium & 0\% &  0\% & 100\% & 0.858 & 0.281 & 5.09 & 3.81 \\
+&        High & 0\% &  0\% & 100\% & 0.658 & 0.160 & 4.75 & 3.12 \\
+&   Very High & 0\% &  0\% & 100\% & 0.635 & 0.198 & 5.79 & 2.96 \\
+\hline
+Hilbert & Low & 0\% & 8\% &  94\% & 1.14  & 0.451 & 5.57 & 6.15 \\
+&      Medium & 0\% & 0\% & 100\% & 0.871 & 0.358 & 5.02 & 5.03 \\
+&        High & 0\% & 0\% & 100\% & 0.669 & 0.152 & 4.86 & 2.64 \\
+&   Very High & 0\% & 0\% & 100\% & 0.542 & 0.138 & 5.95 & 2.82 \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\clearpage
 \section{Additional plots of posterior predictions}
 \label{moreplots}
 
-\subsection{Minimum-MSPE surfaces}
+\subsection{Minimum-MSPE surfaces, LGCP dataset}
 
 \includegraphics[width=2.5in]{../graphics/lambda-minMSPE-Hilbert000013-LGCP000004.pdf}
 \includegraphics[width=2.5in]{../graphics/lambdaSD-minMSPE-Hilbert000013-LGCP000004.pdf}
@@ -1328,7 +1497,7 @@ enough'' to use a simple design.
 \includegraphics[width=2.5in]{../graphics/lambda-minMSPE-Sys000309-LGCP000004.pdf}
 \includegraphics[width=2.5in]{../graphics/lambdaSD-minMSPE-Sys000309-LGCP000004.pdf}
 
-\subsection{Median-MSPE surfaces}
+\subsection{Median-MSPE surfaces, LGCP dataset}
 
 \includegraphics[width=2.5in]{../graphics/lambda-medMSPE-Hilbert000100-LGCP000004.pdf}
 \includegraphics[width=2.5in]{../graphics/lambdaSD-medMSPE-Hilbert000100-LGCP000004.pdf}
@@ -1426,7 +1595,7 @@ enough'' to use a simple design.
 \includegraphics[width=2.5in]{../graphics/lambda-medMSPE-Sys000302-LGCP000004.pdf}
 \includegraphics[width=2.5in]{../graphics/lambdaSD-medMSPE-Sys000302-LGCP000004.pdf}
 
-\subsection{Max-MSPE surfaces}
+\subsection{Max-MSPE surfaces, LGCP dataset}
 
 \includegraphics[width=2.5in]{../graphics/lambda-maxMSPE-Hilbert000053-LGCP000004.pdf}
 \includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Hilbert000053-LGCP000004.pdf}
@@ -1573,118 +1742,6 @@ enough'' to use a simple design.
 \includegraphics[width=2.5in]{../graphics/lambdaSD-maxMSPE-Sys000332-LGCP000004.pdf}
 
 
-\pagebreak
-\section{Tables summarizing results}
-
-%\subsection{LGCP dataset}
-
-\begin{table}[h!]\tiny
-\caption{Summary of model fitting and spatial prediction for each design
-applied to a single LGCP dataset.}
-\label{lgcptable}
-\begin{tabular}{|l|c|c|c|c|cc|cc|}
-\hline
-& & Not & & Mean & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
-Scheme & Effort & Converged & MSPE \(>\) 100 & Captured &
-Median & IQR & Median & IQR \\
-\hline
-SRS &   Low & 0\% & 21\% &  85\% & 3.02 & 3.71  & 25.2 & 42.2  \\
-&    Medium & 0\% &  7\% &  95\% & 1.90 & 0.593 & 16.2 & 10.6  \\
-&      High & 0\% &  5\% &  97\% & 1.79 & 0.442 & 15.2 &  7.17 \\
-& Very High & 0\% &  1\% & 100\% & 1.61 & 0.399 & 15.5 &  4.93 \\
-\hline
-Systematic & Low & 0\% & 34\% &  76\% & 3.29 & 2260  & 36.8 & 61.4 \\
-&         Medium & 0\% &  6\% &  94\% & 1.75 & 0.370 & 18.4 & 10.2 \\
-&           High & 0\% &  0\% & 100\% & 1.65 & 0.216 & 18.0 & 11.4 \\
-&      Very High & 0\% &  0\% & 100\% & 1.62 & 0.158 & 17.3 &  5.27 \\
-\hline
-Inhibitory,      &    Low & 0\% & 32\% &  77\% & 3.02 & 2094  & 26.9 & 60.6  \\
-10\% Close Pairs & Medium & 0\% &  5\% &  95\% & 1.96 & 0.570 & 16.7 & 10.7  \\
-&                    High & 0\% &  0\% & 100\% & 1.73 & 0.367 & 16.7 &  5.70 \\
-&               Very High & 0\% &  0\% & 100\% & 1.60 & 0.345 & 16.6 &  5.89 \\
-\hline
-Inhibitory,      &    Low & 1\% & 28\% &  80\% & 3.57 & 1290  & 32.2 & 46.5  \\
-20\% Close Pairs & Medium & 0\% &  9\% &  92\% & 1.96 & 0.543 & 16.4 &  8.29 \\
-&                    High & 0\% &  0\% & 100\% & 1.68 & 0.382 & 17.5 &  5.98 \\
-&               Very High & 0\% &  0\% & 100\% & 1.59 & 0.289 & 17.2 &  5.07 \\
-\hline
-Serpentine, &  Low & 0\% & 11\% &  92\% & 2.37 & 1.33  & 27.9 & 35.6  \\
-5 zigzags & Medium & 0\% &  3\% &  97\% & 1.88 & 0.350 & 13.9 &  9.26 \\
-&             High & 0\% &  0\% & 100\% & 1.64 & 0.268 & 14.6 &  9.27 \\
-&        Very High & 0\% &  0\% & 100\% & 1.55 & 0.123 & 16.9 &  2.87 \\
-\hline
-Serpentine &   Low & 0\% & 15\% &  87\% & 2.61 & 2.07  & 29.2 & 33.3  \\
-8 zigzags & Medium & 0\% &  0\% & 100\% & 1.88 & 0.408 & 18.3 &  8.15 \\
-&             High & 0\% &  0\% & 100\% & 1.64 & 0.245 & 17.6 &  6.25 \\
-&        Very High & 0\% &  0\% & 100\% & 1.53 & 0.272 & 16.4 &  5.41 \\
-\hline
-LHS-TSP & Low & 2\% & 31\% &  71\% & 2.90 & 1777  & 22.9 & 57.5  \\
-&      Medium & 0\% & 15\% &  88\% & 1.92 & 0.730 & 14.8 & 14.4  \\
-&        High & 0\% &  0\% & 100\% & 1.64 & 0.335 & 15.8 &  6.80 \\
-&   Very High & 0\% &  0\% & 100\% & 1.53 & 0.298 & 16.2 &  5.61 \\
-\hline
-Hilbert & Low & 0\% & 17\% &  86\% & 2.54 & 1.44  & 25.6 & 44.2  \\
-&      Medium & 0\% &  7\% &  95\% & 2.10 & 0.748 & 16.7 &  7.96 \\
-&        High & 0\% &  1\% &  99\% & 1.67 & 0.438 & 14.3 &  5.54 \\
-&   Very High & 0\% &  0\% & 100\% & 1.46 & 0.388 & 15.6 &  4.57 \\
-\hline
-\end{tabular}
-\end{table}
-
-%\subsection{LGCP with Clusters dataset}
-
-\begin{table}[h!]\tiny
-\caption{Summary of model fitting and spatial prediction for each design
-applied to a single LGCP with Clusters dataset.}
-\label{clusttable}
-\begin{tabular}{|l|c|c|c|c|cc|cc|}
-\hline
-& & Not & & Mean & \multicolumn{2}{|c|}{MSPE} & \multicolumn{2}{|c|}{APV} \\
-Scheme & Effort & Converged & MSPE \(>\) 100 & Captured &
-Median & IQR & Median & IQR \\
-\hline
-SRS &   Low & 0\% & 6\% &  98\% & 1.22  & 0.339 & 5.02 & 5.72 \\
-&    Medium & 0\% & 2\% &  99\% & 0.902 & 0.219 & 4.32 & 3.89 \\
-&      High & 0\% & 1\% &  99\% & 0.717 & 0.216 & 4.45 & 3.28 \\
-& Very High & 0\% & 0\% & 100\% & 0.619 & 0.223 & 4.81 & 2.97 \\
-\hline
-Systematic &   Low & 0\% & 3\% &  98\% & 1.08  & 0.338  & 4.50 & 4.67 \\
-&           Medium & 0\% & 0\% & 100\% & 0.812 & 0.199  & 4.27 & 2.85 \\
-&             High & 0\% & 0\% & 100\% & 0.671 & 0.189  & 5.01 & 2.02 \\
-&        Very High & 0\% & 0\% & 100\% & 0.596 & 0.0846 & 5.33 & 1.39 \\
-\hline
-Inhibitory, &         Low & 1\% & 6\% &  97\% & 1.20  & 0.326 & 6.93 & 6.78 \\
-10\% Close Pairs & Medium & 0\% & 0\% & 100\% & 0.887 & 0.245 & 4.92 & 3.33 \\
-&                    High & 0\% & 0\% & 100\% & 0.694 & 0.167 & 4.64 & 2.27 \\
-&               Very High & 0\% & 0\% & 100\% & 0.599 & 0.144 & 4.47 & 2.21 \\
-\hline
-Inhibitory &          Low & 0\% & 2\% & 100\% & 1.23  & 0.287 & 6.42 & 3.59 \\
-20\% Close Pairs & Medium & 0\% & 0\% & 100\% & 0.832 & 0.222 & 4.19 & 3.82 \\
-&                    High & 0\% & 0\% & 100\% & 0.701 & 0.253 & 4.53 & 3.57 \\
-&               Very High & 0\% & 0\% & 100\% & 0.630 & 0.204 & 5.08 & 2.91 \\
-\hline
-Serpentine, & Low  & 0\% & 5\% &  96\% & 1.22  & 0.364  & 6.35 & 8.95 \\
-5 zigzags & Medium & 0\% & 0\% & 100\% & 0.808 & 0.259  & 4.32 & 4.28 \\
-&             High & 0\% & 0\% & 100\% & 0.597 & 0.137  & 4.23 & 1.73 \\
-&        Very High & 0\% & 0\% & 100\% & 0.530 & 0.0924 & 4.32 & 2.50 \\
-Serpentine, &  Low & 0\% & 5\% &  97\% & 1.11  & 0.342  & 6.10 & 5.77 \\
-8 zigzags & Medium & 0\% & 0\% & 100\% & 0.795 & 0.163  & 5.14 & 3.19 \\
-&             High & 0\% & 0\% & 100\% & 0.643 & 0.235  & 4.61 & 2.75 \\
-&        Very High & 0\% & 0\% & 100\% & 0.564 & 0.0621 & 5.48 & 1.65 \\
-\hline
-LHS-TSP & Low & 0\% & 14\% &  91\% & 1.21  & 0.374 & 5.73 & 8.92 \\
-&      Medium & 0\% &  0\% & 100\% & 0.858 & 0.281 & 5.09 & 3.81 \\
-&        High & 0\% &  0\% & 100\% & 0.658 & 0.160 & 4.75 & 3.12 \\
-&   Very High & 0\% &  0\% & 100\% & 0.635 & 0.198 & 5.79 & 2.96 \\
-\hline
-Hilbert & Low & 0\% & 8\% &  94\% & 1.14  & 0.451 & 5.57 & 6.15 \\
-&      Medium & 0\% & 0\% & 100\% & 0.871 & 0.358 & 5.02 & 5.03 \\
-&        High & 0\% & 0\% & 100\% & 0.669 & 0.152 & 4.86 & 2.64 \\
-&   Very High & 0\% & 0\% & 100\% & 0.542 & 0.138 & 5.95 & 2.82 \\
-\hline
-\end{tabular}
-\end{table}
-
 %\section{Notation and terminology}
 
 %\begin{itemize}
@@ -1760,7 +1817,7 @@ Hilbert & Low & 0\% & 8\% &  94\% & 1.14  & 0.451 & 5.57 & 6.15 \\
 %\section{Extension of Nearest Neighbor Distance to Paths}
 
 
-\clearpage
+\pagebreak
 \section*{References}
 
 \bibliography{lgcp_sampling.bib}
