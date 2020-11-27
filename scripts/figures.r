@@ -66,6 +66,12 @@ for(i in seq_along(plotplans)){
   plot(thisplan$Plan[[1]], add = TRUE)
   dev.off()
 }
+thisplan <- allplans %>% filter(PlanID == 'LHS-TSP000161')
+pdf('../graphics/LHS-TSP000161-points.pdf', width = 6, height = 3)
+par(mar = c(0, 0, 1, 0))
+plot(rect_R, border = 'grey', main = 'LHS Design')
+plot(vertices(thisplan$Plan[[1]]), add = TRUE, pch = 16)
+dev.off()
 
 
 # Read the model fitting results and prepare for plotting.
@@ -309,7 +315,8 @@ for(thisplan in min_results$PlanID){
   (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
     t %>%
     im(xrange = rect_R$x, yrange = rect_R$y) %>%
-    plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
+    plot(main = sprintf('%s, Prediction Surface\n(MSPE = %.2f)',
+                        thisplan,
                         min_results %>%
                         filter(DataID == thisdataset, PlanID == thisplan) %>%
                         `[`(1, 'MSPE')
@@ -333,7 +340,8 @@ for(thisplan in min_results$PlanID){
     filter(DataID == thisdataset, PlanID == thisplan)
   plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
        values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
-       main = sprintf('Prediction SD of the GP\n(APV = %.2f)',
+       main = sprintf('%s, Prediction SD\n(APV = %.2f)',
+                      thisplan,
                       min_results %>%
                       filter(DataID == thisdataset, PlanID == thisplan) %>%
                       `[`(1, 'APV')
@@ -367,7 +375,8 @@ for(thisplan in med_results$PlanID){
   (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
     t %>%
     im(xrange = rect_R$x, yrange = rect_R$y) %>%
-    plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
+    plot(main = sprintf('%s, Prediction Surface\n(MSPE = %.2f)',
+                        thisplan,
                         med_results %>%
                         filter(DataID == thisdataset, PlanID == thisplan) %>%
                         `[`(1, 'MSPE')
@@ -391,7 +400,8 @@ for(thisplan in med_results$PlanID){
     filter(DataID == thisdataset, PlanID == thisplan)
   plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
        values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
-       main = sprintf('Prediction SD of the GP\n(APV = %.2f)',
+       main = sprintf('%s, Prediction SD\n(APV = %.2f)',
+                      thisplan,
                       med_results %>%
                       filter(DataID == thisdataset, PlanID == thisplan) %>%
                       `[`(1, 'APV')
@@ -423,7 +433,8 @@ for(thisplan in max_results$PlanID){
   (thisresult$IntMean + inla.mesh.project(rect_R_proj, thisresult$Prediction[[1]])) %>%
     t %>%
     im(xrange = rect_R$x, yrange = rect_R$y) %>%
-    plot(main = sprintf('Prediction Surface\n(MSPE = %.2f)',
+    plot(main = sprintf('%s, Prediction Surface\n(MSPE = %.2f)',
+                        thisplan,
                         max_results %>%
                         filter(DataID == thisdataset, PlanID == thisplan) %>%
                         `[`(1, 'MSPE')
@@ -447,7 +458,8 @@ for(thisplan in max_results$PlanID){
     filter(DataID == thisdataset, PlanID == thisplan)
   plot(rect_dual_tess, border = '#80808020', do.col = TRUE,
        values = thisresult$PredictionSD[[1]], ribargs = list(las = 1),
-       main = sprintf('Prediction SD of the GP\n(APV = %.2f)',
+       main = sprintf('%s, Prediction SD\n(APV = %.2f)',
+                      thisplan,
                       max_results %>%
                       filter(DataID == thisdataset, PlanID == thisplan) %>%
                       `[`(1, 'APV')
@@ -676,7 +688,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_line(aes(x = AvgLength, group = interaction(Scheme, Variant)), stat = 'summary', fun = median) +
     geom_point(alpha = 0.25) +
     facet_wrap(~Scheme) +
-    ggtitle('Averave Distance to Path vs Total Path Length')
+    ggtitle('Average Distance to Path vs Total Path Length')
   )
   dev.off()
 
@@ -732,6 +744,7 @@ for(thisdataset in rect_datasets$DataID){
     geom_point(alpha = 0.25) +
     scale_y_log10() +
     facet_wrap(~factor(paste(Effort, 'Effort'), levels = paste(levels(Effort), 'Effort'))) +
+    xlab('Average Distance to the Path') +
     ggtitle('MSPE vs Average Distance to Path')
   )
   dev.off()
@@ -744,6 +757,7 @@ for(thisdataset in rect_datasets$DataID){
     ggplot(aes(y = MSPE, x = CoverageAvgDist, col = Scheme)) +
     geom_point(alpha = 0.25) +
     scale_y_log10() +
+    xlab('Average Distance to the Path') +
     ggtitle('MSPE vs Average Distance to Path')
   )
   dev.off()
